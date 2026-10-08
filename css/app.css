@@ -259,3 +259,6 @@ details.box>ul:last-child{margin-bottom:6px}
 /* Play again: stands out from Log a play so played scenarios are obvious */
 .btn.again{border-color:var(--accent);color:var(--accent)}
 .btn.again:hover{background:var(--accent-soft)}
+
+/* inline icons inside buttons: sized to the text, coloured like it */
+.btn .ico{flex:none;width:1.05em;height:1.05em;margin-left:-2px}

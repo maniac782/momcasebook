@@ -123,6 +123,9 @@ function scenStats(){
   var st={};plays.forEach(function(p){var s=st[p.scenarioId]||(st[p.scenarioId]={n:0,pass:0,last:''});s.n++;if(p.result==='pass')s.pass++;if((p.date||'')>s.last)s.last=p.date;});
   return st;
 }
+// A replay arrow for "Play again": an open circle turning back on itself with an arrowhead, drawn in the text colour
+// so it matches the label in both themes. Original drawing (CC0); decorative, as the button text says what it does.
+var ICON_AGAIN='<svg class="ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 3.8v5h5"/></svg>';
 // ---------- the Scenarios tab: one list to browse, filter and sort ----------
 var sf={src:'all',diff:'any',len:'any',rate:'any',lang:'any',sort:'box'};
 // which of the Official / Valkyrie / Your own boxes are open; remembered on this device
@@ -190,7 +193,7 @@ function scenariosHtml(){
       '<span class="note">'+facts+'</span>'+(comm?'<span class="note community">'+comm+'</span>':'')+(yours?'<span class="note">'+yours+'</span>':'')+
       (s.link&&/^https:\/\//.test(s.link)?'<span class="note"><a href="'+esc(s.link)+'" target="_blank" rel="noopener">Details</a></span>':'')+
       (rv.length?'<details class="reviews"><summary>'+rv.length+' review'+(rv.length===1?'':'s')+'</summary>'+rv.map(function(r){return '<p><span>'+esc(r.summary)+'</span> <a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.source)+'</a>'+(r.date?' <span class="note">('+esc(r.date)+')</span>':'')+'</p>';}).join('')+'</details>':'')+'</div>'+
-      '<div class="row tight">'+(x?'<button class="btn sm again" data-a="again" data-sc="'+esc(s.id)+'" title="Same players, investigators, rules and place as last time">\u21bb Play again</button>':'<button class="btn sm" data-a="log" data-sc="'+esc(s.id)+'">Log a play</button>')+
+      '<div class="row tight">'+(x?'<button class="btn sm again" data-a="again" data-sc="'+esc(s.id)+'" title="Same players, investigators, rules and place as last time">'+ICON_AGAIN+'Play again</button>':'<button class="btn sm" data-a="log" data-sc="'+esc(s.id)+'">Log a play</button>')+
       (s.mine&&!x?'<button class="btn sm ghost" data-a="delsc" data-id="'+esc(s.id)+'" aria-label="Remove '+esc(s.name)+'">Remove</button>':'')+'</div></li>';
   };
   var ul=function(items){return '<ul class="scs">'+items.map(row).join('')+'</ul>';};
