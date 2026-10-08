@@ -128,8 +128,9 @@ function cropDialog(img){
 window.accountMenu=function(user,opts){
   opts=opts||{};
   var name=opts.name||user.displayName||user.email||'You';
-  return '<span class="acct"><button class="acct-btn" type="button" data-acct="toggle" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">'+avatarHtml(name,opts.photo,googlePic(user))+'</button>'+
+  return '<span class="acct"><button class="acct-btn" type="button" data-acct="toggle" aria-haspopup="true" aria-expanded="false" title="Your account" aria-label="Your account">'+avatarHtml(name,opts.photo,googlePic(user))+'<b class="acct-name">'+esc(name)+'</b><span class="caret" aria-hidden="true">\u25be</span></button>'+
     '<span class="acct-menu" role="menu" hidden><span class="acct-who">'+avatarHtml(name,opts.photo,googlePic(user),'lg')+'<span><b>'+esc(name)+'</b>'+(user.email&&user.email!==name?'<small>'+esc(user.email)+'</small>':'')+'</span></span>'+
+    (opts.home?'<a role="menuitem" href="./?account=1">Your account</a>':'<button role="menuitem" type="button" data-acct="account">Your account</button>')+
     (isInstalledApp()?'':'<button role="menuitem" type="button" data-acct="install">Install app</button>')+
     (opts.admin?'<a role="menuitem" href="admin.html">Admin</a>':'')+(opts.home?'<a role="menuitem" href="./">Back to my plays</a>':'')+
     '<button role="menuitem" type="button" data-acct="feedback">Send feedback</button>'+
@@ -142,7 +143,8 @@ document.addEventListener('click',function(e){
   var k=a.getAttribute('data-acct');
   if(k==='toggle'){var m=a.nextElementSibling;m.hidden=!m.hidden;a.setAttribute('aria-expanded',String(!m.hidden));return;}
   if(open){open.hidden=true;}
-  if(k==='install')openInstall();
+  if(k==='account')window.dispatchEvent(new CustomEvent('acct-account'));
+  else if(k==='install')openInstall();
   else if(k==='feedback')openFeedback();
   else if(k==='signout')firebase.app().auth().signOut().then(function(){location.href='./';});
 });

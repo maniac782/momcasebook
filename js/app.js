@@ -178,13 +178,7 @@ function statsHtml(){
 
 function settingsHtml(){
   var own=owned(),imp=ui.imp;
-  var hasPic=profile&&picOk(profile.photo);
-  var h='<section class="sec"><h2>You</h2>'+
-    '<div class="row picrow">'+avatarHtml(myName()||me.email,profile&&profile.photo,googlePic(me),'xl')+'<div class="stack tight"><span class="lbl">Profile picture</span><div class="row">'+
-    '<button class="btn" data-a="pic">'+(hasPic||googlePic(me)?'Change picture':'Choose a picture')+'</button>'+(hasPic?'<button class="btn ghost" data-a="picrm">Remove</button>':'')+'</div>'+
-    '<span class="note">'+(hasPic?'Shown on your account button.':googlePic(me)?'Using your Google photo until you choose one.':'Until you choose one, your initial is shown.')+'</span></div></div>'+
-    '<form class="row bottom" data-form="name"><label class="field grow"><span class="lbl">Your name</span><input class="f" id="s-name" maxlength="40" value="'+esc(myName())+'"></label><button class="btn" type="submit">Save</button></form>'+
-    '<p class="note">It’s filled in as the first player when you log a play. Signed in as '+esc(me.email||me.displayName||'')+'.</p></section>';
+  var h='';
   h+='<section class="sec"><h2>Products you own</h2><p class="note">The Scenarios tab and the scenario picker list what\u2019s ticked here.</p><div class="checks">'+
     MOM.PRODUCTS.map(function(p){return '<label class="check"><input type="checkbox" data-own="'+p.id+'"'+(own.indexOf(p.id)>=0?' checked':'')+'><span>'+esc(p.name)+' <small class="note">'+p.scenarios.length+'</small></span></label>';}).join('')+
     '<label class="check"><input type="checkbox" id="s-valk"'+(showValk()?' checked':'')+'><span>Valkyrie fan scenarios <small class="note">'+MOM.VALKYRIE.length+'</small></span></label></div></section>';
@@ -305,6 +299,33 @@ function groupDialog(g){
     }catch(e2){btn.disabled=false;err.textContent=friendly(e2);err.hidden=false;}
   });
 }
+
+// ---------- Your account (from the account menu, like the Arkham site) ----------
+function accountBody(){
+  var hasPic=profile&&picOk(profile.photo),g=googlePic(me);
+  return '<div class="dlg-head"><h2>Your account</h2><button class="x" type="button" data-close aria-label="Close">\u00d7</button></div>'+
+    '<div class="row picrow">'+avatarHtml(myName()||me.email,profile&&profile.photo,g,'xl')+'<div class="stack tight"><span class="lbl">Profile picture</span><div class="row">'+
+    '<button class="btn" type="button" data-ac="pic">'+(hasPic||g?'Change picture':'Choose a picture')+'</button>'+(hasPic?'<button class="btn ghost" type="button" data-ac="picrm">Remove</button>':'')+'</div>'+
+    '<span class="note">'+(hasPic?'Shown on your account button.':g?'Using your Google photo until you choose one.':'Until you choose one, your initial is shown.')+'</span></div></div>'+
+    '<form class="row bottom" data-ac-form><label class="field grow"><span class="lbl">Your name</span><input class="f" name="aname" maxlength="40" value="'+esc(myName())+'"></label><button class="btn" type="submit">Save</button></form>'+
+    '<p class="note">Your name is filled in as the first player when you log a play. Signed in as '+esc(me.email||me.displayName||'')+'.</p>'+
+    '<div class="row end"><button class="btn" type="button" data-close>Done</button></div>';
+}
+function openAccount(){
+  if(!me)return;
+  var d=openDialog(accountBody(),'Your account'),box=d.querySelector('.dlg');
+  var redraw=function(){if(document.body.contains(d))box.innerHTML=accountBody();};
+  box.addEventListener('click',function(e){
+    var b=e.target.closest('[data-ac]');if(!b)return;
+    if(b.dataset.ac==='pic')choosePicture().then(function(data){if(!data)return;return fb.db.doc('users/'+me.uid).set({photo:data},{merge:true}).then(function(){profile.photo=data;redraw();toast('Picture saved.');});}).catch(function(err){toast(friendly(err));});
+    else if(b.dataset.ac==='picrm')fb.db.doc('users/'+me.uid).set({photo:''},{merge:true}).then(function(){profile.photo='';redraw();toast('Picture removed.');}).catch(function(err){toast(friendly(err));});
+  });
+  box.addEventListener('submit',function(e){
+    e.preventDefault();var n=box.querySelector('[name=aname]').value.trim().replace(/\s+/g,' ').slice(0,40);
+    fb.db.doc('users/'+me.uid).set({name:n},{merge:true}).then(function(){toast('Saved.');}).catch(function(err){toast(friendly(err));});
+  });
+}
+window.addEventListener('acct-account',openAccount);
 
 // ---------- the play form ----------
 function playForm(p,preset){
@@ -475,8 +496,6 @@ app.addEventListener('click',function(e){
     location.href='./';
   });
   else if(k==='google')googleSignIn();
-  else if(k==='pic')choosePicture().then(function(data){if(!data)return;return fb.db.doc('users/'+me.uid).set({photo:data},{merge:true}).then(function(){toast('Picture saved.');});}).catch(function(err){toast(friendly(err));});
-  else if(k==='picrm')fb.db.doc('users/'+me.uid).set({photo:''},{merge:true}).then(function(){toast('Picture removed.');}).catch(function(err){toast(friendly(err));});
   else if(k==='mode'){ui.authMode=a.dataset.m;ui.authErr='';render();}
 });
 app.addEventListener('input',function(e){if(e.target.id==='q'){ui.q=e.target.value;render();}else if(e.target.id==='sq'){ui.sq=e.target.value;render();}else if(e.target.id==='imp-link')ui.impLink=e.target.value;});
@@ -492,7 +511,6 @@ app.addEventListener('change',function(e){
 app.addEventListener('submit',function(e){
   var f=e.target.closest('[data-form]');if(!f)return;e.preventDefault();var k=f.getAttribute('data-form');
   if(k==='auth')emailAuth();
-  else if(k==='name'){var n=document.getElementById('s-name').value.trim().slice(0,40);fb.db.doc('users/'+me.uid).set({name:n},{merge:true}).then(function(){toast('Saved.');}).catch(function(err){toast(friendly(err));});}
   else if(k==='sheet'){var link=document.getElementById('imp-link').value.trim();ui.impLink=link;ui.busy=true;ui.imp=null;render();
     I.fetchSheet(link).then(function(rows){prepareImport(rows);}).catch(function(err){ui.imp={error:err.message};}).then(function(){ui.busy=false;render();});}
 });
@@ -542,9 +560,10 @@ function listen(user){
 momFirebase().then(function(x){
   fb=x;
   fb.auth.getRedirectResult().catch(function(e){ui.authErr=friendly(e);});
+  var wantAccount=/[?&]account=1/.test(location.search);
   fb.auth.onAuthStateChanged(function(u){
     authKnown=true;me=u;
-    if(u)listen(u);else{unsub.forEach(function(f){f();});unsub=[];plays=[];isAdmin=false;}
+    if(u){listen(u);if(wantAccount){wantAccount=false;history.replaceState(null,'',location.pathname);setTimeout(openAccount,400);}}else{unsub.forEach(function(f){f();});unsub=[];plays=[];isAdmin=false;}
     render();
   });
 }).catch(function(e){
