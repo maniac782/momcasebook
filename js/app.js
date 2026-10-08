@@ -628,8 +628,11 @@ app.addEventListener('click',function(e){
   else if(k==='google')googleSignIn();
   else if(k==='mode'){ui.authMode=a.dataset.m;ui.authErr='';render();}
 });
-app.addEventListener('toggle',function(e){var d=e.target;if(!d.matches||!d.matches('details[data-box]'))return;
-  boxes[d.dataset.box]=d.open;try{localStorage.setItem('mom-boxes',JSON.stringify(boxes));}catch(x){}},true);
+// Remember which boxes are open. Recorded on the click itself, because the browser's toggle event comes a moment later
+// and is lost if the list redraws in between (say, a filter changed straight after); toggle still covers the keyboard.
+function saveBox(key,open){boxes[key]=open;try{localStorage.setItem('mom-boxes',JSON.stringify(boxes));}catch(x){}}
+app.addEventListener('click',function(e){var sm=e.target.closest('details[data-box]>summary');if(sm)saveBox(sm.parentNode.dataset.box,!sm.parentNode.open);},true);
+app.addEventListener('toggle',function(e){var d=e.target;if(d.matches&&d.matches('details[data-box]'))saveBox(d.dataset.box,d.open);},true);
 app.addEventListener('input',function(e){if(e.target.id==='q'){ui.q=e.target.value;render();}else if(e.target.id==='sq'){ui.sq=e.target.value;render();}else if(e.target.id==='imp-link')ui.impLink=e.target.value;});
 app.addEventListener('change',function(e){
   var t=e.target;
