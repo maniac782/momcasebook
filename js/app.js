@@ -1,4 +1,4 @@
-/* Mansions of Madness Ledger — the main page: sign-in, the play log, scenarios, stats and settings.
+/* Mansions of Madness Casebook — the main page: sign-in, the play log, scenarios, stats and settings.
    Data (all private to each account, see firestore.rules):
      users/{uid}                 name, email, created, lastSeen, playCount, owned (product ids from js/catalog.js)
      users/{uid}/plays/{id}      scenarioId, scenarioName, scenarioType, date (YYYY-MM-DD or ''), result (pass|fail|abandoned),

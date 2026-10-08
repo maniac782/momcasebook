@@ -1,4 +1,4 @@
-/* Mansions of Madness Ledger — the admin page: accounts, the shared scenario list (Valkyrie and other scenarios
+/* Mansions of Madness Casebook — the admin page: accounts, the shared scenario list (Valkyrie and other scenarios
    everyone can pick), feedback and errors. Only accounts with an admins/{uid} document (made by hand in the
    Firebase console) can use it; firestore.rules enforces that, not just this page. */
 (function(){

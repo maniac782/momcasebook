@@ -1,6 +1,6 @@
 {
-  "name": "Mansions of Madness Ledger",
-  "short_name": "MoM Ledger",
+  "name": "Mansions of Madness Casebook",
+  "short_name": "MoM Casebook",
   "description": "Log your Mansions of Madness plays: official and Valkyrie scenarios, who played, which investigators, pass or fail, and notes.",
   "id": "/",
   "start_url": "/",

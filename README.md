@@ -1,4 +1,4 @@
-# Mansions of Madness Ledger
+# Mansions of Madness Casebook
 
 A play log for Mansions of Madness (Second Edition), official app scenarios and Valkyrie ones alike: who played, which investigators they took, pass or fail, attempts, the rules you used, and notes. Sign in with Google or an email, and it works on phones and computers, installs like an app and keeps working offline.
 
@@ -17,12 +17,12 @@ It's a free, unofficial fan project, not affiliated with or endorsed by Fantasy 
 
 Everything here is done in your browser; no secrets go into the code or into chat.
 
-1. **GitHub:** create an empty repository `maniac782/momledger` (no README) and push this code to it.
-2. **Firebase:** at <https://console.firebase.google.com>, *Add project*. Use the ID `momledger` if it's free (the site is then **momledger.web.app**); if it's taken, choose another and put it in `.firebaserc`. Analytics: off. The free Spark plan is enough; nothing here needs Blaze.
+1. **GitHub:** create an empty repository `maniac782/momcasebook` (no README) and push this code to it.
+2. **Firebase:** at <https://console.firebase.google.com>, *Add project*. Use the ID `momcasebook` if it's free (the site is then **momcasebook.web.app**); if it's taken, choose another and put it in `.firebaserc`. Analytics: off. The free Spark plan is enough; nothing here needs Blaze.
    - *Build → Authentication → Get started*: enable **Google** and **Email/Password**.
    - *Build → Firestore Database → Create database*: production mode, a US location.
    - *Build → Hosting → Get started*: just click through (the workflow does the deploying).
-   - *Project settings → Your apps → Web (`</>`)*: register an app named "Mansions of Madness Ledger". You don't need to copy its settings; Hosting serves them to the site at `/__/firebase/init.json`.
+   - *Project settings → Your apps → Web (`</>`)*: register an app named "Mansions of Madness Casebook". You don't need to copy its settings; Hosting serves them to the site at `/__/firebase/init.json`.
 3. **Deploy key:** in Google Cloud for that project (<https://console.cloud.google.com/iam-admin/serviceaccounts>), create a service account `github-deploy` with the roles **Firebase Hosting Admin**, **Firebase Rules Admin**, **API Keys Viewer** and **Service Usage Consumer**. Under *Keys → Add key → JSON*, download the key. In GitHub, *Settings → Secrets and variables → Actions → New repository secret*: name it `FIREBASE_SERVICE_ACCOUNT` and paste the whole file there (only there). Then delete the downloaded file.
 4. **Deploy:** push to `main`, or *Actions → Deploy to Firebase → Run workflow*. It runs the tests, then publishes the site and `firestore.rules`.
 5. **Make yourself admin:** sign in on the site once. In Firebase *Authentication → Users*, copy your **User UID**. In *Firestore*, start collection `admins`, document ID = that UID, no fields. The account menu then shows **Admin**.

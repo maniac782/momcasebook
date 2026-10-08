@@ -1,4 +1,4 @@
-/* Mansions of Madness Ledger — the built-in list of official scenarios (Mansions of Madness Second Edition app),
+/* Mansions of Madness Casebook — the built-in list of official scenarios (Mansions of Madness Second Edition app),
    grouped by the product that unlocks them, plus investigator names offered as suggestions.
    Valkyrie and other fan scenarios are added on the admin page (shared with everyone) or by each player (just theirs).
    Investigators are suggestions only; any name can be typed. */

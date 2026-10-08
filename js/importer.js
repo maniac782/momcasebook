@@ -1,4 +1,4 @@
-/* Mansions of Madness Ledger — turning a spreadsheet into plays.
+/* Mansions of Madness Casebook — turning a spreadsheet into plays.
    Reads a Google Sheets link (through Google's public "gviz" feed, which works for sheets shared as
    "Anyone with the link") or a CSV file, finds the columns by their headings, and builds plays.
    Understands the original tracking sheet (Scenario, Played, Characters, Pass/Fail, Notes, Rules) and this

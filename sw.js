@@ -1,4 +1,4 @@
-/* Mansions of Madness Ledger — offline copy of the site for the installed app.
+/* Mansions of Madness Casebook — offline copy of the site for the installed app.
    Pages and scripts come from the network first (so changes show up straight away) and fall back to the copy
    saved here when offline. The cache is named after the version in js/version.js; a new version clears the old one.
    Your plays themselves are kept offline by Firestore, not here. */

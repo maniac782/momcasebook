@@ -1,4 +1,4 @@
-/* Mansions of Madness Ledger — Firebase start-up, shared by every page.
+/* Mansions of Madness Casebook — Firebase start-up, shared by every page.
    The Firebase web settings are read from /__/firebase/init.json, which Firebase Hosting serves for this project
    automatically, so nothing needs pasting into the code. (They aren't secret anyway: they only name the project;
    firestore.rules decides what anyone can do.) For a local copy outside Firebase Hosting, set

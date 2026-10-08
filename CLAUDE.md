@@ -1,4 +1,4 @@
-# Working on Mansions of Madness Ledger
+# Working on Mansions of Madness Casebook
 
 Standing preferences from Dan, the owner. They apply to every change in this repo.
 

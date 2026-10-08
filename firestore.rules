@@ -1,5 +1,5 @@
 rules_version = '2';
-// Mansions of Madness Ledger: who can read and write what. The pages hide what people can't do, but these rules
+// Mansions of Madness Casebook: who can read and write what. The pages hide what people can't do, but these rules
 // are what actually enforce it. Published by the GitHub workflow on every push to main.
 service cloud.firestore {
   match /databases/{database}/documents {

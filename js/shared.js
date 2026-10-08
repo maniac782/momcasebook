@@ -1,4 +1,4 @@
-/* Mansions of Madness Ledger — helpers used on every page: escaping, the toast, the account menu,
+/* Mansions of Madness Casebook — helpers used on every page: escaping, the toast, the account menu,
    Install app and Send feedback. */
 (function(){
 'use strict';
@@ -32,9 +32,9 @@ window.isInstalledApp=function(){try{return matchMedia('(display-mode: standalon
 window.openInstall=function(){
   if(deferred){var d=deferred;deferred=null;d.prompt();return;}
   var ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1),android=/Android/.test(ua);
-  var steps=ios?['Tap the <b>Share</b> button (the square with an arrow) in Safari’s toolbar.','Scroll down and tap <b>Add to Home Screen</b>.','Tap <b>Add</b>. The ledger appears on your home screen and opens full-screen.']:
-    android?['Tap the browser’s <b>⋮</b> menu (top right in Chrome).','Tap <b>Install app</b> or <b>Add to Home screen</b>.','Open Mansions of Madness Ledger from your home screen.']:
-    ['In Chrome or Edge, click the <b>install</b> icon at the right end of the address bar, or open the browser menu and choose <b>Install Mansions of Madness Ledger</b>.','Open it from your Start menu, Dock or desktop like any other app. (Safari on a Mac: <b>File › Add to Dock</b>.)'];
+  var steps=ios?['Tap the <b>Share</b> button (the square with an arrow) in Safari’s toolbar.','Scroll down and tap <b>Add to Home Screen</b>.','Tap <b>Add</b>. The casebook appears on your home screen and opens full-screen.']:
+    android?['Tap the browser’s <b>⋮</b> menu (top right in Chrome).','Tap <b>Install app</b> or <b>Add to Home screen</b>.','Open Mansions of Madness Casebook from your home screen.']:
+    ['In Chrome or Edge, click the <b>install</b> icon at the right end of the address bar, or open the browser menu and choose <b>Install Mansions of Madness Casebook</b>.','Open it from your Start menu, Dock or desktop like any other app. (Safari on a Mac: <b>File › Add to Dock</b>.)'];
   openDialog('<div class="dlg-head"><h2>Install the app</h2><button class="x" type="button" data-close aria-label="Close">×</button></div>'+
     '<p class="note">It opens full-screen with its own icon, and works offline: plays you log without a connection sync when you’re back online.</p>'+
     '<ol class="steps">'+steps.map(function(s){return '<li>'+s+'</li>';}).join('')+'</ol>'+
@@ -70,7 +70,7 @@ window.accountMenu=function(user,opts){
     (opts.admin?'<a role="menuitem" href="admin.html">Admin</a>':'')+(opts.home?'<a role="menuitem" href="./">Back to my plays</a>':'')+
     '<button role="menuitem" type="button" data-acct="feedback">Send feedback</button>'+
     '<button role="menuitem" type="button" data-acct="signout">Sign out</button>'+
-    '<span class="acct-ver">Mansions of Madness Ledger '+esc(self.APP_VERSION||'')+'</span></span></span>';
+    '<span class="acct-ver">Mansions of Madness Casebook '+esc(self.APP_VERSION||'')+'</span></span></span>';
 };
 document.addEventListener('click',function(e){
   var a=e.target.closest('[data-acct]'),open=document.querySelector('.acct-menu:not([hidden])');

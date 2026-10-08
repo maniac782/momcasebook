@@ -16,8 +16,8 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
       if(u.hostname==='www.gstatic.com'){return r.fulfill({body:u.pathname.includes('firebase-app-compat')?fs.readFileSync(path.join(__dirname,'fake-firebase.js'),'utf8'):'',contentType:'text/javascript'});}
       if(u.hostname==='docs.google.com'){const cb=(u.searchParams.get('tqx')||'').split('responseHandler:')[1];return r.fulfill({body:'/*O_o*/\n'+cb+'('+JSON.stringify(gviz)+');',contentType:'text/javascript'});}
       if(u.hostname.includes('fonts.g'))return r.fulfill({body:'',contentType:'text/css'});
-      if(u.hostname!=='momledger.test')return r.abort();
-      if(u.pathname==='/__/firebase/init.json')return r.fulfill({body:'{"projectId":"momledger"}',contentType:'application/json'});
+      if(u.hostname!=='momcasebook.test')return r.abort();
+      if(u.pathname==='/__/firebase/init.json')return r.fulfill({body:'{"projectId":"momcasebook"}',contentType:'application/json'});
       const f=path.join(root,u.pathname==='/'?'index.html':decodeURIComponent(u.pathname));
       if(!fs.existsSync(f))return r.fulfill({status:404,body:'nf'});
       r.fulfill({body:fs.readFileSync(f),contentType:types[f.split('.').pop()]||'application/octet-stream'});
@@ -26,7 +26,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   }
   const c=await ctx({viewport:{width:1100,height:900}});const p=await c.newPage();
   p.on('pageerror',e=>errors.push('pageerror: '+e.message));p.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
-  await p.goto('https://momledger.test/');
+  await p.goto('https://momcasebook.test/');
   await p.waitForSelector('text=Continue with Google');
   assert.ok((await p.textContent('#ver')).startsWith('v'),'version in footer');
   await p.screenshot({path:out+'/1-signin.png',fullPage:true});
@@ -79,7 +79,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   // admin page
   const uid=await p.evaluate(()=>firebase.app().auth().currentUser.uid);
   await p.evaluate(u=>__fake.makeAdmin(u),uid);
-  await p.goto('https://momledger.test/admin.html');
+  await p.goto('https://momcasebook.test/admin.html');
   // fresh page = fresh fake store: sign in again and seed
   await p.waitForSelector('text=Sign in on the');
   await p.evaluate(()=>{__fake.makeAdmin('u-danexamplecom');__fake.store['users/u-danexamplecom']={name:'Dan',email:'dan@example.com',playCount:11,created:Date.now(),lastSeen:Date.now()};firebase.app().auth().signInWithEmailAndPassword('dan@example.com');});
@@ -90,7 +90,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   // phone, dark
   const c2=await ctx({viewport:{width:390,height:844},deviceScaleFactor:2,colorScheme:'dark',isMobile:true,hasTouch:true});const q=await c2.newPage();
   q.on('pageerror',e=>errors.push('pageerror(phone): '+e.message));
-  await q.goto('https://momledger.test/');await q.waitForSelector('text=Continue with Google');
+  await q.goto('https://momcasebook.test/');await q.waitForSelector('text=Continue with Google');
   await q.screenshot({path:out+'/8-phone-signin-dark.png'});
   await q.fill('#au-em','dan@example.com');await q.fill('#au-pw','secret1');await q.click('form[data-form=auth] button[type=submit]');
   await q.waitForSelector('text=No plays yet');await q.click('text=Import a spreadsheet');
