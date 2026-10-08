@@ -18,7 +18,7 @@
     orderBy:function(){return this;},limit:function(){return this;},
     onSnapshot:function(cb){var l={run:function(){cb(colSnap(col));}};listeners.push(l);setTimeout(l.run,0);return function(){listeners.splice(listeners.indexOf(l),1);};}};}
   var db={doc:docRef,collection:colRef,enablePersistence:function(){return Promise.resolve();},
-    batch:function(){var ops=[];return {set:function(r,d){ops.push(function(){return r.set(d);});},delete:function(r){ops.push(function(){return r.delete();});},commit:function(){return Promise.all(ops.map(function(f){return f();}));}};}};
+    batch:function(){var ops=[];return {set:function(r,d,o){ops.push(function(){return r.set(d,o);});},update:function(r,d){ops.push(function(){return r.update(d);});},delete:function(r){ops.push(function(){return r.delete();});},commit:function(){return Promise.all(ops.map(function(f){return f();}));}};}};
   function setUser(u){user=u;auth.currentUser=u;authCbs.forEach(function(cb){cb(u);});}
   function mkUser(email,name){return {uid:'u-'+email.replace(/\W/g,''),email:email,displayName:name||null,photoURL:null,
     updateProfile:function(p){this.displayName=p.displayName;return Promise.resolve();},delete:function(){setUser(null);return Promise.resolve();}};}

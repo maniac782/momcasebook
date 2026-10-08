@@ -89,6 +89,38 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('[data-t=settings]');await p.check('#s-valk');await p.waitForTimeout(150);
   await p.click('[data-t=stats]');await p.waitForSelector('text=Who you played with');
   await p.screenshot({path:out+'/6-stats.png',fullPage:true});
+  // players and groups: save the names already in plays, make a group, log a play from it, rename someone everywhere
+  await p.click('[data-t=players]');await p.waitForSelector('text=In your plays, not saved yet');
+  await p.click('[data-a=addloose]');await p.waitForSelector('[data-a=editperson]');
+  assert.strictEqual(await p.locator('text=In your plays, not saved yet').count(),0,'all loose names saved');
+  await p.click('[data-a=newgroup]');await p.fill('input[name=gname]','Thursday group');
+  await p.locator('label.check',{hasText:'Gerri'}).locator('input').check();await p.locator('label.check',{hasText:'Dan'}).locator('input').check();
+  await p.fill('input[name=gnew]','Pat, Sam');await p.click('.dlg button[type=submit]');
+  await p.waitForSelector('.scs b:text("Thursday group")');
+  assert.strictEqual(await p.locator('li',{has:p.locator('b:text("Thursday group")')}).locator('.chip').count(),4,'group has 4 members');
+  await p.screenshot({path:out+'/5c-players.png',fullPage:true});
+  await p.click('.bar [data-a=log]');await p.selectOption('select[name=sc]','o-rising-tide');
+  await p.locator('.seat [name=pi]').first().fill('Agatha Crane');  // Dan's seat keeps this investigator after picking the group
+  const gid=await p.locator('select[name=grp] option').nth(1).getAttribute('value');await p.selectOption('select[name=grp]',gid);
+  assert.strictEqual(await p.locator('.seat').count(),4,'seats filled from group');
+  assert.strictEqual(await p.locator('.seat').filter({has:p.locator('[name=pp][value="Dan"]')}).count()>=0,true);
+  const seats=await p.$$eval('.seat',ss=>ss.map(s=>s.querySelector('[name=pp]').value+':'+s.querySelector('[name=pi]').value));
+  assert.ok(seats.includes('Dan:Agatha Crane')&&seats.includes('Gerri:')&&seats.includes('Pat:'),'seats '+seats.join(','));
+  await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
+  await p.waitForSelector('.play:has-text("Rising Tide")');
+  // rename Gerri -> Geraldine, also in past plays
+  await p.click('[data-t=players]');
+  await p.locator('li',{hasText:'Gerri'}).locator('[data-a=editperson]').click();
+  await p.fill('input[name=pname]','Geraldine');assert.ok(await p.isVisible('.renm'),'rename-in-plays offered');
+  await p.click('.dlg button[type=submit]');await p.waitForSelector('.scs b:has-text("Geraldine")');
+  await p.click('[data-t=plays]');
+  assert.strictEqual(await p.locator('.pl-party:has-text("Gerri")').count(),0,'old name gone from plays');
+  assert.ok(await p.locator('.pl-party:has-text("Geraldine")').count()>=3,'new name in plays');
+  // delete Sam: leaves the group
+  await p.click('[data-t=players]');await p.locator('li',{hasText:'Sam'}).locator('[data-a=delperson]').click();await p.click('[data-yes]');
+  await p.waitForFunction(()=>!document.querySelector('[data-a=editperson]')||![...document.querySelectorAll('li')].some(li=>li.querySelector('[data-a=editperson]')&&li.textContent.includes('Sam')));
+  assert.ok(await p.locator('li',{hasText:'Sam'}).locator('[data-a=addname]').count(),'Sam is back under not-saved because a past play names him');
+  assert.strictEqual(await p.locator('li',{has:p.locator('b:text("Thursday group")')}).locator('.chip').count(),3,'deleted player left the group');
   // profile picture: choose, crop, save; it shows on the account button; then remove it
   const png=Buffer.from((await p.evaluate(()=>{const c=document.createElement('canvas');c.width=640;c.height=420;const g=c.getContext('2d');
     const gr=g.createLinearGradient(0,0,640,420);gr.addColorStop(0,'#1d5c63');gr.addColorStop(1,'#a3322a');g.fillStyle=gr;g.fillRect(0,0,640,420);

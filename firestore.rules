@@ -54,6 +54,20 @@ service cloud.firestore {
         allow read, delete: if own(uid);
         allow create, update: if own(uid) && validScenario(request.resource.data);
       }
+      // regular players (just names; they don't need accounts) and groups of them
+      match /people/{pid} {
+        allow read, delete: if own(uid);
+        allow create, update: if own(uid) && request.resource.data.keys().hasOnly(['name','notes','created','updated'])
+          && str(request.resource.data.name, 40) && request.resource.data.name.size() > 0
+          && optStr(request.resource.data, 'notes', 500) && optNum(request.resource.data, 'created') && optNum(request.resource.data, 'updated');
+      }
+      match /groups/{gid} {
+        allow read, delete: if own(uid);
+        allow create, update: if own(uid) && request.resource.data.keys().hasOnly(['name','members','created','updated'])
+          && str(request.resource.data.name, 40) && request.resource.data.name.size() > 0
+          && request.resource.data.members is list && request.resource.data.members.size() <= 30
+          && optNum(request.resource.data, 'created') && optNum(request.resource.data, 'updated');
+      }
     }
 
     // Scenarios the admin shares with everyone (mostly Valkyrie ones).

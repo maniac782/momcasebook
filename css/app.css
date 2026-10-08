@@ -214,3 +214,10 @@ li:has(.chip.bad)>.play{border-left-color:var(--bad)}
 .prose p,.prose ul{margin:0}
 code{font-family:var(--mono);font-size:.88em;background:var(--surface2);padding:1px 4px;border-radius:4px}
 @media (max-width:560px){.toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}main{padding-bottom:96px}}
+
+/* players and groups */
+.scs li>.avatar{align-self:flex-start;margin-top:2px}
+.chips{margin-top:4px}
+.pnote{font-style:italic}
+select.grp{margin-bottom:8px}
+@media (max-width:440px){.tab{padding:10px 8px;font-size:14px}}
