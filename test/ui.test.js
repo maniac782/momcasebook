@@ -92,7 +92,23 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(await p.locator('.scs >> text=The Lighthouse Keeper').count());
   await p.screenshot({path:out+'/5-scenarios.png',fullPage:true});
   // the built-in Valkyrie list: search it and log a play straight from it
-  assert.ok(await p.locator('h2',{hasText:'Valkyrie scenarios'}).count(),'valkyrie group shown');
+  assert.ok(await p.locator('details[data-box=valkyrie]').count(),'valkyrie box shown');
+  // collapsible boxes: close Official, its scenarios disappear, Valkyrie stays; remembered after a reload
+  await p.click('details[data-box=official] > summary');
+  assert.strictEqual(await p.locator('details[data-box=official] .scs li').first().isVisible(),false,'official closed');
+  assert.ok(await p.locator('details[data-box=valkyrie] .scs li').first().isVisible(),'valkyrie still open');
+  await p.screenshot({path:out+'/5a-official-closed.png'});
+  assert.deepStrictEqual(await p.evaluate(()=>JSON.parse(localStorage.getItem('mom-boxes'))),{official:false,valkyrie:true,yours:true});
+  await p.click('details[data-box=official] > summary');
+  // language: Spanish only, and sorting by language groups them
+  await p.selectOption('#sf-src','valkyrie');await p.selectOption('#sf-lang','Spanish');
+  const langOk=await p.$$eval('details[data-box=valkyrie] .scs li b',bs=>bs.map(b=>b.textContent)).then(names=>p.evaluate(ns=>ns.every(n=>{const s=MOM.VALKYRIE.find(x=>x.name===n);return s&&(s.langs||[s.lang]).includes('Spanish');}),names));
+  assert.ok(langOk,'every row is available in Spanish');
+  await p.selectOption('#sf-lang','any');await p.selectOption('#sf-sort','lang');
+  const heads=await p.$$eval('details[data-box=valkyrie] .subhead',hs=>hs.map(h=>h.firstChild.textContent.trim()));
+  assert.ok(heads.length>=5&&heads.includes('English')&&heads.includes('Spanish'),'grouped by original language: '+heads.join(', '));
+  await p.screenshot({path:out+'/5g-by-language.png',fullPage:true});
+  await p.selectOption('#sf-sort','box');await p.selectOption('#sf-src','all');
   await p.fill('#sq','exotic');
   await p.waitForFunction(()=>document.querySelectorAll('.scs li').length===1);
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('text=by Bruce').count(),'author shown');
@@ -107,6 +123,11 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('[data-t=scenarios]');await p.fill('#sq','exotic');await p.waitForFunction(()=>document.querySelectorAll('.scs li').length===1);
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('text=You: 1 play').count(),'your record next to the community');
   await p.screenshot({path:out+'/5e-community.png'});
+  // played scenarios offer Play again, filled from last time (it was a fail, so attempt 2)
+  assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('[data-a=again]').count(),'Play again on a played scenario');
+  await p.locator('.scs li',{hasText:'Exotic Material'}).locator('[data-a=again]').click();await p.waitForSelector('.dlg h2:text("Play again")');
+  assert.strictEqual(await p.inputValue('select[name=sc]'),'v-exotic-material');assert.strictEqual(await p.inputValue('input[name=att]'),'2','next attempt after a fail');
+  await p.keyboard.press('Escape');
   // the list: filter Valkyrie, easy-or-medium is two filters here (medium), under 2 hours, rated 8+, sorted by rating
   await p.fill('#sq','');await p.selectOption('#sf-src','valkyrie');await p.selectOption('#sf-diff','medium');await p.selectOption('#sf-len','short');
   await p.selectOption('#sf-rate','8');await p.selectOption('#sf-sort','rating');
@@ -125,7 +146,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.fill('#sq','');
   // log a play from the list
   await p.fill('#sq','a time and place');await p.waitForFunction(()=>document.querySelectorAll('.scs li').length===1);
-  const pick2='A Time and Place';await p.click('.scs li [data-a=log]');await p.waitForSelector('form[data-form=play]');
+  const pick2='A Time and Place';assert.strictEqual(await p.locator('.scs li [data-a=again]').count(),0,'unplayed shows Log a play');await p.click('.scs li [data-a=log]');await p.waitForSelector('form[data-form=play]');
   assert.strictEqual(await p.evaluate(()=>document.querySelector('select[name=sc]').selectedOptions[0].textContent.replace(' • new','')),pick2,'Log a play opens with that scenario');
   // location: saved, shown, remembered next time, counted in stats
   await p.fill('input[name=loc]','Gerri\u2019s house');await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
@@ -135,7 +156,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   // switching the list off in Settings keeps played ones only
   await p.click('[data-t=settings]');await p.uncheck('#s-valk');await p.waitForTimeout(150);
   await p.click('[data-t=scenarios]');await p.click('[data-a=sfclear]').catch(()=>{});await p.selectOption('#sf-sort','box');await p.fill('#sq','');await p.waitForTimeout(100);
-  const vl=await p.locator('section',{has:p.locator('h2',{hasText:'Valkyrie scenarios'})}).locator('.scs li').count();
+  const vl=await p.locator('details[data-box=valkyrie] .scs li').count();
   assert.strictEqual(vl,3,'only the 3 played Valkyrie scenarios remain when the list is off (got '+vl+')');
   await p.click('[data-t=settings]');await p.check('#s-valk');await p.waitForTimeout(150);
   await p.click('[data-t=stats]');await p.waitForSelector('text=Who you played with');

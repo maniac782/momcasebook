@@ -242,3 +242,20 @@ select.grp{margin-bottom:8px}
 .reviews summary{cursor:pointer;color:var(--accent);font-weight:600;width:max-content}
 .reviews p{margin:6px 0 0;padding-left:10px;border-left:2px solid var(--line)}
 .filters .field{min-width:130px}
+
+/* collapsible Official / Valkyrie / Your own boxes */
+details.box{padding:0;gap:0}
+details.box>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:14px 16px}
+details.box>summary::-webkit-details-marker{display:none}
+details.box>summary h2{margin-right:auto}
+details.box>summary .chev{width:10px;height:10px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);align-self:center;transition:transform .15s}
+details.box:not([open])>summary .chev{transform:rotate(-45deg)}
+details.box[open]>summary{border-bottom:1px solid var(--line)}
+details.box>summary:hover h2{color:var(--accent)}
+details.box>ul,details.box>.subhead{margin-left:16px;margin-right:16px}
+details.box>ul:last-child{margin-bottom:6px}
+.subhead{font-size:19px;margin-top:14px;margin-bottom:2px}
+
+/* Play again: stands out from Log a play so played scenarios are obvious */
+.btn.again{border-color:var(--accent);color:var(--accent)}
+.btn.again:hover{background:var(--accent-soft)}
