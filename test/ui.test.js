@@ -5,6 +5,8 @@ const root=path.join(__dirname,'..'),out=process.argv[2]||path.join(root,'test',
 const types={html:'text/html',js:'text/javascript',css:'text/css',png:'image/png',webmanifest:'application/manifest+json'};
 require('../js/valkyrie.js');require('../js/catalog.js');require('../js/importer.js');
 const rows=globalThis.MOMImport.parseCSV(fs.readFileSync(path.join(__dirname,'fixture-sheet.csv'),'utf8'));
+const typo=[['Scenario','Played','Pass/Fail'],['Altered Fate','Y','Fail'],['Escape Innsmouth','Y','Pass'],['Mansion','Y','Pass'],['The Lighthouse Keeper','Y','Pass']];
+const toGviz=rows=>({status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(1).map(r=>({c:r.map(v=>v===''?null:{v})}))}});
 const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(1).map(r=>({c:r.map(v=>v===''?null:{v})}))}};
 (async()=>{
   const browser=await chromium.launch({executablePath:process.env.CHROME||undefined});
@@ -14,7 +16,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
     await c.route('**/*',async r=>{
       const u=new URL(r.request().url());
       if(u.hostname==='www.gstatic.com'){return r.fulfill({body:u.pathname.includes('firebase-app-compat')?fs.readFileSync(path.join(__dirname,'fake-firebase.js'),'utf8'):'',contentType:'text/javascript'});}
-      if(u.hostname==='docs.google.com'){const cb=(u.searchParams.get('tqx')||'').split('responseHandler:')[1];return r.fulfill({body:'/*O_o*/\n'+cb+'('+JSON.stringify(gviz)+');',contentType:'text/javascript'});}
+      if(u.hostname==='docs.google.com'){const cb=(u.searchParams.get('tqx')||'').split('responseHandler:')[1];return r.fulfill({body:'/*O_o*/\n'+cb+'('+JSON.stringify(u.pathname.includes('TYPOSHEET')?toGviz(typo):gviz)+');',contentType:'text/javascript'});}
       if(u.hostname.includes('fonts.g'))return r.fulfill({body:'',contentType:'text/css'});
       if(u.hostname!=='momcasebook.test')return r.abort();
       if(u.pathname==='/__/firebase/init.json')return r.fulfill({body:'{"projectId":"momcasebook"}',contentType:'application/json'});
@@ -59,24 +61,50 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   const after=await p.evaluate(()=>{const S=__fake.store,ks=Object.keys(S).filter(k=>k.includes('/plays/'));const g=n=>S[ks.find(k=>S[k].scenarioName===n)].party;return [g('The Jungle Awakens'),g('Gangs of Arkham')];});
   assert.deepStrictEqual(after[0].map(s=>s.investigator),['"Ashcan" Pete','Ursula Downs','Lily Chen']);
   assert.deepStrictEqual(after[1],[{player:'',investigator:'Agatha Crane'},{player:'Dan',investigator:''},{player:'',investigator:'Tommy Muldoon'}]);
+  // an older version could save a made-up scenario: the Plays tab asks to match it, with a good guess filled in
+  await p.evaluate(async()=>{const db=firebase.app().firestore(),u=firebase.app().auth().currentUser.uid;
+    await db.doc('users/'+u+'/scenarios/c-altered-fate').set({name:'Altered Fate',type:'custom',author:'',link:'',created:1});
+    await db.collection('users/'+u+'/plays').add({scenarioId:'c-altered-fate',scenarioName:'Altered Fate',scenarioType:'custom',date:'',result:'fail',attempts:1,party:[],solo:false,rules:'',notes:'',created:1});});
+  await p.waitForSelector('[data-a=fixsc]');assert.ok(await p.locator('details[data-box=p-fix] .plays > li').count()===1,'shown under Needs a scenario');
+  await p.screenshot({path:out+'/3e-needs-scenario.png'});
+  await p.click('[data-a=fixsc]');await p.waitForSelector('.fixes select');
+  assert.strictEqual(await p.inputValue('.fixes select'),'o-altered-fates','best guess Altered Fates');
+  await p.click('.dlg button[type=submit]');await p.waitForSelector('[data-a=fixsc]',{state:'detached'});
+  assert.strictEqual(await p.evaluate(()=>Object.keys(__fake.store).filter(k=>k.includes('/scenarios/c-')).length),0,'old personal scenario removed');
+  assert.strictEqual(await p.evaluate(()=>Object.values(__fake.store).filter(v=>v&&v.scenarioName==='Altered Fates').length),2,'now two Altered Fates plays');
+  await p.evaluate(async()=>{const db=firebase.app().firestore();for(const [k,v] of Object.entries(__fake.store))if(k.includes('/plays/')&&v&&v.created===1)await db.doc(k).delete();});
   // and the form only offers official investigators
   await p.click('.bar [data-a=log]');
   const optCount=await p.locator('.seat [name=pi] option:not([value=""])').count();assert.strictEqual(optCount,40,'40 official investigators in the dropdown');
   await p.keyboard.press('Escape');
+  // a sheet with typos: sure matches are used, the rest wait for a choice in the preview
+  await p.click('[data-t=settings]');await p.fill('#imp-link','https://docs.google.com/spreadsheets/d/TYPOSHEETxxxxxxxxxxxxxxxxxxxxxxxxx/edit');await p.click('text=Load sheet');
+  await p.waitForSelector('.unmatched');
+  assert.strictEqual(await p.locator('.unmatched select').count(),2,'two names need a choice');
+  assert.ok((await p.inputValue('#um-0')).startsWith('v-'),'Mansion: a best guess is chosen');
+  assert.strictEqual(await p.inputValue('#um-1'),'','made-up name: skip by default');
+  await p.screenshot({path:out+'/2b-import-matching.png',fullPage:true});
+  const keysBefore=await p.evaluate(()=>Object.keys(__fake.store).filter(k=>k.includes('/plays/')));const nBefore=keysBefore.length;
+  await p.click('[data-a=doimport]');await p.waitForSelector('.plays');
+  const nAfter=await p.evaluate(()=>Object.keys(__fake.store).filter(k=>k.includes('/plays/')).length);
+  assert.strictEqual(nAfter-nBefore,3,'three imported, the made-up one skipped');
+  assert.ok(await p.evaluate(()=>Object.values(__fake.store).every(v=>!v||!v.scenarioType||v.scenarioType==='official'||v.scenarioType==='valkyrie')),'no custom scenarios saved');
+  // remove those three again so the rest of the test's counts hold
+  await p.evaluate(async kb=>{const db=firebase.app().firestore();for(const k of Object.keys(__fake.store).filter(k=>k.includes('/plays/')&&!kb.includes(k)))await db.doc(k).delete();},keysBefore);
   // importing again adds nothing
-  await p.click('[data-t=settings]');await p.click('text=Load sheet');await p.waitForSelector('text=10 already in your log');
+  await p.click('[data-t=settings]');await p.fill('#imp-link','https://docs.google.com/spreadsheets/d/1qOKghDouy9aFbaexfI-Gt7JSxcLmRkDMsIfRJfvD5Ug/edit?usp=sharing');await p.click('text=Load sheet');await p.waitForSelector('text=10 already in your log');
   assert.ok(await p.locator('text=0 plays to import').count(),'re-import finds nothing new');
   await p.click('[data-a=cancelimport]');
   // log a new play with a new Valkyrie scenario
   await p.click('.bar [data-a=log]');
-  await p.selectOption('select[name=sc]','__new');await p.fill('input[name=nsname]','The Lighthouse Keeper');
+  assert.strictEqual(await p.locator('select[name=sc] option[value=__new]').count(),0,'no way to add a custom scenario');await p.selectOption('select[name=sc]','v-the-sea-devils');
   await p.check('.seg.big .pass input',{force:true});
   await p.fill('.seat [name=pp]','Dan');await p.selectOption('.seat [name=pi]','Agatha Crane');
   await p.click('[data-f=addseat]');await p.locator('.seat').nth(1).locator('[name=pp]').fill('Gerri');await p.locator('.seat').nth(1).locator('[name=pi]').selectOption('Ursula Downs');
   await p.fill('textarea[name=notes]','Escaped the lighthouse with one turn to spare.');
   await p.screenshot({path:out+'/4-log-form.png',fullPage:true});
   await p.click('form[data-form=play] button[type=submit]');
-  await p.waitForSelector('.pl-name >> text=The Lighthouse Keeper');
+  await p.waitForSelector('.pl-name >> text=The Sea Devils');
   await p.click('[data-t=plays]');
   assert.strictEqual(await p.locator('.plays > li').count(),11);
   assert.ok(await p.locator('text=Agatha Crane').first().count(),'short name expanded');
@@ -97,7 +125,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.selectOption('#fpl','Gerri');assert.strictEqual(await p.locator('.plays > li').count(),2);
   await p.click('[data-a=clearf]');
   await p.click('[data-t=scenarios]');await p.waitForSelector('#sf-sort');
-  assert.ok(await p.locator('.scs >> text=The Lighthouse Keeper').count());
+  assert.ok(await p.locator('.scs >> text=The Sea Devils').count());assert.strictEqual(await p.locator('details[data-box=yours]').count(),0,'no Your own box');
   await p.screenshot({path:out+'/5-scenarios.png',fullPage:true});
   // the built-in Valkyrie list: search it and log a play straight from it
   assert.ok(await p.locator('details[data-box=valkyrie]').count(),'valkyrie box shown');
@@ -233,7 +261,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   // CSV export round trip
   await p.click('[data-t=settings]');
   const [dl]=await Promise.all([p.waitForEvent('download'),p.click('[data-a=csv]')]);
-  const csv=fs.readFileSync(await dl.path(),'utf8');assert.ok(csv.split('\n').length>=12&&/Lighthouse Keeper/.test(csv),'csv export');
+  const csv=fs.readFileSync(await dl.path(),'utf8');assert.ok(csv.split('\n').length>=12&&/The Sea Devils/.test(csv),'csv export');
   // admin page
   const uid=await p.evaluate(()=>firebase.app().auth().currentUser.uid);
   await p.evaluate(u=>__fake.makeAdmin(u),uid);

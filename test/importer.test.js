@@ -7,7 +7,7 @@ const r=I.buildPlays(rows,MOM.OFFICIAL);
 const byName=n=>r.plays.find(p=>p.scenarioName===n);
 assert.strictEqual(r.plays.length,10,'10 played rows');
 assert.strictEqual(r.skipped,10,'10 unplayed rows skipped');
-assert.strictEqual(r.scenarios.length,0,'every scenario is in the official catalog');
+assert.strictEqual(Object.keys(r.unmatched).length,0,'every scenario is in the official catalog');
 assert.strictEqual(r.plays.filter(p=>p.result==='pass').length,5);
 assert.strictEqual(r.plays.filter(p=>p.result==='fail').length,5);
 const vi=byName('Vengeful Impulses');assert.strictEqual(vi.attempts,3);assert.strictEqual(vi.result,'pass');
@@ -35,7 +35,7 @@ assert.ok(MOM.VALKYRIE.every(s=>/^v-[a-z0-9-]+$/.test(s.id)&&s.type==='valkyrie'
 assert.strictEqual(new Set(MOM.VALKYRIE.map(s=>MOM.key(s.name))).size,MOM.VALKYRIE.length,'no duplicate valkyrie names');
 assert.ok(!MOM.VALKYRIE.some(v=>MOM.OFFICIAL.some(o=>MOM.key(o.name)===MOM.key(v.name))),'no valkyrie name clashes with an official one');
 const vr=I.buildPlays([['Scenario','Played','Pass/Fail'],['exotic material','Y','Pass']],MOM.OFFICIAL.concat(MOM.VALKYRIE));
-assert.strictEqual(vr.plays[0].scenarioId,'v-exotic-material');assert.strictEqual(vr.plays[0].scenarioType,'valkyrie');assert.strictEqual(vr.scenarios.length,0);
+assert.strictEqual(vr.plays[0].scenarioId,'v-exotic-material');assert.strictEqual(vr.plays[0].scenarioType,'valkyrie');assert.strictEqual(Object.keys(vr.unmatched).length,0);
 // only official investigators come out of an import; anything else becomes an unknown seat, with a note
 assert.deepStrictEqual(byName('The Jungle Awakens').party.map(x=>x.investigator),['Ursula Downs','"Ashcan" Pete','Lily Chen']);
 const odd=I.buildPlays([['Scenario','Played','Characters','Pass/Fail'],['Rising Tide','Y','Daisy Walker, Wendy, Bob the Builder','Pass']],MOM.OFFICIAL);
@@ -45,5 +45,15 @@ assert.ok(r.plays.every(p=>p.party.every(s=>s.investigator===''||MOM.isInvestiga
 const lr=I.buildPlays([['Scenario','Played','Pass/Fail','Where'],['Rising Tide','Y','Pass',"Gerri's"]],MOM.OFFICIAL);
 assert.strictEqual(lr.plays[0].location,"Gerri's");
 assert.strictEqual(I.buildPlays(I.parseCSV(I.toCSV(lr.plays)),MOM.OFFICIAL).plays[0].location,"Gerri's",'location survives export and import');
+// names that aren't exact: sure matches are used (and noted); unsure ones wait for the person to choose
+const all=MOM.OFFICIAL.concat(MOM.VALKYRIE);
+const ty=I.buildPlays([['Scenario','Played','Pass/Fail'],['Altered Fate','Y','Fail'],['Escape Innsmouth','Y','Pass'],['Mansion','Y','Pass'],['The Lighthouse Keeper','Y','Pass']],all);
+assert.deepStrictEqual(ty.plays.map(p=>p.scenarioId),['o-altered-fates','o-escape-from-innsmouth','','']);
+assert.ok(/Altered Fate”/.test(ty.plays[0].notes),'sheet name noted');
+assert.deepStrictEqual(Object.keys(ty.unmatched),['Mansion','The Lighthouse Keeper']);
+assert.ok(ty.unmatched['Mansion'].length>=2&&ty.unmatched['The Lighthouse Keeper'].length===0,'guesses for Mansion, none for a made-up name');
+assert.ok(ty.plays.every(p=>p.scenarioId===''||/^(o|v)-/.test(p.scenarioId)),'never a custom id');
+// every real name matches itself with certainty
+assert.ok(all.every(s=>MOM.sureMatch(MOM.matchScenarios(s.name,all))===s),'self-match');
 console.log('importer: all checks passed');
 r.plays.forEach(p=>console.log(p.result.padEnd(5),String(p.attempts),p.scenarioName.padEnd(34),p.party.map(x=>(x.player?x.player+':':'')+x.investigator).join(', ')));

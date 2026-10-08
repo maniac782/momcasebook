@@ -265,3 +265,7 @@ details.box>ul:last-child{margin-bottom:6px}
 
 /* plays inside collapsible boxes */
 details.pbox>.plays{margin:12px 16px 16px}
+
+/* import: names that need a scenario chosen */
+.unmatched{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:10px}
+.unmatched p{margin:0}

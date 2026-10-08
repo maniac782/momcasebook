@@ -32,7 +32,8 @@ service cloud.firestore {
       return d.keys().hasOnly(['scenarioId','scenarioName','scenarioType','date','result','attempts','party','solo','rules','notes',
                                'created','updated','importKey','seq','location'])
         && str(d.scenarioId, 100) && d.scenarioId.size() > 0 && str(d.scenarioName, 100)
-        && d.scenarioType in ['official','valkyrie','custom']
+        // only official and Valkyrie scenarios (ids o-… and v-…); custom scenarios can't be saved
+        && d.scenarioType in ['official','valkyrie'] && d.scenarioId.matches('(o|v)-[a-z0-9-]+')
         && str(d.date, 10) && (d.date == '' || d.date.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}'))
         && d.result in ['pass','fail','abandoned']
         && d.attempts is int && d.attempts >= 1 && d.attempts <= 99
@@ -42,7 +43,7 @@ service cloud.firestore {
     }
     function validScenario(d) {
       return d.keys().hasOnly(['name','type','author','link','created','by'])
-        && str(d.name, 80) && d.name.size() > 0 && d.type in ['official','valkyrie','custom']
+        && str(d.name, 80) && d.name.size() > 0 && d.type in ['official','valkyrie']
         && optStr(d, 'author', 60) && optStr(d, 'link', 300) && (!('link' in d) || d.link == '' || d.link.matches('https://.*'))
         && optNum(d, 'created') && optStr(d, 'by', 128);
     }
@@ -66,9 +67,9 @@ service cloud.firestore {
         allow read, delete: if own(uid);
         allow create, update: if own(uid) && validPlay(request.resource.data);
       }
+      // personal scenarios from older versions: readable and removable, never created any more
       match /scenarios/{sid} {
         allow read, delete: if own(uid);
-        allow create, update: if own(uid) && validScenario(request.resource.data);
       }
       // regular players (just names; they don't need accounts) and groups of them
       match /people/{pid} {

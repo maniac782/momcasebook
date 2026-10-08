@@ -54,11 +54,11 @@ function scsHtml(){
   var list=scs.slice().sort(function(a,b){return (a.type||'').localeCompare(b.type||'')||a.name.localeCompare(b.name);});
   return '<section class="sec"><h2>Add a shared scenario</h2><p class="note">Everyone can pick these when logging a play. The '+MOM.OFFICIAL.length+' official and '+MOM.VALKYRIE.length+' Valkyrie scenarios are already built in; use this for anything missing, such as a Valkyrie scenario newer than the built-in list (refresh that with <code>scripts/fetch-valkyrie.py</code>).</p>'+
     '<form class="stack" data-form="addsc"><div class="grid2"><label class="field"><span class="lbl">Name</span><input class="f" id="sc-name" maxlength="80" required></label>'+
-    '<label class="field"><span class="lbl">Kind</span><select class="f" id="sc-type"><option value="valkyrie">Valkyrie</option><option value="official">Official</option><option value="custom">Other</option></select></label>'+
+    '<label class="field"><span class="lbl">Kind</span><select class="f" id="sc-type"><option value="valkyrie">Valkyrie</option><option value="official">Official</option></select></label>'+
     '<label class="field"><span class="lbl">Author (optional)</span><input class="f" id="sc-author" maxlength="60"></label>'+
     '<label class="field"><span class="lbl">Link (optional)</span><input class="f" id="sc-link" type="url" maxlength="300" placeholder="https://"></label></div>'+
     '<div class="row"><button class="btn pri" type="submit">Add</button></div></form></section>'+
-    (list.length?'<ul class="adm">'+list.map(function(s){return '<li><div class="grow"><b>'+esc(s.name)+'</b><span class="note">'+esc(s.type==='valkyrie'?'Valkyrie':s.type==='official'?'Official':'Other')+(s.author?' · by '+esc(s.author):'')+(s.link&&/^https:\/\//.test(s.link)?' · <a href="'+esc(s.link)+'" target="_blank" rel="noopener">link</a>':'')+'</span></div>'+
+    (list.length?'<ul class="adm">'+list.map(function(s){return '<li><div class="grow"><b>'+esc(s.name)+'</b><span class="note">'+esc(s.type==='official'?'Official':'Valkyrie')+(s.author?' · by '+esc(s.author):'')+(s.link&&/^https:\/\//.test(s.link)?' · <a href="'+esc(s.link)+'" target="_blank" rel="noopener">link</a>':'')+'</span></div>'+
       '<button class="btn sm" data-a="delsc" data-id="'+esc(s.id)+'">Remove</button></li>';}).join('')+'</ul>':'<p class="note">No shared scenarios yet. The '+MOM.OFFICIAL.length+' official and '+MOM.VALKYRIE.length+' Valkyrie scenarios are built in.</p>');
 }
 function fbHtml(){
@@ -89,7 +89,7 @@ app.addEventListener('submit',function(e){
   var nm=document.getElementById('sc-name').value.trim().replace(/\s+/g,' '),type=document.getElementById('sc-type').value,link=document.getElementById('sc-link').value.trim();
   if(!nm)return;
   if(MOM.OFFICIAL.concat(MOM.VALKYRIE,scs).some(function(s){return MOM.key(s.name)===MOM.key(nm);})){toast('“'+nm+'” is already on the list.');return;}
-  var pre=type==='valkyrie'?'v-':type==='official'?'o-':'c-';
+  var pre=type==='official'?'o-':'v-';
   fb.db.doc('scenarios/'+pre+MOM.slug(nm)).set({name:nm,type:type,author:document.getElementById('sc-author').value.trim().slice(0,60),link:/^https:\/\//.test(link)?link:'',created:Date.now(),by:me.uid})
     .then(function(){toast('Added.');}).catch(function(err){console.warn(err);toast('Couldn’t add that.');});
 });

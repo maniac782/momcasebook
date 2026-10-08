@@ -105,9 +105,10 @@ function splitList(s){return String(s||'').split(/\s*(?:[,;\/&+]|\band\b)\s*/i).
 function hash(s){var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return (h>>>0).toString(36);}
 
 // rows: arrays of text with the headings first. known: scenarios already in the catalog ({id,name,type}).
-// Returns {plays, scenarios (new custom ones to add), skipped, notes (messages for the person), cols}.
+// Returns {plays, unmatched ({sheet name: [best-guess scenario ids]} for rows needing a choice), skipped, notes, cols}.
+// Plays with an unmatched name have scenarioId '' and sheetName set until the person picks.
 function buildPlays(rows,known){
-  var out={plays:[],scenarios:[],skipped:0,notes:[],cols:{}};
+  var out={plays:[],unmatched:{},skipped:0,notes:[],cols:{}};
   if(!rows||rows.length<2){out.notes.push('The sheet has no rows under its headings.');return out;}
   var hi=0;
   // headings may sit below a title row: take the first row that names a Scenario column
@@ -118,11 +119,14 @@ function buildPlays(rows,known){
   var get=function(row,k){return at[k]==null?'':String(row[at[k]]==null?'':row[at[k]]).trim();};
   rows.slice(hi+1).forEach(function(row,n){
     var name=get(row,'scenario');if(!name){return;}
-    var type=/valk/i.test(get(row,'type'))?'valkyrie':/custom|fan|home/i.test(get(row,'type'))?'custom':'';
-    var sc=byKey[MOM.key(name)];
-    if(!sc){sc={id:(type==='valkyrie'?'v-':'c-')+MOM.slug(name),name:name,type:type||'custom'};byKey[MOM.key(name)]=sc;out.scenarios.push(sc);}
     var played=get(row,'played');
     if(at.played!=null&&!/^\s*(y|yes|x|true|✓|✔)/i.test(played)){out.skipped++;return;}
+    // Only official and Valkyrie scenarios: the exact name, else a confident match (noted on the play), else the person
+    // picks one in the import preview (out.unmatched holds the best guesses for each name).
+    var sc=byKey[MOM.key(name)],matchedFrom='';
+    if(!sc){var cands=MOM.matchScenarios(name,known||[]),sure=MOM.sureMatch(cands);
+      if(sure){sc=sure;matchedFrom=name;}
+      else{if(!out.unmatched[name])out.unmatched[name]=cands.slice(0,6).map(function(c){return c.s.id;});sc={id:'',name:name,type:''};}}
     var resText=get(row,'result'),party=[],extra=[],unknown=[];
     // "Y (Dan only)": a solo play by that person
     var solo=played.match(/\(\s*([^)]+?)\s+only\s*\)/i);
@@ -137,10 +141,11 @@ function buildPlays(rows,known){
       for(var i=0;i<n2;i++)party.push({player:ppl[i]||'',investigator:inv[i]||''});
       if(/\?/.test(get(row,'investigators')))extra.push('Imported with an investigator left as “?”.');
     }
+    if(matchedFrom)extra.push('Scenario in the sheet: \u201c'+matchedFrom+'\u201d.');
     if(unknown.length)extra.push('Not an official investigator, left as unknown: '+unknown.join(', ')+'.');
     var attempts=parseAttempts(get(row,'attempts'))||parseAttempts(resText)||1;
     var result=parseResult(resText);
-    var p={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,date:normDate(get(row,'date')),result:result,attempts:attempts,
+    var p={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,sheetName:sc.id?'':name,date:normDate(get(row,'date')),result:result,attempts:attempts,
       party:party,solo:!!solo||party.length===1,rules:normRules(get(row,'rules')),location:get(row,'location').replace(/\s+/g,' ').slice(0,60),notes:get(row,'notes'),seq:n};
     if(resText&&!result)extra.push('Result in the sheet: '+resText);
     if(extra.length)p.notes=(p.notes?p.notes+'\n':'')+extra.join('\n');
