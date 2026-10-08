@@ -350,12 +350,13 @@ function investigatorProblems(){
 }
 function fixInvestigators(){
   var probs=investigatorProblems();if(!probs.length){toast('Every investigator is already an official one.');return;}
+  var nPlays=Object.keys(probs.reduce(function(o,x){Object.keys(x.ids).forEach(function(id){o[id]=1;});return o;},{})).length;
   var opts=function(sel){return MOM.INVESTIGATOR_GROUPS.map(function(g){return '<optgroup label="'+esc(g.name)+'">'+g.list.map(function(n){return '<option'+(n===sel?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</optgroup>';}).join('');};
   var d=openDialog('<form class="stack"><div class="dlg-head"><h2>Fix investigator names</h2><button class="x" type="button" data-close aria-label="Close">\u00d7</button></div>'+
     '<p class="note">Only official investigators can be saved. Each name below is matched to the one it most likely means; change any that are wrong.</p>'+
     '<ul class="fixes">'+probs.map(function(x,i){return '<li><div><b>'+esc(x.text)+'</b><span class="note"> '+(x.kind==='player'?'typed as a player':'as investigator')+' in '+x.n+' play'+(x.n===1?'':'s')+'</span></div>'+
       '<select class="f" name="fix'+i+'">'+(x.kind==='player'?'<option value="__keep">It\u2019s a person; leave it</option>':'<option value="">Unknown (leave blank)</option>')+opts(x.guess)+'</select></li>';}).join('')+'</ul>'+
-    '<p class="err" role="alert" hidden></p><div class="row end"><button class="btn" type="button" data-close>Cancel</button><button class="btn pri" type="submit">Fix '+probs.reduce(function(n,x){return n+x.n;},0)+' play'+(probs.length===1&&probs[0].n===1?'':'s')+'</button></div></form>','Fix investigator names');
+    '<p class="err" role="alert" hidden></p><div class="row end"><button class="btn" type="button" data-close>Cancel</button><button class="btn pri" type="submit">Fix '+nPlays+' play'+(nPlays===1?'':'s')+'</button></div></form>','Fix investigator names');
   var f=d.querySelector('form');
   f.addEventListener('submit',async function(e){
     e.preventDefault();var btn=f.querySelector('[type=submit]');btn.disabled=true;

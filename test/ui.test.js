@@ -54,6 +54,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   const fx=await p.$$eval('.fixes li',ls=>ls.map(l=>l.querySelector('b').textContent+'=>'+l.querySelector('select').value));
   assert.deepStrictEqual(fx,['Agatha Crane=>Agatha Crane','Ashcan Pete=>"Ashcan" Pete','Daisy Walker=>','Ursula=>Ursula Downs'],'suggestions '+fx.join(' | '));
   await p.screenshot({path:out+'/3c-fix.png'});
+  assert.strictEqual(await p.textContent('.dlg button[type=submit]'),'Fix 2 plays','button counts plays, not names');
   await p.click('.dlg button[type=submit]');await p.waitForSelector('.sec.notice',{state:'detached'});
   const after=await p.evaluate(()=>{const S=__fake.store,ks=Object.keys(S).filter(k=>k.includes('/plays/'));const g=n=>S[ks.find(k=>S[k].scenarioName===n)].party;return [g('The Jungle Awakens'),g('Gangs of Arkham')];});
   assert.deepStrictEqual(after[0].map(s=>s.investigator),['"Ashcan" Pete','Ursula Downs','Lily Chen']);
