@@ -1,0 +1,54 @@
+name: Refresh Valkyrie scenarios
+
+# Every Monday, pull the scenario list the Valkyrie app downloads (github.com/NPBruce/valkyrie-store) and, if anything
+# changed (new scenarios, or updated community numbers), bump the version, run the tests, commit and deploy.
+# Can also be run by hand from the Actions tab.
+on:
+  schedule:
+    - cron: '17 13 * * 1'   # Mondays 13:17 UTC (9:17 in New York during daylight time)
+  workflow_dispatch:
+
+permissions:
+  contents: write   # commit the refreshed list
+  actions: write    # start the deploy workflow afterwards
+
+concurrency: valkyrie-refresh
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch the Valkyrie catalogue
+        id: fetch
+        run: python3 scripts/fetch-valkyrie.py
+
+      - name: Bump the version, test and commit
+        if: steps.fetch.outputs.changed == 'true'
+        run: |
+          n=$(sed -n "s/.*APP_VERSION='v\([0-9]*\)'.*/\1/p" js/version.js)
+          next=$((n+1))
+          sed -i "s/APP_VERSION='v$n'/APP_VERSION='v$next'/" js/version.js
+          node test/importer.test.js
+          node test/house-rules.test.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/valkyrie.js js/version.js
+          added="${{ steps.fetch.outputs.added }}"
+          if [ "${added:-0}" != "0" ]; then msg="$added new"; else msg="updated community numbers"; fi
+          git commit -m "Weekly Valkyrie refresh: $msg, v$next"
+          git push
+
+      # A push made by this workflow doesn't start other workflows on its own, so start the deploy explicitly.
+      - name: Deploy
+        if: steps.fetch.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main

@@ -9,6 +9,9 @@ It's a free, unofficial fan project, not affiliated with or endorsed by Fantasy 
 - **Plays.** Log a play in a few taps: scenario, date, result (Passed, Failed or Abandoned), which attempt it was, each player and their investigator, rules, notes. Search and filter by result, person, investigator or scenario. Tap a play to edit or delete it.
 - **Scenarios.** All 23 official app scenarios grouped by the product that unlocks them, plus the 168 Valkyrie fan scenarios from the Valkyrie app's own catalogue (with author, difficulty and length), plus any you add yourself. Each shows Beaten / Not beaten yet / Not played; search by name or author. Tick the products you own in Settings, where the Valkyrie list can be switched off too (ones you've played still show).
 - **Official investigators only.** Each seat picks from the 40 Second Edition investigators (grouped by box) or Unknown; custom characters can't be saved, and the database rules enforce it. Imports map names like "Tommy" or "Ashcan Pete" to the official ones and leave anything else as Unknown (noted on the play). If older plays hold a non-official name, the Plays tab offers **Fix them**, with each name pre-matched to its official investigator.
+- **Suggest a scenario.** On the Scenarios tab: a random pick from official scenarios you own and/or Valkyrie ones, filtered by never played / not beaten yet, length (Valkyrie players' real average where known) and difficulty, with **Another one** and **Log a play**.
+- **Valkyrie community numbers.** Each Valkyrie scenario shows how the Valkyrie community does on it (pass rate, number of plays, typical length) next to your own record.
+- **Where you played.** An optional location on each play, remembered from last time, searchable and counted in Stats.
 - **Players.** The people you play with, without them needing accounts: just their names and an optional note, with plays, pass rate, last game and their usual investigator. Put them in **groups** (one person can be in several); when logging a play, pick a group to fill in the seats, then adjust for that scenario. Names already typed into plays can be saved with one tap, and renaming someone can update their past plays too.
 - **Stats.** Win rates per person, per investigator, per scenario, by party size, by rules variant and by scenario type.
 - **Import.** From a Google Sheet link (shared as "Anyone with the link") or a CSV file. Understands the original tracking sheet's columns (*Scenario, Played, Characters, Pass/Fail, Notes, Rules*) and this site's own export. Short investigator names are expanded ("Tommy" → Tommy Muldoon); "Passed on 3rd try" becomes a pass on attempt 3; rows marked N under Played are skipped; anything already imported is never added twice.
@@ -56,6 +59,7 @@ Plain HTML, CSS and JavaScript, no build step. Firebase compat SDK 10 (Authentic
 | `css/app.css` | All styles, light and dark themes |
 | `firestore.rules` | Who can read and write what |
 | `.github/workflows/deploy.yml` | Tests, then deploys Hosting and the rules on every push to `main` |
+| `.github/workflows/valkyrie-refresh.yml` | Every Monday: refreshes `js/valkyrie.js` from the Valkyrie catalogue, bumps the version, commits and deploys |
 | `test/` | `importer.test.js`, `house-rules.test.js` (version bump, no yellow), `ui.test.js` (headless end-to-end with a fake Firebase) |
 
 ### Data
@@ -68,7 +72,9 @@ Plain HTML, CSS and JavaScript, no build step. Firebase compat SDK 10 (Authentic
 - `scenarios/{id}`: shared scenarios from the admin page. `admins/{uid}`, `feedback`, `errors` as above.
 
 ### Valkyrie scenarios
-The list comes from [NPBruce/valkyrie-store](https://github.com/NPBruce/valkyrie-store) (`MoM/manifestDownload.ini`), the catalogue the Valkyrie app downloads. Only names, authors, difficulty and play length are kept; hidden entries are skipped. To refresh: `python3 scripts/fetch-valkyrie.py`, bump `js/version.js`, push. A scenario newer than the built-in list can also be added for everyone on the admin page.
+**Refreshed automatically every Monday** by `.github/workflows/valkyrie-refresh.yml`: it runs the script below, and if anything changed (new scenarios or updated community numbers) it bumps the version, runs the tests, commits and starts the deploy. It can also be run by hand from the Actions tab (*Refresh Valkyrie scenarios → Run workflow*). Scenarios that leave the catalogue are kept, marked retired, so old plays keep their details.
+
+The list comes from [NPBruce/valkyrie-store](https://github.com/NPBruce/valkyrie-store) (`MoM/manifestDownload.ini`), the catalogue the Valkyrie app downloads. Kept: names, authors, difficulty, play length, and the catalogue's community numbers (plays, pass rate, average length); hidden entries are skipped. To refresh: `python3 scripts/fetch-valkyrie.py`, bump `js/version.js`, push. A scenario newer than the built-in list can also be added for everyone on the admin page.
 
 ### Costs
 

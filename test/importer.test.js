@@ -42,5 +42,8 @@ const odd=I.buildPlays([['Scenario','Played','Characters','Pass/Fail'],['Rising 
 assert.deepStrictEqual(odd.plays[0].party.map(x=>x.investigator),['','Wendy Adams','']);
 assert.ok(/Daisy Walker, Bob the Builder/.test(odd.plays[0].notes),'unknown names kept in the notes');
 assert.ok(r.plays.every(p=>p.party.every(s=>s.investigator===''||MOM.isInvestigator(s.investigator))),'every imported investigator is official');
+const lr=I.buildPlays([['Scenario','Played','Pass/Fail','Where'],['Rising Tide','Y','Pass',"Gerri's"]],MOM.OFFICIAL);
+assert.strictEqual(lr.plays[0].location,"Gerri's");
+assert.strictEqual(I.buildPlays(I.parseCSV(I.toCSV(lr.plays)),MOM.OFFICIAL).plays[0].location,"Gerri's",'location survives export and import');
 console.log('importer: all checks passed');
 r.plays.forEach(p=>console.log(p.result.padEnd(5),String(p.attempts),p.scenarioName.padEnd(34),p.party.map(x=>(x.player?x.player+':':'')+x.investigator).join(', ')));

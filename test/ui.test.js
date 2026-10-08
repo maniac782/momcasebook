@@ -96,17 +96,39 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.fill('#sq','exotic');
   await p.waitForFunction(()=>document.querySelectorAll('.scs li').length===1);
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('text=by Bruce').count(),'author shown');
+  assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('.community:has-text("Valkyrie players")').count(),'community numbers shown');
   await p.screenshot({path:out+'/5b-scenarios-search.png'});
   await p.locator('.scs li',{hasText:'Exotic Material'}).locator('[data-a=log]').click();
   assert.strictEqual(await p.inputValue('select[name=sc]'),'v-exotic-material');
   await p.check('.seg.big .fail input',{force:true});await p.click('form[data-form=play] button[type=submit]');
   await p.waitForSelector('.pl-name >> text=Exotic Material');
   assert.ok(await p.locator('.play',{hasText:'Exotic Material'}).locator('text=Valkyrie').count(),'tagged Valkyrie');
+  await p.click('[data-t=scenarios]');await p.fill('#sq','exotic');await p.waitForFunction(()=>document.querySelectorAll('.scs li').length===1);
+  assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('.community:has-text("you: ")').count(),'your record next to the community');
+  await p.screenshot({path:out+'/5e-community.png'});
+  // suggest a scenario: Valkyrie, never played, up to 2 hours, easier
+  await p.click('[data-t=scenarios]');await p.fill('#sq','');await p.click('[data-a=suggest]');await p.waitForSelector('.pick h3');
+  await p.check('input[name=sg-from][value=valkyrie]',{force:true});await p.check('input[name=sg-status][value=new]',{force:true});
+  await p.selectOption('select[name=sg-len]','120');await p.selectOption('select[name=sg-diff]','easier');
+  const pickName=await p.textContent('.pick h3');
+  const ok=await p.evaluate(n=>{const s=MOM.VALKYRIE.find(x=>x.name===n);return !!s&&(s.avg||s.minutes[1])<=120&&s.difficulty<0.6&&!s.retired;},pickName);
+  assert.ok(ok,'suggestion matches the filters: '+pickName);
+  assert.ok(!/^Exotic Material$/.test(pickName),'never-played filter');
+  await p.screenshot({path:out+'/5d-suggest.png'});
+  await p.click('[data-sg=again]');await p.waitForSelector('.pick h3');
+  const pick2=await p.textContent('.pick h3');assert.notStrictEqual(pick2,pickName,'Another one gives a different scenario');
+  await p.click('[data-sg=log]');await p.waitForSelector('form[data-form=play]');
+  assert.strictEqual(await p.evaluate(()=>document.querySelector('select[name=sc]').selectedOptions[0].textContent.replace(' • new','')),pick2,'Log a play opens with the suggestion');
+  // location: saved, shown, remembered next time, counted in stats
+  await p.fill('input[name=loc]','Gerri\u2019s house');await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
+  await p.waitForSelector('.pl-loc:has-text("at Gerri")');
+  await p.click('.bar [data-a=log]');assert.strictEqual(await p.inputValue('input[name=loc]'),'Gerri\u2019s house','last place remembered');await p.keyboard.press('Escape');
+  await p.click('[data-t=stats]');assert.ok(await p.locator('h2:text-is("Where you played")').count(),'location stats');
   // switching the list off in Settings keeps played ones only
   await p.click('[data-t=settings]');await p.uncheck('#s-valk');await p.waitForTimeout(150);
   await p.click('[data-t=scenarios]');await p.fill('#sq','');await p.waitForTimeout(100);
   const vl=await p.locator('section',{has:p.locator('h2',{hasText:'Valkyrie scenarios'})}).locator('.scs li').count();
-  assert.strictEqual(vl,2,'only the 2 played Valkyrie scenarios remain when the list is off (got '+vl+')');
+  assert.strictEqual(vl,3,'only the 3 played Valkyrie scenarios remain when the list is off (got '+vl+')');
   await p.click('[data-t=settings]');await p.check('#s-valk');await p.waitForTimeout(150);
   await p.click('[data-t=stats]');await p.waitForSelector('text=Who you played with');
   await p.screenshot({path:out+'/6-stats.png',fullPage:true});

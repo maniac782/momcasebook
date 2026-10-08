@@ -232,3 +232,10 @@ select.grp{margin-bottom:8px}
 .fixes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
 .fixes li{display:flex;flex-direction:column;gap:6px}
 .seat select.f{min-width:0}
+
+/* suggester, community numbers, location */
+.pick{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;background:var(--surface)}
+.pick h3{font-size:26px;line-height:1.15}
+.sugg .seg{align-self:flex-start}
+.community b{color:var(--ink)}
+.pl-loc{color:var(--muted);font-size:14px}

@@ -62,12 +62,13 @@ var COLS={
   players:/player|played with|people|group/,
   investigators:/character|investigator/,
   rules:/rule|variant/,
+  location:/^(location|where|venue|place|played at)$/,
   notes:/note|comment/
 };
 function findCols(head){
   var at={},low=head.map(function(h){return String(h||'').trim().toLowerCase();});
   // played/date first so "Played on" goes to date and "Played" doesn't swallow "Played with"
-  ['played','scenario','date','type','attempts','party','investigators','players','result','rules','notes'].forEach(function(k){
+  ['played','scenario','date','location','type','attempts','party','investigators','players','result','rules','notes'].forEach(function(k){
     for(var i=0;i<low.length;i++){if(at[k]==null&&low[i]&&!Object.keys(at).some(function(o){return at[o]===i;})&&COLS[k].test(low[i])){at[k]=i;break;}}
   });
   return at;
@@ -140,7 +141,7 @@ function buildPlays(rows,known){
     var attempts=parseAttempts(get(row,'attempts'))||parseAttempts(resText)||1;
     var result=parseResult(resText);
     var p={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,date:normDate(get(row,'date')),result:result,attempts:attempts,
-      party:party,solo:!!solo||party.length===1,rules:normRules(get(row,'rules')),notes:get(row,'notes'),seq:n};
+      party:party,solo:!!solo||party.length===1,rules:normRules(get(row,'rules')),location:get(row,'location').replace(/\s+/g,' ').slice(0,60),notes:get(row,'notes'),seq:n};
     if(resText&&!result)extra.push('Result in the sheet: '+resText);
     if(extra.length)p.notes=(p.notes?p.notes+'\n':'')+extra.join('\n');
     p.importKey=hash([MOM.key(name),p.date,result,attempts,party.map(function(x){return x.player+':'+x.investigator;}).join(';'),p.rules,get(row,'notes')].join('|'));
@@ -153,9 +154,9 @@ function buildPlays(rows,known){
 // This site's export, readable by buildPlays above.
 function toCSV(plays){
   var q=function(v){v=String(v==null?'':v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
-  var lines=[['Date','Scenario','Type','Result','Attempts','Party','Rules','Notes'].join(',')];
+  var lines=[['Date','Scenario','Type','Result','Attempts','Party','Location','Rules','Notes'].join(',')];
   plays.forEach(function(p){lines.push([p.date,p.scenarioName,p.scenarioType,p.result,p.attempts||1,
-    (p.party||[]).map(function(x){return (x.player||'')+': '+(x.investigator||'');}).join('; '),p.rules,p.notes].map(q).join(','));});
+    (p.party||[]).map(function(x){return (x.player||'')+': '+(x.investigator||'');}).join('; '),p.location||'',p.rules,p.notes].map(q).join(','));});
   return lines.join('\r\n')+'\r\n';
 }
 
