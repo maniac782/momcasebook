@@ -261,7 +261,7 @@ details.box>ul:last-child{margin-bottom:6px}
 .btn.again:hover{background:var(--accent-soft)}
 
 /* inline icons inside buttons: sized to the text, coloured like it */
-.btn .ico{flex:none;width:1.05em;height:1.05em;margin-left:-2px}
+.btn .ico{flex:none;width:1.2em;height:1.2em;margin-left:-3px}
 
 /* plays inside collapsible boxes */
 details.pbox>.plays{margin:12px 16px 16px}

@@ -131,9 +131,9 @@ function scenStats(){
   var st={};plays.forEach(function(p){var s=st[p.scenarioId]||(st[p.scenarioId]={n:0,pass:0,last:''});s.n++;if(p.result==='pass')s.pass++;if((p.date||'')>s.last)s.last=p.date;});
   return st;
 }
-// A replay arrow for "Play again": an open circle turning back on itself with an arrowhead, drawn in the text colour
-// so it matches the label in both themes. Original drawing (CC0); decorative, as the button text says what it does.
-var ICON_AGAIN='<svg class="ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 3.8v5h5"/></svg>';
+// "Play again" icon: a forward (clockwise) arrow circling a play triangle, drawn in the text colour so it suits both
+// themes. Original drawing (CC0); decorative, as the button text says what it does.
+var ICON_AGAIN='<svg class="ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4.5v4h-4"/><path d="M9.6 8.2v7.6l6-3.8z" fill="currentColor" stroke-width="1.3"/></svg>';
 // ---------- the Scenarios tab: one list to browse, filter and sort ----------
 var sf={src:'all',diff:'any',len:'any',rate:'any',lang:'any',sort:'box'};
 // which of the Official / Valkyrie / Your own boxes are open; remembered on this device
