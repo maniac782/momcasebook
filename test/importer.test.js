@@ -36,5 +36,11 @@ assert.strictEqual(new Set(MOM.VALKYRIE.map(s=>MOM.key(s.name))).size,MOM.VALKYR
 assert.ok(!MOM.VALKYRIE.some(v=>MOM.OFFICIAL.some(o=>MOM.key(o.name)===MOM.key(v.name))),'no valkyrie name clashes with an official one');
 const vr=I.buildPlays([['Scenario','Played','Pass/Fail'],['exotic material','Y','Pass']],MOM.OFFICIAL.concat(MOM.VALKYRIE));
 assert.strictEqual(vr.plays[0].scenarioId,'v-exotic-material');assert.strictEqual(vr.plays[0].scenarioType,'valkyrie');assert.strictEqual(vr.scenarios.length,0);
+// only official investigators come out of an import; anything else becomes an unknown seat, with a note
+assert.deepStrictEqual(byName('The Jungle Awakens').party.map(x=>x.investigator),['Ursula Downs','"Ashcan" Pete','Lily Chen']);
+const odd=I.buildPlays([['Scenario','Played','Characters','Pass/Fail'],['Rising Tide','Y','Daisy Walker, Wendy, Bob the Builder','Pass']],MOM.OFFICIAL);
+assert.deepStrictEqual(odd.plays[0].party.map(x=>x.investigator),['','Wendy Adams','']);
+assert.ok(/Daisy Walker, Bob the Builder/.test(odd.plays[0].notes),'unknown names kept in the notes');
+assert.ok(r.plays.every(p=>p.party.every(s=>s.investigator===''||MOM.isInvestigator(s.investigator))),'every imported investigator is official');
 console.log('importer: all checks passed');
 r.plays.forEach(p=>console.log(p.result.padEnd(5),String(p.attempts),p.scenarioName.padEnd(34),p.party.map(x=>(x.player?x.player+':':'')+x.investigator).join(', ')));

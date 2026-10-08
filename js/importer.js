@@ -122,19 +122,21 @@ function buildPlays(rows,known){
     if(!sc){sc={id:(type==='valkyrie'?'v-':'c-')+MOM.slug(name),name:name,type:type||'custom'};byKey[MOM.key(name)]=sc;out.scenarios.push(sc);}
     var played=get(row,'played');
     if(at.played!=null&&!/^\s*(y|yes|x|true|✓|✔)/i.test(played)){out.skipped++;return;}
-    var resText=get(row,'result'),party=[],extra=[];
+    var resText=get(row,'result'),party=[],extra=[],unknown=[];
     // "Y (Dan only)": a solo play by that person
     var solo=played.match(/\(\s*([^)]+?)\s+only\s*\)/i);
     if(at.party!=null&&get(row,'party')){
-      get(row,'party').split(/\s*;\s*/).forEach(function(p){if(!p)return;var m=p.split(/\s*[:=]\s*/);party.push({player:m.length>1?m[0]:'',investigator:MOM.fullInvestigator(m.length>1?m.slice(1).join(':'):m[0])});});
+      get(row,'party').split(/\s*;\s*/).forEach(function(p){if(!p)return;var m=p.split(/\s*[:=]\s*/);var raw=m.length>1?m.slice(1).join(':'):m[0],inv=MOM.matchInvestigator(raw);if(raw.trim()&&!inv&&!/^\?+$/.test(raw.trim()))unknown.push(raw.trim());party.push({player:m.length>1?m[0]:'',investigator:inv});});
     }else{
-      var inv=splitList(get(row,'investigators')).map(MOM.fullInvestigator); // a "?" stays as an unknown seat, so the party size is right
+      // only official investigators; a "?" or anything unrecognised stays as an unknown seat, so the party size is right
+      var inv=splitList(get(row,'investigators')).map(function(x){var m=MOM.matchInvestigator(x);if(!m&&!/^\?+$/.test(x))unknown.push(x);return m;});
       var ppl=splitList(get(row,'players')).filter(function(x){return !/^\?+$/.test(x);});
       if(solo&&!ppl.length)ppl=[solo[1].trim()];
       var n2=Math.max(inv.length,ppl.length);
       for(var i=0;i<n2;i++)party.push({player:ppl[i]||'',investigator:inv[i]||''});
       if(/\?/.test(get(row,'investigators')))extra.push('Imported with an investigator left as “?”.');
     }
+    if(unknown.length)extra.push('Not an official investigator, left as unknown: '+unknown.join(', ')+'.');
     var attempts=parseAttempts(get(row,'attempts'))||parseAttempts(resText)||1;
     var result=parseResult(resText);
     var p={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,date:normDate(get(row,'date')),result:result,attempts:attempts,

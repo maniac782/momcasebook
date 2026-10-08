@@ -93,12 +93,13 @@ function playsHtml(){
   if(!loaded.plays)return '<p class="note pad">Loading your plays…</p>';
   if(!plays.length)return '<section class="sec empty"><h2>No plays yet</h2><p class="note">Log your first game with <b>+ Log a play</b>, or bring in the spreadsheet you’ve been keeping.</p>'+
     '<div class="row"><button class="btn pri" data-a="log">+ Log a play</button><button class="btn" data-a="goimport">Import a spreadsheet</button></div></section>';
-  var list=filtered(),people=names('player'),invs=names('investigator');
+  var list=filtered(),people=names('player'),invs=names('investigator'),probs=investigatorProblems();
   var scs={};plays.forEach(function(p){scs[p.scenarioId]=p.scenarioName;});
   var h='<div class="filters"><label class="field grow"><span class="lbl">Search</span><input class="f" id="q" type="search" value="'+esc(ui.q)+'" placeholder="Scenario, person, investigator or notes" autocomplete="off"></label>'+
     sel('fres','Result',ui.result,[['','Any'],['pass','Passed'],['fail','Failed'],['abandoned','Abandoned']])+
     sel('fpl','Player or investigator',ui.player,[['','Anyone']].concat(people.map(function(n){return [n,n];}),invs.length?[['-','────']]:[],invs.map(function(n){return [n,n];})))+
     sel('fsc','Scenario',ui.scen,[['','Any']].concat(Object.keys(scs).sort(function(a,b){return scs[a].localeCompare(scs[b]);}).map(function(k){return [k,scs[k]];})))+'</div>';
+  if(probs.length)h='<section class="sec notice" role="status"><div class="grow"><b>Some investigator names aren\u2019t official ones</b><span class="note">'+probs.length+' name'+(probs.length===1?'':'s')+' ('+probs.slice(0,3).map(function(x){return '\u201c'+esc(x.text)+'\u201d';}).join(', ')+(probs.length>3?'\u2026':'')+') need matching to an official investigator.</span></div><button class="btn pri" data-a="fixinv">Fix them</button></section>'+h;
   var any=ui.q||ui.result||ui.player||ui.scen;
   h+='<p class="note count">'+list.length+' of '+plays.length+' play'+(plays.length===1?'':'s')+(any?' · <a href="#" data-a="clearf">Clear filters</a>':'')+'</p>';
   if(!list.length)return h+'<p class="note">Nothing matches.</p>';
@@ -327,6 +328,52 @@ function openAccount(){
 }
 window.addEventListener('acct-account',openAccount);
 
+// ---------- investigators: official names only ----------
+// The dropdown on each seat: the 40 official investigators grouped by box, or Unknown.
+function invSelect(val){
+  var odd=val&&!MOM.isInvestigator(val);
+  return '<select class="f" name="pi" aria-label="Investigator"><option value="">Investigator\u2026</option>'+
+    MOM.INVESTIGATOR_GROUPS.map(function(g){return '<optgroup label="'+esc(g.name)+'">'+g.list.map(function(n){return '<option'+(n===val?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</optgroup>';}).join('')+
+    (odd?'<option value="" selected disabled>'+esc(val)+' (not official)</option>':'')+'</select>';
+}
+// Names in saved plays that aren't official investigators: in the investigator slot, or an investigator's full name typed
+// in the player slot. Grouped by the text, with the official name it most likely means.
+function investigatorProblems(){
+  var by={};
+  plays.forEach(function(p){(p.party||[]).forEach(function(s){
+    var inv=s.investigator||'',pl=(s.player||'').trim();
+    if(inv&&!MOM.isInvestigator(inv)){var k='i|'+inv;(by[k]=by[k]||{kind:'inv',text:inv,ids:{},guess:MOM.matchInvestigator(inv)}).ids[p.id]=1;}
+    else if(!inv&&pl){var m=MOM.INVESTIGATORS.filter(function(n){return lc(n.replace(/"/g,''))===lc(pl.replace(/"/g,''));})[0];
+      if(m){var k2='p|'+pl;(by[k2]=by[k2]||{kind:'player',text:pl,ids:{},guess:m}).ids[p.id]=1;}}
+  });});
+  return Object.keys(by).map(function(k){var x=by[k];x.n=Object.keys(x.ids).length;return x;}).sort(function(a,b){return a.text.localeCompare(b.text);});
+}
+function fixInvestigators(){
+  var probs=investigatorProblems();if(!probs.length){toast('Every investigator is already an official one.');return;}
+  var opts=function(sel){return MOM.INVESTIGATOR_GROUPS.map(function(g){return '<optgroup label="'+esc(g.name)+'">'+g.list.map(function(n){return '<option'+(n===sel?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</optgroup>';}).join('');};
+  var d=openDialog('<form class="stack"><div class="dlg-head"><h2>Fix investigator names</h2><button class="x" type="button" data-close aria-label="Close">\u00d7</button></div>'+
+    '<p class="note">Only official investigators can be saved. Each name below is matched to the one it most likely means; change any that are wrong.</p>'+
+    '<ul class="fixes">'+probs.map(function(x,i){return '<li><div><b>'+esc(x.text)+'</b><span class="note"> '+(x.kind==='player'?'typed as a player':'as investigator')+' in '+x.n+' play'+(x.n===1?'':'s')+'</span></div>'+
+      '<select class="f" name="fix'+i+'">'+(x.kind==='player'?'<option value="__keep">It\u2019s a person; leave it</option>':'<option value="">Unknown (leave blank)</option>')+opts(x.guess)+'</select></li>';}).join('')+'</ul>'+
+    '<p class="err" role="alert" hidden></p><div class="row end"><button class="btn" type="button" data-close>Cancel</button><button class="btn pri" type="submit">Fix '+probs.reduce(function(n,x){return n+x.n;},0)+' play'+(probs.length===1&&probs[0].n===1?'':'s')+'</button></div></form>','Fix investigator names');
+  var f=d.querySelector('form');
+  f.addEventListener('submit',async function(e){
+    e.preventDefault();var btn=f.querySelector('[type=submit]');btn.disabled=true;
+    var invMap={},plMap={};
+    probs.forEach(function(x,i){var v=f['fix'+i].value;if(x.kind==='inv')invMap[x.text]=v;else if(v!=='__keep')plMap[x.text]=v;});
+    var todo=plays.filter(function(p){return (p.party||[]).some(function(s){return (s.investigator&&invMap[s.investigator]!=null)||(!s.investigator&&plMap[(s.player||'').trim()]);});});
+    try{
+      for(var i=0;i<todo.length;i+=400){var b=fb.db.batch();todo.slice(i,i+400).forEach(function(p){
+        var party=p.party.map(function(s){
+          if(s.investigator&&invMap[s.investigator]!=null)return {player:s.player||'',investigator:invMap[s.investigator]};
+          var pl=(s.player||'').trim();if(!s.investigator&&plMap[pl])return {player:'',investigator:plMap[pl]};
+          return {player:s.player||'',investigator:s.investigator||''};});
+        b.update(fb.db.doc('users/'+me.uid+'/plays/'+p.id),{party:party,updated:Date.now()});});await b.commit();}
+      d.close();toast('Fixed '+todo.length+' play'+(todo.length===1?'':'s')+'.');
+    }catch(err){btn.disabled=false;var el=f.querySelector('.err');el.textContent=friendly(err);el.hidden=false;}
+  });
+}
+
 // ---------- the play form ----------
 function playForm(p,preset){
   var editing=!!(p&&p.id);p=p||{};
@@ -344,9 +391,8 @@ function playForm(p,preset){
   if(scId&&!scenById(scId)&&p.scenarioName)opts+='<option value="'+esc(scId)+'" selected>'+esc(p.scenarioName)+'</option>';
   opts+='<option value="__new">+ Add a scenario not listed…</option>';
   var seat=function(s){return '<div class="seat"><input class="f" name="pp" list="dl-pl" placeholder="Player" maxlength="40" value="'+esc(s.player||'')+'" aria-label="Player">'+
-    '<input class="f" name="pi" list="dl-inv" placeholder="Investigator" maxlength="40" value="'+esc(s.investigator||'')+'" aria-label="Investigator">'+
+    invSelect(s.investigator||'')+
     '<button class="x" type="button" data-f="rmseat" aria-label="Remove this seat">×</button></div>';};
-  var invs=MOM.INVESTIGATORS.slice();names('investigator').forEach(function(n){if(invs.indexOf(n)<0)invs.push(n);});invs.sort();
   var ppl=people.map(function(x){return x.name;}).sort();names('player').forEach(function(n){if(!personByName(n)&&ppl.indexOf(n)<0)ppl.push(n);});if(myName()&&!ppl.some(function(n){return lc(n)===lc(myName());}))ppl.unshift(myName());
   var res=p.result||'';
   return '<form class="stack" data-form="play"'+(editing?' data-id="'+esc(p.id)+'"':'')+'>'+
@@ -363,7 +409,6 @@ function playForm(p,preset){
     '<label class="field"><span class="lbl">Rules</span><input class="f" name="rules" list="dl-rules" maxlength="80" value="'+esc(editing?p.rules||'':(last&&last.rules)||'Normal rules')+'"></label>'+
     '<label class="field"><span class="lbl">Notes</span><textarea class="f" name="notes" rows="4" maxlength="4000" placeholder="What happened? Anything to remember next time?">'+esc(p.notes||'')+'</textarea></label>'+
     '<datalist id="dl-pl">'+ppl.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
-    '<datalist id="dl-inv">'+invs.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
     '<datalist id="dl-rules">'+rulesUsed().map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
     '<p class="err" role="alert" hidden></p>'+
     '<div class="row end">'+(editing?'<button class="btn dng ghost" type="button" data-f="del" style="margin-right:auto">Delete</button>':'')+'<button class="btn" type="button" data-close>Cancel</button><button class="btn pri" type="submit">'+(editing?'Save':'Log play')+'</button></div></form>';
@@ -409,7 +454,7 @@ async function savePlay(f){
   if(!sc){var old=plays.filter(function(p){return p.id===f.dataset.id;})[0];if(old&&old.scenarioId===scId)sc={id:scId,name:old.scenarioName,type:old.scenarioType};}
   if(!sc)throw {msg:'Choose a scenario.'};
   var res=(f.querySelector('input[name=res]:checked')||{}).value;if(!res)throw {msg:'Choose Passed, Failed or Abandoned.'};
-  var party=[];f.querySelectorAll('.seat').forEach(function(s){var a=s.querySelector('[name=pp]').value.trim(),b=s.querySelector('[name=pi]').value.trim();if(a||b)party.push({player:a.slice(0,40),investigator:MOM.fullInvestigator(b).slice(0,40)});});
+  var party=[];f.querySelectorAll('.seat').forEach(function(s){var a=s.querySelector('[name=pp]').value.trim(),b=s.querySelector('[name=pi]').value;if(b&&!MOM.isInvestigator(b))b='';if(a||b)party.push({player:a.slice(0,40),investigator:b});});
   var att=Math.max(1,Math.min(99,parseInt(f.att.value,10)||1));
   var doc={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type||'official',date:f.date.value||'',result:res,attempts:att,
     party:party,solo:party.length===1,rules:f.rules.value.trim().slice(0,80),notes:f.notes.value.trim().slice(0,4000),updated:Date.now()};
@@ -472,6 +517,7 @@ app.addEventListener('click',function(e){
   else if(k==='clearf'){ui.q=ui.result=ui.player=ui.scen='';render();}
   else if(k==='scplays'){ui.q=ui.result=ui.player='';ui.scen=a.dataset.id;ui.tab='plays';render();window.scrollTo(0,0);}
   else if(k==='addsc')addScenarioDialog();
+  else if(k==='fixinv')fixInvestigators();
   else if(k==='newperson')personDialog();
   else if(k==='newgroup')groupDialog();
   else if(k==='editperson'){var ps=people.filter(function(x){return x.id===a.dataset.id;})[0];if(ps)personDialog(ps);}

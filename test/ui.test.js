@@ -42,6 +42,26 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.waitForSelector('.plays');
   assert.strictEqual(await p.locator('.plays > li').count(),10,'10 plays imported');
   await p.screenshot({path:out+'/3-plays.png',fullPage:true});
+  assert.strictEqual(await p.locator('.sec.notice').count(),0,'a fresh import has only official investigators');
+  assert.ok(await p.locator('.pl-party:has-text("\\"Ashcan\\" Pete")').count(),'imported Ashcan Pete is the official name');
+  // plays saved before this version could hold anything: simulate that, then fix it from the banner
+  await p.evaluate(async()=>{const S=__fake.store,db=firebase.app().firestore(),ks=Object.keys(S).filter(k=>k.includes('/plays/'));
+    const jung=ks.find(k=>S[k].scenarioName==='The Jungle Awakens');await db.doc(jung).update({party:[{player:'',investigator:'Ashcan Pete'},{player:'',investigator:'Ursula'},{player:'',investigator:'Lily Chen'}]});
+    const gang=ks.find(k=>S[k].scenarioName==='Gangs of Arkham');await db.doc(gang).update({party:[{player:'Agatha Crane',investigator:''},{player:'Dan',investigator:'Daisy Walker'},{player:'',investigator:'Tommy Muldoon'}]});});
+  await p.waitForSelector('.sec.notice');
+  await p.screenshot({path:out+'/3b-notice.png'});
+  await p.click('[data-a=fixinv]');await p.waitForSelector('.fixes');
+  const fx=await p.$$eval('.fixes li',ls=>ls.map(l=>l.querySelector('b').textContent+'=>'+l.querySelector('select').value));
+  assert.deepStrictEqual(fx,['Agatha Crane=>Agatha Crane','Ashcan Pete=>"Ashcan" Pete','Daisy Walker=>','Ursula=>Ursula Downs'],'suggestions '+fx.join(' | '));
+  await p.screenshot({path:out+'/3c-fix.png'});
+  await p.click('.dlg button[type=submit]');await p.waitForSelector('.sec.notice',{state:'detached'});
+  const after=await p.evaluate(()=>{const S=__fake.store,ks=Object.keys(S).filter(k=>k.includes('/plays/'));const g=n=>S[ks.find(k=>S[k].scenarioName===n)].party;return [g('The Jungle Awakens'),g('Gangs of Arkham')];});
+  assert.deepStrictEqual(after[0].map(s=>s.investigator),['"Ashcan" Pete','Ursula Downs','Lily Chen']);
+  assert.deepStrictEqual(after[1],[{player:'',investigator:'Agatha Crane'},{player:'Dan',investigator:''},{player:'',investigator:'Tommy Muldoon'}]);
+  // and the form only offers official investigators
+  await p.click('.bar [data-a=log]');
+  const optCount=await p.locator('.seat [name=pi] option:not([value=""])').count();assert.strictEqual(optCount,40,'40 official investigators in the dropdown');
+  await p.keyboard.press('Escape');
   // importing again adds nothing
   await p.click('[data-t=settings]');await p.click('text=Load sheet');await p.waitForSelector('text=10 already in your log');
   assert.ok(await p.locator('text=0 plays to import').count(),'re-import finds nothing new');
@@ -50,8 +70,8 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('.bar [data-a=log]');
   await p.selectOption('select[name=sc]','__new');await p.fill('input[name=nsname]','The Lighthouse Keeper');
   await p.check('.seg.big .pass input',{force:true});
-  await p.fill('.seat [name=pp]','Dan');await p.fill('.seat [name=pi]','Agatha');
-  await p.click('[data-f=addseat]');await p.locator('.seat').nth(1).locator('[name=pp]').fill('Gerri');await p.locator('.seat').nth(1).locator('[name=pi]').fill('Ursula Downs');
+  await p.fill('.seat [name=pp]','Dan');await p.selectOption('.seat [name=pi]','Agatha Crane');
+  await p.click('[data-f=addseat]');await p.locator('.seat').nth(1).locator('[name=pp]').fill('Gerri');await p.locator('.seat').nth(1).locator('[name=pi]').selectOption('Ursula Downs');
   await p.fill('textarea[name=notes]','Escaped the lighthouse with one turn to spare.');
   await p.screenshot({path:out+'/4-log-form.png',fullPage:true});
   await p.click('form[data-form=play] button[type=submit]');
@@ -100,7 +120,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.locator('li',{has:p.locator('b:text("Thursday group")')}).locator('.chip').count(),4,'group has 4 members');
   await p.screenshot({path:out+'/5c-players.png',fullPage:true});
   await p.click('.bar [data-a=log]');await p.selectOption('select[name=sc]','o-rising-tide');
-  await p.locator('.seat [name=pi]').first().fill('Agatha Crane');  // Dan's seat keeps this investigator after picking the group
+  await p.locator('.seat [name=pi]').first().selectOption('Agatha Crane');  // Dan's seat keeps this investigator after picking the group
   const gid=await p.locator('select[name=grp] option').nth(1).getAttribute('value');await p.selectOption('select[name=grp]',gid);
   assert.strictEqual(await p.locator('.seat').count(),4,'seats filled from group');
   assert.strictEqual(await p.locator('.seat').filter({has:p.locator('[name=pp][value="Dan"]')}).count()>=0,true);

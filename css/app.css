@@ -225,3 +225,10 @@ code{font-family:var(--mono);font-size:.88em;background:var(--surface2);padding:
 .pnote{font-style:italic}
 select.grp{margin-bottom:8px}
 @media (max-width:440px){.tab{padding:10px 8px;font-size:14px}}
+
+/* investigator clean-up */
+.sec.notice{flex-direction:row;align-items:center;flex-wrap:wrap;gap:12px;border-color:var(--accent);background:var(--accent-soft)}
+.sec.notice .grow{display:flex;flex-direction:column;gap:2px;min-width:220px}
+.fixes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.fixes li{display:flex;flex-direction:column;gap:6px}
+.seat select.f{min-width:0}

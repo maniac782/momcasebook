@@ -23,6 +23,13 @@ for(const f of files(root).filter(f=>/\.(css|html|js|webmanifest)$/.test(f))){
 if(bad.length){console.error('Yellow found in the UI (not allowed):\n  '+bad.join('\n  '));process.exit(1);}
 console.log('no yellow: ok');
 
+// 3. Only official investigators: the list in firestore.rules must match js/catalog.js exactly.
+global.window=globalThis;require('../js/valkyrie.js');require('../js/catalog.js');
+const rulesInv=[...(fs.readFileSync(path.join(root,'firestore.rules'),'utf8').match(/function investigators\(\) \{\s*return \[([^\]]*)\]/)||[,''])[1].matchAll(/'([^']*)'/g)].map(m=>m[1]);
+const catInv=globalThis.MOM.INVESTIGATORS;
+if(JSON.stringify(rulesInv)!==JSON.stringify(catInv)){console.error('firestore.rules investigators() differs from js/catalog.js:\n  rules: '+rulesInv.length+'\n  catalog: '+catInv.length);process.exit(1);}
+console.log('investigators: '+catInv.length+' official, rules match');
+
 const before=process.env.BEFORE;
 if(before&&!/^0+$/.test(before)){
   let changed;try{changed=execSync('git diff --name-only '+before+' HEAD',{cwd:root}).toString().trim().split('\n').filter(Boolean);}

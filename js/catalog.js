@@ -1,7 +1,7 @@
 /* Mansions of Madness Casebook — the built-in list of official scenarios (Mansions of Madness Second Edition app),
    grouped by the product that unlocks them, plus investigator names offered as suggestions.
    Valkyrie scenarios are built in from js/valkyrie.js; others can be added on the admin page (shared) or by each player (just theirs).
-   Investigators are suggestions only; any name can be typed. */
+   Investigators are a fixed official list: plays can only name these. */
 (function(root){
 'use strict';
 var PRODUCTS=[
@@ -15,12 +15,21 @@ var PRODUCTS=[
   {id:'hj',name:'Horrific Journeys',scenarios:['Murder on the Stargazer Majestic','10:50 to Arkham','Hidden Depths']},
   {id:'pots',name:'Path of the Serpent',scenarios:['The Jungle Awakens','Into the Dark','Lost Temple of Yig']}
 ];
-var INVESTIGATORS=['Agatha Crane','Agnes Baker','Akachi Onyele','Amanda Sharpe','Ashcan Pete','Bob Jenkins','Carolyn Fern',
-  'Carson Sinclair','Charlie Kane','Daisy Walker','Daniela Reyes','Darrell Simmons','Dexter Drake','Diana Stanley','Father Mateo',
-  'Finn Edwards','Gloria Goldberg','Harvey Walters','Jenny Barnes','Jim Culver','Joe Diamond','Kate Winthrop','Leo Anderson',
-  'Lily Chen','Mandy Thompson','Marie Lambeau','Michael McGlen','Minh Thi Phan','Monterey Jack','Norman Withers','Preston Fairmont',
-  'Rita Young','Silas Marsh','Sister Mary','Tommy Muldoon','Trish Scarborough','Ursula Downs','Vincent Lee','William Yorick',
-  'Wilson Richards'];
+// The official Second Edition investigators, by the product that includes them. Only these can be saved on a play
+// (firestore.rules holds the same list; test/house-rules.test.js checks they match). Sources: Valkyrie's content data
+// (github.com/NPBruce/valkyrie, content/MoM/*/investigators.ini) for the core game and expansions; the publisher's
+// product lists for the two figure collections.
+var INVESTIGATOR_GROUPS=[
+  {product:'core',name:'Core game',list:['Agatha Crane','Carson Sinclair','Father Mateo','Minh Thi Phan','Preston Fairmont','Rita Young','Wendy Adams','William Yorick']},
+  {product:'rn',name:'Recurring Nightmares',list:['"Ashcan" Pete','Gloria Goldberg','Harvey Walters','Jenny Barnes','Joe Diamond','Kate Winthrop','Michael McGlen','Sister Mary']},
+  {product:'sm',name:'Suppressed Memories',list:['Amanda Sharpe','Bob Jenkins','Carolyn Fern','Darrell Simmons','Dexter Drake','Mandy Thompson','Monterey Jack','Vincent Lee']},
+  {product:'btt',name:'Beyond the Threshold',list:['Akachi Onyele','Wilson Richards']},
+  {product:'soa',name:'Streets of Arkham',list:['Diana Stanley','Finn Edwards','Marie Lambeau','Tommy Muldoon']},
+  {product:'sot',name:'Sanctum of Twilight',list:['Charlie Kane','Lily Chen']},
+  {product:'hj',name:'Horrific Journeys',list:['Agnes Baker','Jim Culver','Silas Marsh','Trish Scarborough']},
+  {product:'pots',name:'Path of the Serpent',list:['Daniela Reyes','Leo Anderson','Norman Withers','Ursula Downs']}
+];
+var INVESTIGATORS=[];INVESTIGATOR_GROUPS.forEach(function(g){INVESTIGATORS=INVESTIGATORS.concat(g.list);});
 
 // Stable id from a scenario name: lowercase letters and digits joined by dashes ("10:50 to Arkham" -> "10-50-to-arkham").
 function slug(s){return String(s||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60)||'scenario';}
@@ -30,21 +39,23 @@ function key(s){return slug(s).replace(/^the-/,'').replace(/-/g,'');}
 var OFFICIAL=[];
 PRODUCTS.forEach(function(p){p.scenarios.forEach(function(n){OFFICIAL.push({id:'o-'+slug(n),name:n,type:'official',product:p.id});});});
 
-// Turn a short or misspelt investigator name into the full one when it's unambiguous ("Tommy" -> "Tommy Muldoon",
-// "Pete" -> "Ashcan Pete"). Anything else is kept as typed.
-function fullInvestigator(s){
-  s=String(s||'').trim();if(!s||/^\?+$/.test(s))return '';
-  var low=s.toLowerCase().replace(/[“”"]/g,'');
-  var exact=INVESTIGATORS.filter(function(n){return n.toLowerCase()===low;});if(exact.length)return exact[0];
-  var hits=INVESTIGATORS.filter(function(n){return n.toLowerCase().split(/\s+/).indexOf(low)>=0;});
-  if(hits.length===1)return hits[0];
-  var pre=INVESTIGATORS.filter(function(n){return n.toLowerCase().indexOf(low)===0;});
-  return pre.length===1?pre[0]:s;
+// Compare names ignoring case, quotes and punctuation ("Ashcan Pete" = '"Ashcan" Pete').
+function invKey(s){return String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();}
+function isInvestigator(s){return INVESTIGATORS.indexOf(s)>=0;}
+// The official investigator a typed name means, or '' if it isn't one (or is ambiguous).
+// "Tommy" -> Tommy Muldoon, "Pete"/"Ashcan Pete" -> "Ashcan" Pete, "Mateo" -> Father Mateo, "?" -> ''.
+function matchInvestigator(s){
+  var k=invKey(s);if(!k)return '';
+  var exact=INVESTIGATORS.filter(function(n){return invKey(n)===k;});if(exact.length)return exact[0];
+  var word=INVESTIGATORS.filter(function(n){return invKey(n).split(' ').indexOf(k)>=0;});if(word.length===1)return word[0];
+  var pre=INVESTIGATORS.filter(function(n){return invKey(n).indexOf(k)===0;});if(pre.length===1)return pre[0];
+  var all=INVESTIGATORS.filter(function(n){var w=invKey(n).split(' ');return k.split(' ').every(function(t){return w.indexOf(t)>=0;});});
+  return all.length===1?all[0]:'';
 }
 
 // Valkyrie scenarios come from js/valkyrie.js (generated by scripts/fetch-valkyrie.py), loaded before this file.
 var VALKYRIE=(root.MOM_VALKYRIE||[]).map(function(s){var o={};for(var k in s)if(k!=='key')o[k]=s[k];o.builtin=true;return o;});
 
-root.MOM={PRODUCTS:PRODUCTS,OFFICIAL:OFFICIAL,VALKYRIE:VALKYRIE,INVESTIGATORS:INVESTIGATORS,slug:slug,key:key,fullInvestigator:fullInvestigator,
+root.MOM={PRODUCTS:PRODUCTS,OFFICIAL:OFFICIAL,VALKYRIE:VALKYRIE,INVESTIGATORS:INVESTIGATORS,INVESTIGATOR_GROUPS:INVESTIGATOR_GROUPS,isInvestigator:isInvestigator,matchInvestigator:matchInvestigator,slug:slug,key:key,
   productName:function(id){var p=PRODUCTS.filter(function(x){return x.id===id;})[0];return p?p.name:'';}};
 })(typeof window!=='undefined'?window:globalThis);

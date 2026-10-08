@@ -12,6 +12,22 @@ service cloud.firestore {
     function optStr(d, k, n) { return !(k in d) || str(d[k], n); }
     function optNum(d, k) { return !(k in d) || num(d[k]); }
 
+    // The official investigators (same list as js/catalog.js; test/house-rules.test.js checks they match).
+    function investigators() {
+      return ['Agatha Crane', 'Carson Sinclair', 'Father Mateo', 'Minh Thi Phan', 'Preston Fairmont', 'Rita Young', 'Wendy Adams', 'William Yorick', '"Ashcan" Pete', 'Gloria Goldberg', 'Harvey Walters', 'Jenny Barnes', 'Joe Diamond', 'Kate Winthrop', 'Michael McGlen', 'Sister Mary', 'Amanda Sharpe', 'Bob Jenkins', 'Carolyn Fern', 'Darrell Simmons', 'Dexter Drake', 'Mandy Thompson', 'Monterey Jack', 'Vincent Lee', 'Akachi Onyele', 'Wilson Richards', 'Diana Stanley', 'Finn Edwards', 'Marie Lambeau', 'Tommy Muldoon', 'Charlie Kane', 'Lily Chen', 'Agnes Baker', 'Jim Culver', 'Silas Marsh', 'Trish Scarborough', 'Daniela Reyes', 'Leo Anderson', 'Norman Withers', 'Ursula Downs'];
+    }
+    // A seat: a player's name (free text) and an official investigator, or '' when not recorded.
+    function seatOk(s) {
+      return s is map && s.keys().hasOnly(['player','investigator']) && str(s.player, 40)
+        && s.investigator is string && (s.investigator == '' || s.investigator in investigators());
+    }
+    function partyOk(p) {
+      return p is list && p.size() <= 8
+        && (p.size() < 1 || seatOk(p[0])) && (p.size() < 2 || seatOk(p[1])) && (p.size() < 3 || seatOk(p[2]))
+        && (p.size() < 4 || seatOk(p[3])) && (p.size() < 5 || seatOk(p[4])) && (p.size() < 6 || seatOk(p[5]))
+        && (p.size() < 7 || seatOk(p[6])) && (p.size() < 8 || seatOk(p[7]));
+    }
+
     function validPlay(d) {
       return d.keys().hasOnly(['scenarioId','scenarioName','scenarioType','date','result','attempts','party','solo','rules','notes',
                                'created','updated','importKey','seq'])
@@ -20,7 +36,7 @@ service cloud.firestore {
         && str(d.date, 10) && (d.date == '' || d.date.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}'))
         && d.result in ['pass','fail','abandoned']
         && d.attempts is int && d.attempts >= 1 && d.attempts <= 99
-        && d.party is list && d.party.size() <= 8
+        && partyOk(d.party)
         && d.solo is bool && str(d.rules, 80) && str(d.notes, 4000)
         && optNum(d, 'created') && optNum(d, 'updated') && optStr(d, 'importKey', 40) && (!('seq' in d) || d.seq is int);
     }
