@@ -3,7 +3,7 @@
 const {chromium}=require(process.env.PW||'playwright');const fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.join(__dirname,'..'),out=process.argv[2]||path.join(root,'test','shots');fs.mkdirSync(out,{recursive:true});
 const types={html:'text/html',js:'text/javascript',css:'text/css',png:'image/png',webmanifest:'application/manifest+json'};
-require('../js/catalog.js');require('../js/importer.js');
+require('../js/valkyrie.js');require('../js/catalog.js');require('../js/importer.js');
 const rows=globalThis.MOMImport.parseCSV(fs.readFileSync(path.join(__dirname,'fixture-sheet.csv'),'utf8'));
 const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(1).map(r=>({c:r.map(v=>v===''?null:{v})}))}};
 (async()=>{
@@ -70,6 +70,23 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('[data-t=scenarios]');await p.waitForSelector('text=Official scenarios beaten');
   assert.ok(await p.locator('.scs >> text=The Lighthouse Keeper').count());
   await p.screenshot({path:out+'/5-scenarios.png',fullPage:true});
+  // the built-in Valkyrie list: search it and log a play straight from it
+  assert.ok(await p.locator('h2',{hasText:'Valkyrie scenarios'}).count(),'valkyrie group shown');
+  await p.fill('#sq','exotic');
+  await p.waitForFunction(()=>document.querySelectorAll('.scs li').length===1);
+  assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('text=by Bruce').count(),'author shown');
+  await p.screenshot({path:out+'/5b-scenarios-search.png'});
+  await p.locator('.scs li',{hasText:'Exotic Material'}).locator('[data-a=log]').click();
+  assert.strictEqual(await p.inputValue('select[name=sc]'),'v-exotic-material');
+  await p.check('.seg.big .fail input',{force:true});await p.click('form[data-form=play] button[type=submit]');
+  await p.waitForSelector('.pl-name >> text=Exotic Material');
+  assert.ok(await p.locator('.play',{hasText:'Exotic Material'}).locator('text=Valkyrie').count(),'tagged Valkyrie');
+  // switching the list off in Settings keeps played ones only
+  await p.click('[data-t=settings]');await p.uncheck('#s-valk');await p.waitForTimeout(150);
+  await p.click('[data-t=scenarios]');await p.fill('#sq','');await p.waitForTimeout(100);
+  const vl=await p.locator('section',{has:p.locator('h2',{hasText:'Valkyrie scenarios'})}).locator('.scs li').count();
+  assert.strictEqual(vl,2,'only the 2 played Valkyrie scenarios remain when the list is off (got '+vl+')');
+  await p.click('[data-t=settings]');await p.check('#s-valk');await p.waitForTimeout(150);
   await p.click('[data-t=stats]');await p.waitForSelector('text=Who you played with');
   await p.screenshot({path:out+'/6-stats.png',fullPage:true});
   // CSV export round trip

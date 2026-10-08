@@ -4,7 +4,7 @@
    Your plays themselves are kept offline by Firestore, not here. */
 importScripts('/js/version.js');
 var CACHE='mom-'+self.APP_VERSION;
-var SHELL=['/','/index.html','/admin.html','/privacy.html','/css/app.css','/js/version.js','/js/config.js','/js/catalog.js',
+var SHELL=['/','/index.html','/admin.html','/privacy.html','/css/app.css','/js/version.js','/js/config.js','/js/valkyrie.js','/js/catalog.js',
   '/js/importer.js','/js/shared.js','/js/app.js','/js/admin.js','/manifest.webmanifest','/icon-192.png','/icon-512.png','/favicon-32.png'];
 self.addEventListener('install',function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(SHELL.map(function(u){return new Request(u,{cache:'reload'});}));}).catch(function(){}).then(function(){return self.skipWaiting();}));

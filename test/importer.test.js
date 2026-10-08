@@ -1,6 +1,6 @@
 // Run: node test/importer.test.js
 const assert=require('assert'),fs=require('fs'),path=require('path');
-require('../js/catalog.js');require('../js/importer.js');
+require('../js/valkyrie.js');require('../js/catalog.js');require('../js/importer.js');
 const {MOM,MOMImport:I}=globalThis;
 const rows=I.parseCSV(fs.readFileSync(path.join(__dirname,'fixture-sheet.csv'),'utf8'));
 const r=I.buildPlays(rows,MOM.OFFICIAL);
@@ -29,5 +29,12 @@ assert.deepStrictEqual(g,[['Scenario','Played'],['Rising Tide','Y']]);
 assert.strictEqual(I.sheetId('https://docs.google.com/spreadsheets/d/1qOKghDouy9aFbaexfI-Gt7JSxcLmRkDMsIfRJfvD5Ug/edit?usp=sharing'),'1qOKghDouy9aFbaexfI-Gt7JSxcLmRkDMsIfRJfvD5Ug');
 assert.strictEqual(I.normDate('3/14/2025'),'2025-03-14');assert.strictEqual(I.normDate('Date(2025,2,14)'),'2025-03-14');
 assert.strictEqual(MOM.OFFICIAL.length,23);
+// Valkyrie: the built-in list is there, and a sheet row naming one matches it
+assert.ok(MOM.VALKYRIE.length>100,'valkyrie list loaded');
+assert.ok(MOM.VALKYRIE.every(s=>/^v-[a-z0-9-]+$/.test(s.id)&&s.type==='valkyrie'&&s.name),'valkyrie entries well formed');
+assert.strictEqual(new Set(MOM.VALKYRIE.map(s=>MOM.key(s.name))).size,MOM.VALKYRIE.length,'no duplicate valkyrie names');
+assert.ok(!MOM.VALKYRIE.some(v=>MOM.OFFICIAL.some(o=>MOM.key(o.name)===MOM.key(v.name))),'no valkyrie name clashes with an official one');
+const vr=I.buildPlays([['Scenario','Played','Pass/Fail'],['exotic material','Y','Pass']],MOM.OFFICIAL.concat(MOM.VALKYRIE));
+assert.strictEqual(vr.plays[0].scenarioId,'v-exotic-material');assert.strictEqual(vr.plays[0].scenarioType,'valkyrie');assert.strictEqual(vr.scenarios.length,0);
 console.log('importer: all checks passed');
 r.plays.forEach(p=>console.log(p.result.padEnd(5),String(p.attempts),p.scenarioName.padEnd(34),p.party.map(x=>(x.player?x.player+':':'')+x.investigator).join(', ')));

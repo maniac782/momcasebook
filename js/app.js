@@ -27,12 +27,13 @@ function partyText(p){
   return seats.map(function(s){return s.player&&s.investigator?esc(s.player)+' <span class="as">as</span> '+esc(s.investigator):esc(s.player||s.investigator||'Unknown');}).join(', ');
 }
 // Every scenario this person can pick: official, shared by the admin, and their own. Later entries with the same name are skipped.
-function allScenarios(){
+function showValk(){return !(profile&&profile.hideValkyrie);}
+function allScenarios(all){
   var seen={},out=[];
-  MOM.OFFICIAL.concat(shared,mine).forEach(function(s){var k=MOM.key(s.name);if(!seen[k]){seen[k]=1;out.push(s);}});
+  MOM.OFFICIAL.concat(all||showValk()?MOM.VALKYRIE:[],shared,mine).forEach(function(s){var k=MOM.key(s.name);if(!seen[k]){seen[k]=1;out.push(s);}});
   return out;
 }
-function scenById(id){return allScenarios().filter(function(s){return s.id===id;})[0];}
+function scenById(id){return allScenarios(true).filter(function(s){return s.id===id;})[0];}
 function owned(){return profile&&Array.isArray(profile.owned)?profile.owned:MOM.PRODUCTS.map(function(p){return p.id;});}
 function myName(){return (profile&&profile.name)||(me&&me.displayName)||'';}
 function names(field){
@@ -120,12 +121,12 @@ function scenStats(){
   return st;
 }
 function scenariosHtml(){
-  var st=scenStats(),own=owned(),f=ui.sfilter;
-  var keep=function(s){var x=st[s.id];return f==='all'||(f==='new'&&!x)||(f==='unbeaten'&&(!x||!x.pass))||(f==='beaten'&&x&&x.pass);};
+  var st=scenStats(),own=owned(),f=ui.sfilter,sq=(ui.sq||'').trim().toLowerCase();
+  var keep=function(s){var x=st[s.id];if(sq&&((s.name||'')+' '+(s.author||'')).toLowerCase().indexOf(sq)<0)return false;return f==='all'||(f==='new'&&!x)||(f==='unbeaten'&&(!x||!x.pass))||(f==='beaten'&&x&&x.pass);};
   var row=function(s){
     var x=st[s.id],chip=!x?'<span class="chip muted">Not played</span>':x.pass?'<span class="chip ok">Beaten</span>':'<span class="chip bad">Not beaten yet</span>';
     var meta=x?x.n+' play'+(x.n===1?'':'s')+(x.n?' · '+x.pass+' passed':'')+(x.last?' · last '+esc(fmtDate(x.last)):''):'';
-    var by=s.author?'by '+esc(s.author):'';
+    var by=[s.author?'by '+esc(s.author):'',s.difficulty?diffName(s.difficulty):'',s.minutes?esc(lenText(s.minutes)):''].filter(Boolean).join(' \u00b7 ');
     return '<li class="sc"><div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(s.name)+'</a>':esc(s.name))+'</b>'+chip+'</span>'+
       ((meta||by||s.link)?'<span class="note">'+[meta,by].filter(Boolean).join(' · ')+(s.link&&/^https:\/\//.test(s.link)?(meta||by?' · ':'')+'<a href="'+esc(s.link)+'" target="_blank" rel="noopener">Details</a>':'')+'</span>':'')+'</div>'+
       '<div class="row tight"><button class="btn sm" data-a="log" data-sc="'+esc(s.id)+'">Log a play</button>'+
@@ -133,19 +134,23 @@ function scenariosHtml(){
   };
   var group=function(title,list,sub){list=list.filter(keep);if(!list.length)return '';return '<section class="sec"><div class="sec-head"><h2>'+esc(title)+'</h2>'+(sub?'<span class="note">'+sub+'</span>':'')+'</div><ul class="scs">'+list.map(row).join('')+'</ul></section>';};
   var offIds=MOM.OFFICIAL.filter(function(s){return own.indexOf(s.product)>=0;}),beat=offIds.filter(function(s){return st[s.id]&&st[s.id].pass;}).length;
-  var h='<div class="filters"><div class="seg" role="radiogroup" aria-label="Show">'+[['all','All'],['new','Not played'],['unbeaten','Not beaten'],['beaten','Beaten']].map(function(o){return '<label><input type="radio" name="sf" value="'+o[0]+'"'+(f===o[0]?' checked':'')+'><span>'+o[1]+'</span></label>';}).join('')+'</div>'+
+  var h='<div class="filters"><label class="field grow"><span class="lbl">Search</span><input class="f" id="sq" type="search" value="'+esc(ui.sq||'')+'" placeholder="Scenario or author" autocomplete="off"></label><div class="seg" role="radiogroup" aria-label="Show">'+[['all','All'],['new','Not played'],['unbeaten','Not beaten'],['beaten','Beaten']].map(function(o){return '<label><input type="radio" name="sf" value="'+o[0]+'"'+(f===o[0]?' checked':'')+'><span>'+o[1]+'</span></label>';}).join('')+'</div>'+
     '<button class="btn" data-a="addsc">Add a scenario</button></div>'+
     '<p class="note count">Official scenarios beaten: <b>'+beat+' of '+offIds.length+'</b>'+(own.length<MOM.PRODUCTS.length?' (from the products you own; change them in Settings)':'')+'</p>';
   MOM.PRODUCTS.forEach(function(p){if(own.indexOf(p.id)>=0)h+=group(p.name,MOM.OFFICIAL.filter(function(s){return s.product===p.id;}));});
   var shownKeys={};MOM.OFFICIAL.forEach(function(s){shownKeys[MOM.key(s.name)]=1;});
   var extra=function(list){return list.filter(function(s){var k=MOM.key(s.name);if(shownKeys[k])return false;shownKeys[k]=1;return true;});};
-  var valk=extra(shared.concat(mine).filter(function(s){return s.type==='valkyrie';}));
+  // the built-in Valkyrie list (or, with it switched off in Settings, just the ones you've played), then shared and your own
+  var valk=extra((showValk()?MOM.VALKYRIE:MOM.VALKYRIE.filter(function(s){return st[s.id];})).concat(shared,mine).filter(function(s){return s.type==='valkyrie';}));
   var own2=extra(shared.concat(mine).filter(function(s){return s.type!=='valkyrie';}));
-  h+=group('Valkyrie scenarios',valk,'Fan-made, played in the Valkyrie app')+group('Other scenarios',own2,'Homemade and anything else');
-  if(!valk.length&&f==='all')h+='<p class="note">Played a Valkyrie scenario? Use <b>Add a scenario</b>, or pick “Add a scenario not listed” when logging the play.</p>';
+  h+=group('Valkyrie scenarios',valk,showValk()?MOM.VALKYRIE.length+' from the Valkyrie app\u2019s catalogue':'The full list is switched off in Settings')+group('Other scenarios',own2,'Homemade and anything else');
+  if(sq&&h.indexOf('<ul class="scs">')<0)h+='<p class="note">No scenarios match \u201c'+esc(ui.sq)+'\u201d. Use <b>Add a scenario</b> if it\u2019s missing.</p>';
   return h;
 }
 
+// Valkyrie's difficulty slider runs from 0 to 1.
+function diffName(d){return d<0.35?'Easy':d<0.6?'Medium':d<0.8?'Hard':'Very hard';}
+function lenText(m){var f=function(x){return x<120?x+' min':(Math.round(x/30)/2)+' h';};return m[0]&&m[0]!==m[1]?f(m[0]).replace(/ (min|h)$/,(m[1]<120)===(m[0]<120)?'':' $1')+'\u2013'+f(m[1]):f(m[1]);}
 function statsHtml(){
   if(!plays.length)return '<section class="sec empty"><h2>No stats yet</h2><p class="note">They fill in as you log plays.</p></section>';
   var n=plays.length,pass=plays.filter(function(p){return p.result==='pass';}).length,fail=plays.filter(function(p){return p.result==='fail';}).length;
@@ -175,8 +180,9 @@ function settingsHtml(){
   var own=owned(),imp=ui.imp;
   var h='<section class="sec"><h2>You</h2><form class="row bottom" data-form="name"><label class="field grow"><span class="lbl">Your name</span><input class="f" id="s-name" maxlength="40" value="'+esc(myName())+'"></label><button class="btn" type="submit">Save</button></form>'+
     '<p class="note">It’s filled in as the first player when you log a play. Signed in as '+esc(me.email||me.displayName||'')+'.</p></section>';
-  h+='<section class="sec"><h2>Products you own</h2><p class="note">The Scenarios tab lists the official scenarios from these.</p><div class="checks">'+
-    MOM.PRODUCTS.map(function(p){return '<label class="check"><input type="checkbox" data-own="'+p.id+'"'+(own.indexOf(p.id)>=0?' checked':'')+'><span>'+esc(p.name)+' <small class="note">'+p.scenarios.length+'</small></span></label>';}).join('')+'</div></section>';
+  h+='<section class="sec"><h2>Products you own</h2><p class="note">The Scenarios tab and the scenario picker list what\u2019s ticked here.</p><div class="checks">'+
+    MOM.PRODUCTS.map(function(p){return '<label class="check"><input type="checkbox" data-own="'+p.id+'"'+(own.indexOf(p.id)>=0?' checked':'')+'><span>'+esc(p.name)+' <small class="note">'+p.scenarios.length+'</small></span></label>';}).join('')+
+    '<label class="check"><input type="checkbox" id="s-valk"'+(showValk()?' checked':'')+'><span>Valkyrie fan scenarios <small class="note">'+MOM.VALKYRIE.length+'</small></span></label></div></section>';
   h+='<section class="sec" id="import"><h2>Import from a spreadsheet</h2>'+
     '<p class="note">Paste the link to a Google Sheet shared as “Anyone with the link”, or choose a CSV file. The first row needs headings such as <i>Scenario, Played, Characters, Pass/Fail, Notes, Rules</i> (also <i>Date</i> and <i>Players</i> if you have them). Rows marked N under Played are skipped, and rows you’ve already imported are never added twice.</p>'+
     '<form class="row bottom" data-form="sheet"><label class="field grow"><span class="lbl">Google Sheets link</span><input class="f" id="imp-link" type="url" placeholder="https://docs.google.com/spreadsheets/d/…" value="'+esc(ui.impLink||'')+'"></label><button class="btn" type="submit"'+(ui.busy?' disabled':'')+'>Load sheet</button></form>'+
@@ -297,7 +303,7 @@ function addScenarioDialog(){
 
 // ---------- import ----------
 function prepareImport(rows){
-  var r=I.buildPlays(rows,allScenarios());
+  var r=I.buildPlays(rows,allScenarios(true));
   var have={};plays.forEach(function(p){if(p.importKey)have[p.importKey]=1;});
   r.plays.forEach(function(p){p.dupe=!!have[p.importKey];});
   ui.imp=r;
@@ -347,11 +353,12 @@ app.addEventListener('click',function(e){
   else if(k==='google')googleSignIn();
   else if(k==='mode'){ui.authMode=a.dataset.m;ui.authErr='';render();}
 });
-app.addEventListener('input',function(e){if(e.target.id==='q'){ui.q=e.target.value;render();}else if(e.target.id==='imp-link')ui.impLink=e.target.value;});
+app.addEventListener('input',function(e){if(e.target.id==='q'){ui.q=e.target.value;render();}else if(e.target.id==='sq'){ui.sq=e.target.value;render();}else if(e.target.id==='imp-link')ui.impLink=e.target.value;});
 app.addEventListener('change',function(e){
   var t=e.target;
   if(t.id==='fres'){ui.result=t.value;render();}else if(t.id==='fpl'){ui.player=t.value;render();}else if(t.id==='fsc'){ui.scen=t.value;render();}
   else if(t.name==='sf'){ui.sfilter=t.value;render();}
+  else if(t.id==='s-valk')fb.db.doc('users/'+me.uid).set({hideValkyrie:!t.checked},{merge:true}).catch(function(err){toast(friendly(err));});
   else if(t.dataset.own){var o=owned().slice(),i=o.indexOf(t.dataset.own);if(t.checked&&i<0)o.push(t.dataset.own);if(!t.checked&&i>=0)o.splice(i,1);
     fb.db.doc('users/'+me.uid).set({owned:o},{merge:true}).catch(function(err){toast(friendly(err));});}
   else if(t.id==='imp-file'&&t.files[0]){var r=new FileReader();r.onload=function(){prepareImport(I.parseCSV(r.result));render();};r.readAsText(t.files[0]);t.value='';}

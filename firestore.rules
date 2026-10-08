@@ -35,9 +35,10 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if own(uid) || isAdmin();
       allow create, update: if own(uid)
-        && request.resource.data.keys().hasOnly(['name','email','created','lastSeen','playCount','owned'])
+        && request.resource.data.keys().hasOnly(['name','email','created','lastSeen','playCount','owned','hideValkyrie'])
         && optStr(request.resource.data, 'name', 40) && optStr(request.resource.data, 'email', 200)
         && optNum(request.resource.data, 'created') && optNum(request.resource.data, 'lastSeen') && optNum(request.resource.data, 'playCount')
+        && (!('hideValkyrie' in request.resource.data) || request.resource.data.hideValkyrie is bool)
         && (!('owned' in request.resource.data) || (request.resource.data.owned is list && request.resource.data.owned.size() <= 40));
       allow delete: if own(uid);
 
