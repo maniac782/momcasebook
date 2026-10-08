@@ -10,6 +10,7 @@ It's a free, unofficial fan project, not affiliated with or endorsed by Fantasy 
 - **Scenarios.** All 23 official app scenarios grouped by the product that unlocks them, plus the 168 Valkyrie fan scenarios from the Valkyrie app's own catalogue (with author, difficulty and length), plus any you add yourself. Each shows Beaten / Not beaten yet / Not played; search by name or author. Tick the products you own in Settings, where the Valkyrie list can be switched off too (ones you've played still show).
 - **Stats.** Win rates per person, per investigator, per scenario, by party size, by rules variant and by scenario type.
 - **Import.** From a Google Sheet link (shared as "Anyone with the link") or a CSV file. Understands the original tracking sheet's columns (*Scenario, Played, Characters, Pass/Fail, Notes, Rules*) and this site's own export. Short investigator names are expanded ("Tommy" → Tommy Muldoon); "Passed on 3rd try" becomes a pass on attempt 3; rows marked N under Played are skipped; anything already imported is never added twice.
+- **Profile pictures.** Choose a picture in Settings, position and zoom it in a circle; it shows on your account button (and in the admin page's account list). Google sign-ins use their Google photo until they pick one.
 - **Export.** CSV (opens in any spreadsheet, and imports back) and a JSON backup. Delete all plays, or the whole account, from Settings.
 - **Installable and offline.** Install app is in the account menu. Plays logged offline sync when you're back online.
 
@@ -57,7 +58,7 @@ Plain HTML, CSS and JavaScript, no build step. Firebase compat SDK 10 (Authentic
 
 ### Data
 
-- `users/{uid}`: name, email, created, lastSeen, playCount, owned products, hideValkyrie.
+- `users/{uid}`: name, email, created, lastSeen, playCount, owned products, hideValkyrie, photo (a 256×256 JPEG as a data URL, under 60,000 characters; kept in Firestore because Cloud Storage now needs the paid Blaze plan).
 - `users/{uid}/plays/{id}`: scenarioId, scenarioName, scenarioType (official / valkyrie / custom), date, result, attempts, party `[{player, investigator}]`, solo, rules, notes, created, updated (and importKey, seq for imported rows).
 - `users/{uid}/scenarios/{id}`: each person's own Valkyrie and homemade scenarios.
 - `scenarios/{id}`: shared scenarios from the admin page. `admins/{uid}`, `feedback`, `errors` as above.

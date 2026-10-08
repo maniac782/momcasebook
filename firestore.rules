@@ -35,9 +35,13 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if own(uid) || isAdmin();
       allow create, update: if own(uid)
-        && request.resource.data.keys().hasOnly(['name','email','created','lastSeen','playCount','owned','hideValkyrie'])
+        && request.resource.data.keys().hasOnly(['name','email','created','lastSeen','playCount','owned','hideValkyrie','photo'])
         && optStr(request.resource.data, 'name', 40) && optStr(request.resource.data, 'email', 200)
         && optNum(request.resource.data, 'created') && optNum(request.resource.data, 'lastSeen') && optNum(request.resource.data, 'playCount')
+        // profile picture: a small JPEG written by js/shared.js (choosePicture), or '' for none
+        && (!('photo' in request.resource.data) || request.resource.data.photo == ''
+            || (request.resource.data.photo is string && request.resource.data.photo.size() <= 60000
+                && request.resource.data.photo.matches('data:image/jpeg;base64,[A-Za-z0-9+/=]+')))
         && (!('hideValkyrie' in request.resource.data) || request.resource.data.hideValkyrie is bool)
         && (!('owned' in request.resource.data) || (request.resource.data.owned is list && request.resource.data.owned.size() <= 40));
       allow delete: if own(uid);

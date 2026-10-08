@@ -89,6 +89,28 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('[data-t=settings]');await p.check('#s-valk');await p.waitForTimeout(150);
   await p.click('[data-t=stats]');await p.waitForSelector('text=Who you played with');
   await p.screenshot({path:out+'/6-stats.png',fullPage:true});
+  // profile picture: choose, crop, save; it shows on the account button; then remove it
+  const png=Buffer.from((await p.evaluate(()=>{const c=document.createElement('canvas');c.width=640;c.height=420;const g=c.getContext('2d');
+    const gr=g.createLinearGradient(0,0,640,420);gr.addColorStop(0,'#1d5c63');gr.addColorStop(1,'#a3322a');g.fillStyle=gr;g.fillRect(0,0,640,420);
+    g.fillStyle='#e4e7ea';g.beginPath();g.arc(320,210,120,0,7);g.fill();return c.toDataURL('image/png');})).split(',')[1],'base64');
+  await p.click('[data-t=settings]');
+  const [chooser]=await Promise.all([p.waitForEvent('filechooser'),p.click('[data-a=pic]')]);
+  await chooser.setFiles({name:'me.png',mimeType:'image/png',buffer:png});
+  await p.waitForSelector('.crop canvas');
+  await p.locator('.zoom').fill('1.6');
+  const box=await p.locator('.crop canvas').boundingBox();
+  await p.mouse.move(box.x+130,box.y+130);await p.mouse.down();await p.mouse.move(box.x+90,box.y+120);await p.mouse.up();
+  await p.screenshot({path:out+'/6b-crop.png'});
+  await p.click('[data-use]');
+  await p.waitForSelector('.acct-btn .avatar img');
+  const photo=await p.evaluate(()=>__fake.store['users/u-danexamplecom'].photo);
+  assert.ok(/^data:image\/jpeg;base64,/.test(photo)&&photo.length<=60000,'photo saved as small jpeg ('+photo.length+')');
+  assert.ok(await p.locator('.picrow .avatar img').count(),'shown in settings');
+  await p.screenshot({path:out+'/6c-settings-pic.png'});
+  await p.click('.acct-btn');await p.screenshot({path:out+'/6d-menu.png'});await p.keyboard.press('Escape');
+  await p.click('[data-a=picrm]');await p.waitForSelector('.acct-btn .avatar:not(:has(img))');
+  await Promise.all([p.waitForEvent('filechooser').then(c=>c.setFiles({name:'me.png',mimeType:'image/png',buffer:png})),p.click('[data-a=pic]')]);
+  await p.waitForSelector('.crop canvas');await p.click('[data-use]');await p.waitForSelector('.acct-btn .avatar img');
   // CSV export round trip
   await p.click('[data-t=settings]');
   const [dl]=await Promise.all([p.waitForEvent('download'),p.click('[data-a=csv]')]);
@@ -96,11 +118,14 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   // admin page
   const uid=await p.evaluate(()=>firebase.app().auth().currentUser.uid);
   await p.evaluate(u=>__fake.makeAdmin(u),uid);
+  const savedPic=await p.evaluate(()=>__fake.store['users/u-danexamplecom'].photo);
   await p.goto('https://momcasebook.test/admin.html');
+  await p.evaluate(x=>{window.__pic=x;},savedPic);
   // fresh page = fresh fake store: sign in again and seed
   await p.waitForSelector('text=Sign in on the');
-  await p.evaluate(()=>{__fake.makeAdmin('u-danexamplecom');__fake.store['users/u-danexamplecom']={name:'Dan',email:'dan@example.com',playCount:11,created:Date.now(),lastSeen:Date.now()};firebase.app().auth().signInWithEmailAndPassword('dan@example.com');});
+  await p.evaluate(()=>{__fake.makeAdmin('u-danexamplecom');__fake.store['users/u-danexamplecom']={name:'Dan',email:'dan@example.com',playCount:11,created:Date.now(),lastSeen:Date.now(),photo:window.__pic};firebase.app().auth().signInWithEmailAndPassword('dan@example.com');});
   await p.waitForSelector('text=Plays logged');
+  assert.ok(await p.locator('.adm .avatar img').count(),'admin list shows the picture');
   await p.click('[data-t=scs]');await p.fill('#sc-name','Night of the Hunter');await p.click('form[data-form=addsc] button');await p.waitForSelector('.adm >> text=Night of the Hunter');
   await p.screenshot({path:out+'/7-admin.png',fullPage:true});
   await c.close();

@@ -54,7 +54,7 @@ function friendly(e){
 function render(){
   if(!authKnown){app.innerHTML='<p class="note pad">Loading…</p>';return;}
   if(!me){acctEl.innerHTML='';app.innerHTML=signInHtml();return;}
-  acctEl.innerHTML=accountMenu(me,{admin:isAdmin});
+  acctEl.innerHTML=accountMenu(me,{admin:isAdmin,photo:profile&&profile.photo,name:myName()});
   var keep=document.activeElement&&/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)&&document.activeElement.id;
   var tabs=[['plays','Plays'],['scenarios','Scenarios'],['stats','Stats'],['settings','Settings']];
   var h='<div class="bar"><div class="tabs" role="tablist">'+tabs.map(function(t){return '<button class="tab" role="tab" aria-selected="'+(ui.tab===t[0])+'" data-a="tab" data-t="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div>'+
@@ -178,7 +178,12 @@ function statsHtml(){
 
 function settingsHtml(){
   var own=owned(),imp=ui.imp;
-  var h='<section class="sec"><h2>You</h2><form class="row bottom" data-form="name"><label class="field grow"><span class="lbl">Your name</span><input class="f" id="s-name" maxlength="40" value="'+esc(myName())+'"></label><button class="btn" type="submit">Save</button></form>'+
+  var hasPic=profile&&picOk(profile.photo);
+  var h='<section class="sec"><h2>You</h2>'+
+    '<div class="row picrow">'+avatarHtml(myName()||me.email,profile&&profile.photo,googlePic(me),'xl')+'<div class="stack tight"><span class="lbl">Profile picture</span><div class="row">'+
+    '<button class="btn" data-a="pic">'+(hasPic||googlePic(me)?'Change picture':'Choose a picture')+'</button>'+(hasPic?'<button class="btn ghost" data-a="picrm">Remove</button>':'')+'</div>'+
+    '<span class="note">'+(hasPic?'Shown on your account button.':googlePic(me)?'Using your Google photo until you choose one.':'Until you choose one, your initial is shown.')+'</span></div></div>'+
+    '<form class="row bottom" data-form="name"><label class="field grow"><span class="lbl">Your name</span><input class="f" id="s-name" maxlength="40" value="'+esc(myName())+'"></label><button class="btn" type="submit">Save</button></form>'+
     '<p class="note">It’s filled in as the first player when you log a play. Signed in as '+esc(me.email||me.displayName||'')+'.</p></section>';
   h+='<section class="sec"><h2>Products you own</h2><p class="note">The Scenarios tab and the scenario picker list what\u2019s ticked here.</p><div class="checks">'+
     MOM.PRODUCTS.map(function(p){return '<label class="check"><input type="checkbox" data-own="'+p.id+'"'+(own.indexOf(p.id)>=0?' checked':'')+'><span>'+esc(p.name)+' <small class="note">'+p.scenarios.length+'</small></span></label>';}).join('')+
@@ -351,6 +356,8 @@ app.addEventListener('click',function(e){
     location.href='./';
   });
   else if(k==='google')googleSignIn();
+  else if(k==='pic')choosePicture().then(function(data){if(!data)return;return fb.db.doc('users/'+me.uid).set({photo:data},{merge:true}).then(function(){toast('Picture saved.');});}).catch(function(err){toast(friendly(err));});
+  else if(k==='picrm')fb.db.doc('users/'+me.uid).set({photo:''},{merge:true}).then(function(){toast('Picture removed.');}).catch(function(err){toast(friendly(err));});
   else if(k==='mode'){ui.authMode=a.dataset.m;ui.authErr='';render();}
 });
 app.addEventListener('input',function(e){if(e.target.id==='q'){ui.q=e.target.value;render();}else if(e.target.id==='sq'){ui.sq=e.target.value;render();}else if(e.target.id==='imp-link')ui.impLink=e.target.value;});

@@ -27,7 +27,8 @@ async function load(quiet){
 function render(){
   if(!authKnown){app.innerHTML='<p class="note pad">Loading…</p>';return;}
   if(!me){acctEl.innerHTML='';app.innerHTML='<section class="sec"><h2>Admin</h2><p class="note">Sign in on the <a href="./">main page</a> first.</p></section>';return;}
-  acctEl.innerHTML=accountMenu(me,{home:true});
+  var mine=users.filter(function(u){return u.id===me.uid;})[0]||{};
+  acctEl.innerHTML=accountMenu(me,{home:true,photo:mine.photo,name:mine.name});
   if(state==='denied'){app.innerHTML='<section class="sec"><h2>Admin</h2><p class="note">This page is only for the site’s admins.</p><div class="row"><a class="btn" href="./">Back to the site</a></div></section>';return;}
   if(state==='loading'){app.innerHTML='<p class="note pad">Loading…</p>';return;}
   if(state==='error'){app.innerHTML='<section class="sec"><h2>Couldn’t load</h2><p class="note">The database refused the request. If you just made yourself an admin, wait a minute for the rules and try again.</p><div class="row"><button class="btn" data-a="reload">Try again</button></div></section>';return;}
@@ -45,7 +46,7 @@ function usersHtml(){
   var q=ui.q.trim().toLowerCase();
   var list=users.filter(function(u){return !q||((u.name||'')+' '+(u.email||'')).toLowerCase().indexOf(q)>=0;}).sort(function(a,b){return (b.lastSeen||0)-(a.lastSeen||0);});
   return '<label class="field"><span class="lbl">Search</span><input class="f" id="q" value="'+esc(ui.q)+'" placeholder="Name or email" autocomplete="off"></label>'+
-    (list.length?'<ul class="adm">'+list.map(function(u){return '<li><div class="grow"><span class="row tight"><b>'+esc(u.name||'(no name)')+'</b>'+(u.id===me.uid?'<span class="chip ok">You</span>':'')+'</span>'+
+    (list.length?'<ul class="adm">'+list.map(function(u){return '<li>'+avatarHtml(u.name||u.email,u.photo,'')+'<div class="grow"><span class="row tight"><b>'+esc(u.name||'(no name)')+'</b>'+(u.id===me.uid?'<span class="chip ok">You</span>':'')+'</span>'+
       '<span class="note">'+esc(u.email||'')+' · '+(u.playCount||0)+' play'+(u.playCount===1?'':'s')+' · joined '+esc(ago(u.created))+' · last seen '+esc(ago(u.lastSeen))+'</span></div></li>';}).join('')+'</ul>':'<p class="note">No accounts match.</p>')+
     '<p class="note">To remove an account, delete it in Firebase › Authentication and its document under <code>users</code> in Firestore. People can also delete their own from Settings.</p>';
 }

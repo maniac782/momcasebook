@@ -1,5 +1,5 @@
-/* Mansions of Madness Casebook — helpers used on every page: escaping, the toast, the account menu,
-   Install app and Send feedback. */
+/* Mansions of Madness Casebook — helpers used on every page: escaping, the toast, dialogs, profile pictures,
+   the account menu, Install app and Send feedback. */
 (function(){
 'use strict';
 var esc=window.esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
@@ -58,14 +58,78 @@ window.openFeedback=function(){
   });
 };
 
+/* ---------- Profile pictures ----------
+   A picture is a small square JPEG (256x256) kept as text in the person's users/{uid} document as `photo`
+   (Firebase's file storage would need the paid plan). Google sign-ins show their Google photo until they choose one. */
+var PIC_MAX=60000; // characters; firestore.rules allows up to this
+window.picOk=function(p){return typeof p==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p)&&p.length<=PIC_MAX;};
+window.googlePic=function(u){return u&&u.photoURL&&/^https:\/\/lh\d\.googleusercontent\.com\//.test(u.photoURL)?u.photoURL:'';};
+// An avatar circle: the chosen picture, else the Google photo, else the first letter of the name.
+window.avatarHtml=function(name,photo,gphoto,cls){
+  var src=picOk(photo)?photo:gphoto||'';
+  var ini=esc(((String(name||'').trim()[0])||'?').toUpperCase());
+  return '<span class="avatar'+(cls?' '+cls:'')+'" aria-hidden="true">'+(src?'<img src="'+esc(src)+'" alt="" referrerpolicy="no-referrer">':ini)+'</span>';
+};
+/* Choose a picture: opens the file picker, then a crop dialog (drag to move, slider to zoom).
+   Resolves with the JPEG data URL, or null if cancelled. */
+window.choosePicture=function(){
+  return new Promise(function(resolve){
+    var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.style.display='none';document.body.appendChild(inp);
+    var settled=false,done=function(v){if(settled)return;settled=true;inp.remove();resolve(v);};
+    inp.addEventListener('change',function(){
+      var f=inp.files&&inp.files[0];if(!f){done(null);return;}
+      if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|gif|webp|heic|heif)$/i.test(f.name)){toast('That isn\u2019t a picture file.');done(null);return;}
+      var url=URL.createObjectURL(f),img=new Image();
+      img.onload=function(){cropDialog(img).then(function(v){URL.revokeObjectURL(url);done(v);});};
+      img.onerror=function(){URL.revokeObjectURL(url);toast('Couldn\u2019t open that picture. Try a JPEG or PNG.');done(null);};
+      img.src=url;
+    });
+    inp.addEventListener('cancel',function(){done(null);});
+    window.addEventListener('focus',function onf(){window.removeEventListener('focus',onf);setTimeout(function(){if(!inp.files||!inp.files.length)done(null);},1500);});
+    inp.click();
+  });
+};
+function cropDialog(img){
+  return new Promise(function(resolve){
+    var V=260,OUT=256,w=img.naturalWidth,h=img.naturalHeight,base=V/Math.min(w,h),z=1,x=0,y=0,result=null;
+    var d=openDialog('<div class="dlg-head"><h2>Profile picture</h2><button class="x" type="button" data-close aria-label="Close">\u00d7</button></div>'+
+      '<p class="note">Drag to position it in the circle. Use the slider to zoom.</p>'+
+      '<div class="crop"><canvas width="'+V*2+'" height="'+V*2+'" style="width:'+V+'px;height:'+V+'px" aria-label="Picture preview"></canvas></div>'+
+      '<label class="field"><span class="lbl">Zoom</span><input type="range" min="1" max="4" step="0.01" value="1" class="zoom"></label>'+
+      '<div class="row end"><button class="btn" type="button" data-close>Cancel</button><button class="btn pri" type="button" data-use>Use picture</button></div>','Profile picture');
+    var cv=d.querySelector('canvas'),ctx=cv.getContext('2d'),zoom=d.querySelector('.zoom');
+    var clamp=function(){var s=base*z,mx=Math.max(0,(w*s-V)/2),my=Math.max(0,(h*s-V)/2);x=Math.max(-mx,Math.min(mx,x));y=Math.max(-my,Math.min(my,y));};
+    var draw=function(c,size){var k=size/V,s=base*z*k;c.fillStyle='#0f1317';c.fillRect(0,0,size,size);c.drawImage(img,size/2+x*k-w*s/2,size/2+y*k-h*s/2,w*s,h*s);};
+    var paint=function(){clamp();draw(ctx,V*2);};
+    paint();
+    zoom.addEventListener('input',function(){z=+zoom.value;paint();});
+    var drag=null;
+    cv.addEventListener('pointerdown',function(e){drag={x:e.clientX-x,y:e.clientY-y};cv.setPointerCapture(e.pointerId);});
+    cv.addEventListener('pointermove',function(e){if(!drag)return;x=e.clientX-drag.x;y=e.clientY-drag.y;paint();});
+    cv.addEventListener('pointerup',function(){drag=null;});
+    cv.addEventListener('wheel',function(e){e.preventDefault();z=Math.max(1,Math.min(4,z*(e.deltaY<0?1.08:1/1.08)));zoom.value=z;paint();},{passive:false});
+    cv.addEventListener('keydown',function(e){var k={ArrowLeft:[8,0],ArrowRight:[-8,0],ArrowUp:[0,8],ArrowDown:[0,-8]}[e.key];if(k){e.preventDefault();x+=k[0];y+=k[1];paint();}});
+    cv.tabIndex=0;
+    d.querySelector('[data-use]').addEventListener('click',function(){
+      var out=document.createElement('canvas');out.width=out.height=OUT;draw(out.getContext('2d'),OUT);
+      var q=0.86,data=out.toDataURL('image/jpeg',q);
+      while(data.length>PIC_MAX&&q>0.4){q-=0.08;data=out.toDataURL('image/jpeg',q);}
+      result=picOk(data)?data:null;if(!result)toast('That picture is too detailed to save. Try another.');
+      d.close();
+    });
+    // resolve when the dialog goes away, however it was closed
+    new MutationObserver(function(m,o){if(!document.body.contains(d)){o.disconnect();resolve(result);}}).observe(document.body,{childList:true});
+  });
+}
+
 /* ---------- Account button and menu ----------
-   Shows the person's initial; the menu has Install app, Admin (for admins), Send feedback, Sign out and the version. */
+   Shows the person's picture (or initial); the menu has Install app, Admin (for admins), Send feedback, Sign out and the version.
+   opts.photo is their chosen profile picture, if any. */
 window.accountMenu=function(user,opts){
   opts=opts||{};
-  var name=user.displayName||user.email||'You',ini=esc((name.trim()[0]||'?').toUpperCase());
-  var pic=user.photoURL&&/^https:\/\/lh\d\.googleusercontent\.com\//.test(user.photoURL)?'<img src="'+esc(user.photoURL)+'" alt="" referrerpolicy="no-referrer">':ini;
-  return '<span class="acct"><button class="acct-btn" type="button" data-acct="toggle" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">'+pic+'</button>'+
-    '<span class="acct-menu" role="menu" hidden><span class="acct-who"><b>'+esc(name)+'</b>'+(user.email&&user.email!==name?'<small>'+esc(user.email)+'</small>':'')+'</span>'+
+  var name=opts.name||user.displayName||user.email||'You';
+  return '<span class="acct"><button class="acct-btn" type="button" data-acct="toggle" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">'+avatarHtml(name,opts.photo,googlePic(user))+'</button>'+
+    '<span class="acct-menu" role="menu" hidden><span class="acct-who">'+avatarHtml(name,opts.photo,googlePic(user),'lg')+'<span><b>'+esc(name)+'</b>'+(user.email&&user.email!==name?'<small>'+esc(user.email)+'</small>':'')+'</span></span>'+
     (isInstalledApp()?'':'<button role="menuitem" type="button" data-acct="install">Install app</button>')+
     (opts.admin?'<a role="menuitem" href="admin.html">Admin</a>':'')+(opts.home?'<a role="menuitem" href="./">Back to my plays</a>':'')+
     '<button role="menuitem" type="button" data-acct="feedback">Send feedback</button>'+
