@@ -105,14 +105,22 @@ function playsHtml(){
   var any=ui.q||ui.result||ui.player||ui.scen;
   h+='<p class="note count">'+list.length+' of '+plays.length+' play'+(plays.length===1?'':'s')+(any?' · <a href="#" data-a="clearf">Clear filters</a>':'')+'</p>';
   if(!list.length)return h+'<p class="note">Nothing matches.</p>';
-  h+='<ul class="plays">'+list.map(function(p){
-    var t=p.scenarioType&&p.scenarioType!=='official'?'<span class="chip tag">'+typeName(p.scenarioType)+'</span>':'';
+  // one collapsible box each for Official, Valkyrie and Your own scenarios, like the Scenarios tab (open state remembered)
+  var prow=function(p){
+    var t='';  // the box already says Official, Valkyrie or Your own
     return '<li><button class="play" data-a="edit" data-id="'+esc(p.id)+'">'+
       '<span class="pl-top"><span class="pl-date num">'+esc(fmtDate(p.date))+'</span>'+(p.location?'<span class="pl-loc">at '+esc(p.location)+'</span>':'')+resChip(p.result)+(p.attempts>1?'<span class="chip muted">'+p.attempts+' tries</span>':'')+t+'</span>'+
       '<span class="pl-name">'+esc(p.scenarioName)+'</span>'+
       (partyText(p)?'<span class="pl-party">'+partyText(p)+'</span>':'<span class="pl-party none">Players not recorded</span>')+
       (p.rules&&p.rules!=='Normal rules'?'<span class="pl-rules">'+esc(p.rules)+'</span>':'')+
-      (p.notes?'<span class="pl-notes">'+esc(p.notes)+'</span>':'')+'</button></li>';}).join('')+'</ul>';
+      (p.notes?'<span class="pl-notes">'+esc(p.notes)+'</span>':'')+'</button></li>';};
+  var kind=function(p){return p.scenarioType==='valkyrie'?'valkyrie':p.scenarioType==='custom'?'yours':'official';};
+  [['official','Official'],['valkyrie','Valkyrie'],['yours','Your own']].forEach(function(b){
+    var items=list.filter(function(p){return kind(p)===b[0];});if(!items.length)return;
+    var won=items.filter(function(p){return p.result==='pass';}).length,key='p-'+b[0];
+    h+='<details class="sec box pbox" data-box="'+key+'"'+(boxes[key]!==false?' open':'')+'><summary><h2>'+b[1]+'</h2><span class="note">'+items.length+' play'+(items.length===1?'':'s')+' \u00b7 '+won+' passed</span><span class="chev" aria-hidden="true"></span></summary>'+
+      '<ul class="plays">'+items.map(prow).join('')+'</ul></details>';
+  });
   return h;
 }
 function sel(id,label,val,opts){

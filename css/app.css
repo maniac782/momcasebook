@@ -262,3 +262,6 @@ details.box>ul:last-child{margin-bottom:6px}
 
 /* inline icons inside buttons: sized to the text, coloured like it */
 .btn .ico{flex:none;width:1.05em;height:1.05em;margin-left:-2px}
+
+/* plays inside collapsible boxes */
+details.pbox>.plays{margin:12px 16px 16px}

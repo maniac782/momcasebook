@@ -80,6 +80,14 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('[data-t=plays]');
   assert.strictEqual(await p.locator('.plays > li').count(),11);
   assert.ok(await p.locator('text=Agatha Crane').first().count(),'short name expanded');
+  // plays are split into Official and Valkyrie boxes; closing one hides only its plays
+  assert.strictEqual(await p.locator('details[data-box=p-official] .plays > li').count(),10,'10 official plays');
+  assert.strictEqual(await p.locator('details[data-box=p-valkyrie] .plays > li').count(),1,'1 Valkyrie play');
+  await p.click('details[data-box=p-official] > summary');
+  assert.strictEqual(await p.locator('details[data-box=p-official] .plays > li').first().isVisible(),false,'official plays hidden');
+  assert.ok(await p.locator('details[data-box=p-valkyrie] .plays > li').first().isVisible(),'valkyrie plays still shown');
+  await p.screenshot({path:out+'/3d-play-boxes.png',fullPage:true});
+  await p.click('details[data-box=p-official] > summary');
   // edit an imported play to add players
   await p.locator('.play',{hasText:'10:50 to Arkham'}).click();
   await p.locator('.seat').nth(0).locator('[name=pp]').fill('Gerri');
@@ -98,7 +106,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.locator('details[data-box=official] .scs li').first().isVisible(),false,'official closed');
   assert.ok(await p.locator('details[data-box=valkyrie] .scs li').first().isVisible(),'valkyrie still open');
   await p.screenshot({path:out+'/5a-official-closed.png'});
-  assert.deepStrictEqual(await p.evaluate(()=>JSON.parse(localStorage.getItem('mom-boxes'))),{official:false,valkyrie:true,yours:true});
+  assert.deepStrictEqual(await p.evaluate(()=>{const b=JSON.parse(localStorage.getItem('mom-boxes'));return {official:b.official,valkyrie:b.valkyrie,yours:b.yours};}),{official:false,valkyrie:true,yours:true});
   await p.click('details[data-box=official] > summary');
   // language: Spanish only, and sorting by language groups them
   await p.selectOption('#sf-src','valkyrie');await p.selectOption('#sf-lang','Spanish');
@@ -119,7 +127,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.inputValue('select[name=sc]'),'v-exotic-material');
   await p.check('.seg.big .fail input',{force:true});await p.click('form[data-form=play] button[type=submit]');
   await p.waitForSelector('.pl-name >> text=Exotic Material');
-  assert.ok(await p.locator('.play',{hasText:'Exotic Material'}).locator('text=Valkyrie').count(),'tagged Valkyrie');
+  assert.ok(await p.locator('details[data-box=p-valkyrie] .play',{hasText:'Exotic Material'}).count(),'in the Valkyrie box');
   await p.click('[data-t=scenarios]');await p.fill('#sq','exotic');await p.waitForFunction(()=>document.querySelectorAll('.scs li').length===1);
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('text=You: 1 play').count(),'your record next to the community');
   await p.screenshot({path:out+'/5e-community.png'});
