@@ -1,0 +1,106 @@
+// Headless check of the whole flow with test/fake-firebase.js standing in for Firebase.
+// Run: node test/ui.test.js [screenshot dir]   (needs Playwright with Chromium)
+const {chromium}=require(process.env.PW||'playwright');const fs=require('fs'),path=require('path'),assert=require('assert');
+const root=path.join(__dirname,'..'),out=process.argv[2]||path.join(root,'test','shots');fs.mkdirSync(out,{recursive:true});
+const types={html:'text/html',js:'text/javascript',css:'text/css',png:'image/png',webmanifest:'application/manifest+json'};
+require('../js/catalog.js');require('../js/importer.js');
+const rows=globalThis.MOMImport.parseCSV(fs.readFileSync(path.join(__dirname,'fixture-sheet.csv'),'utf8'));
+const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(1).map(r=>({c:r.map(v=>v===''?null:{v})}))}};
+(async()=>{
+  const browser=await chromium.launch({executablePath:process.env.CHROME||undefined});
+  const errors=[];
+  async function ctx(opts){
+    const c=await browser.newContext(Object.assign({serviceWorkers:'block'},opts));
+    await c.route('**/*',async r=>{
+      const u=new URL(r.request().url());
+      if(u.hostname==='www.gstatic.com'){return r.fulfill({body:u.pathname.includes('firebase-app-compat')?fs.readFileSync(path.join(__dirname,'fake-firebase.js'),'utf8'):'',contentType:'text/javascript'});}
+      if(u.hostname==='docs.google.com'){const cb=(u.searchParams.get('tqx')||'').split('responseHandler:')[1];return r.fulfill({body:'/*O_o*/\n'+cb+'('+JSON.stringify(gviz)+');',contentType:'text/javascript'});}
+      if(u.hostname.includes('fonts.g'))return r.fulfill({body:'',contentType:'text/css'});
+      if(u.hostname!=='momledger.test')return r.abort();
+      if(u.pathname==='/__/firebase/init.json')return r.fulfill({body:'{"projectId":"momledger"}',contentType:'application/json'});
+      const f=path.join(root,u.pathname==='/'?'index.html':decodeURIComponent(u.pathname));
+      if(!fs.existsSync(f))return r.fulfill({status:404,body:'nf'});
+      r.fulfill({body:fs.readFileSync(f),contentType:types[f.split('.').pop()]||'application/octet-stream'});
+    });
+    return c;
+  }
+  const c=await ctx({viewport:{width:1100,height:900}});const p=await c.newPage();
+  p.on('pageerror',e=>errors.push('pageerror: '+e.message));p.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
+  await p.goto('https://momledger.test/');
+  await p.waitForSelector('text=Continue with Google');
+  assert.ok((await p.textContent('#ver')).startsWith('v'),'version in footer');
+  await p.screenshot({path:out+'/1-signin.png',fullPage:true});
+  await p.fill('#au-em','dan@example.com');await p.fill('#au-pw','secret1');await p.click('form[data-form=auth] button[type=submit]');
+  await p.waitForSelector('text=No plays yet');
+  // import the sheet
+  await p.click('text=Import a spreadsheet');
+  await p.fill('#imp-link','https://docs.google.com/spreadsheets/d/1qOKghDouy9aFbaexfI-Gt7JSxcLmRkDMsIfRJfvD5Ug/edit?usp=sharing');
+  await p.click('text=Load sheet');
+  await p.waitForSelector('text=10 plays to import');
+  await p.screenshot({path:out+'/2-import-preview.png',fullPage:true});
+  await p.click('[data-a=doimport]');
+  await p.waitForSelector('.plays');
+  assert.strictEqual(await p.locator('.plays > li').count(),10,'10 plays imported');
+  await p.screenshot({path:out+'/3-plays.png',fullPage:true});
+  // importing again adds nothing
+  await p.click('[data-t=settings]');await p.click('text=Load sheet');await p.waitForSelector('text=10 already in your log');
+  assert.ok(await p.locator('text=0 plays to import').count(),'re-import finds nothing new');
+  await p.click('[data-a=cancelimport]');
+  // log a new play with a new Valkyrie scenario
+  await p.click('.bar [data-a=log]');
+  await p.selectOption('select[name=sc]','__new');await p.fill('input[name=nsname]','The Lighthouse Keeper');
+  await p.check('.seg.big .pass input',{force:true});
+  await p.fill('.seat [name=pp]','Dan');await p.fill('.seat [name=pi]','Agatha');
+  await p.click('[data-f=addseat]');await p.locator('.seat').nth(1).locator('[name=pp]').fill('Gerri');await p.locator('.seat').nth(1).locator('[name=pi]').fill('Ursula Downs');
+  await p.fill('textarea[name=notes]','Escaped the lighthouse with one turn to spare.');
+  await p.screenshot({path:out+'/4-log-form.png',fullPage:true});
+  await p.click('form[data-form=play] button[type=submit]');
+  await p.waitForSelector('.pl-name >> text=The Lighthouse Keeper');
+  await p.click('[data-t=plays]');
+  assert.strictEqual(await p.locator('.plays > li').count(),11);
+  assert.ok(await p.locator('text=Agatha Crane').first().count(),'short name expanded');
+  // edit an imported play to add players
+  await p.locator('.play',{hasText:'10:50 to Arkham'}).click();
+  await p.locator('.seat').nth(0).locator('[name=pp]').fill('Gerri');
+  await p.click('form[data-form=play] button[type=submit]');await p.waitForTimeout(200);
+  // filters
+  await p.selectOption('#fres','pass');assert.strictEqual(await p.locator('.plays > li').count(),6);
+  await p.selectOption('#fpl','Gerri');assert.strictEqual(await p.locator('.plays > li').count(),2);
+  await p.click('[data-a=clearf]');
+  await p.click('[data-t=scenarios]');await p.waitForSelector('text=Official scenarios beaten');
+  assert.ok(await p.locator('.scs >> text=The Lighthouse Keeper').count());
+  await p.screenshot({path:out+'/5-scenarios.png',fullPage:true});
+  await p.click('[data-t=stats]');await p.waitForSelector('text=Who you played with');
+  await p.screenshot({path:out+'/6-stats.png',fullPage:true});
+  // CSV export round trip
+  await p.click('[data-t=settings]');
+  const [dl]=await Promise.all([p.waitForEvent('download'),p.click('[data-a=csv]')]);
+  const csv=fs.readFileSync(await dl.path(),'utf8');assert.ok(csv.split('\n').length>=12&&/Lighthouse Keeper/.test(csv),'csv export');
+  // admin page
+  const uid=await p.evaluate(()=>firebase.app().auth().currentUser.uid);
+  await p.evaluate(u=>__fake.makeAdmin(u),uid);
+  await p.goto('https://momledger.test/admin.html');
+  // fresh page = fresh fake store: sign in again and seed
+  await p.waitForSelector('text=Sign in on the');
+  await p.evaluate(()=>{__fake.makeAdmin('u-danexamplecom');__fake.store['users/u-danexamplecom']={name:'Dan',email:'dan@example.com',playCount:11,created:Date.now(),lastSeen:Date.now()};firebase.app().auth().signInWithEmailAndPassword('dan@example.com');});
+  await p.waitForSelector('text=Plays logged');
+  await p.click('[data-t=scs]');await p.fill('#sc-name','Night of the Hunter');await p.click('form[data-form=addsc] button');await p.waitForSelector('.adm >> text=Night of the Hunter');
+  await p.screenshot({path:out+'/7-admin.png',fullPage:true});
+  await c.close();
+  // phone, dark
+  const c2=await ctx({viewport:{width:390,height:844},deviceScaleFactor:2,colorScheme:'dark',isMobile:true,hasTouch:true});const q=await c2.newPage();
+  q.on('pageerror',e=>errors.push('pageerror(phone): '+e.message));
+  await q.goto('https://momledger.test/');await q.waitForSelector('text=Continue with Google');
+  await q.screenshot({path:out+'/8-phone-signin-dark.png'});
+  await q.fill('#au-em','dan@example.com');await q.fill('#au-pw','secret1');await q.click('form[data-form=auth] button[type=submit]');
+  await q.waitForSelector('text=No plays yet');await q.click('text=Import a spreadsheet');
+  await q.fill('#imp-link','https://docs.google.com/spreadsheets/d/1qOKghDouy9aFbaexfI-Gt7JSxcLmRkDMsIfRJfvD5Ug/edit');await q.click('text=Load sheet');await q.waitForSelector('[data-a=doimport]');await q.click('[data-a=doimport]');
+  await q.waitForSelector('.plays');
+  const sw=await q.evaluate(()=>document.documentElement.scrollWidth);assert.ok(sw<=390,'no sideways scroll on a phone ('+sw+')');
+  await q.screenshot({path:out+'/9-phone-plays-dark.png'});
+  await q.click('.bar [data-a=log]');await q.waitForSelector('.dlg');await q.screenshot({path:out+'/10-phone-form-dark.png'});
+  await q.keyboard.press('Escape');await q.click('[data-t=stats]');await q.screenshot({path:out+'/11-phone-stats-dark.png',fullPage:true});
+  await browser.close();
+  if(errors.length){console.error(errors.join('\n'));process.exit(1);}
+  console.log('ui: all checks passed; screenshots in '+out);
+})().catch(e=>{console.error(e);process.exit(1);});

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Admin · Mansions of Madness Ledger</title>
+<meta name="description" content="Log your Mansions of Madness plays: official and Valkyrie scenarios, who played, which investigators, pass or fail, and notes.">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="MoM Ledger">
+<meta name="application-name" content="Mansions of Madness Ledger">
+<meta name="theme-color" content="#eceef0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1317" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="css/app.css">
+<script src="js/version.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/shared.js"></script>
+<script src="js/catalog.js"></script>
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="./"><img src="icon-192.png" alt="" width="34" height="34"><span><b>Mansions of Madness</b> Ledger</span></a><span class="chip tag">Admin</span><span id="acct"></span></div></header>
+<main id="app"><p class="note pad">Loading…</p></main>
+<footer class="foot"><span>Mansions of Madness Ledger</span><span>Unofficial fan project, not affiliated with Fantasy Flight Games</span><a href="privacy.html">Privacy</a><span id="ver" class="num"></span></footer>
+<div class="toast" id="toast" role="status" hidden></div>
+<script src="js/admin.js"></script>
+</body>
+</html>

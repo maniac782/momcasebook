@@ -1,0 +1,58 @@
+name: Deploy to Firebase
+
+# Every push to main publishes the site and the Firestore rules to the Firebase project named in .firebaserc.
+# Needs one repository secret, FIREBASE_SERVICE_ACCOUNT: the JSON key of a Google Cloud service account in that project
+# with the roles Firebase Hosting Admin, Firebase Rules Admin, API Keys Viewer and Service Usage Consumer (see README).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Importer tests
+        run: node test/importer.test.js
+      - name: House rules (version bumped, no yellow)
+        run: node test/house-rules.test.js
+        env:
+          BEFORE: ${{ github.event.before }}
+
+  hosting:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read the project id
+        id: proj
+        run: echo "id=$(node -p "require('./.firebaserc').projects.default")" >> "$GITHUB_OUTPUT"
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ steps.proj.outputs.id }}
+          channelId: live
+
+  rules:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Publish Firestore security rules
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx -y firebase-tools@latest deploy --only firestore:rules --project "$(node -p "require('./.firebaserc').projects.default")" --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"

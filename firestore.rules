@@ -1,0 +1,83 @@
+rules_version = '2';
+// Mansions of Madness Ledger: who can read and write what. The pages hide what people can't do, but these rules
+// are what actually enforce it. Published by the GitHub workflow on every push to main.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function own(uid) { return signedIn() && request.auth.uid == uid; }
+    // Admins have a document admins/{their uid}, made by hand in the Firebase console.
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    function str(v, n) { return v is string && v.size() <= n; }
+    function num(v) { return v is int || v is float; }
+    function optStr(d, k, n) { return !(k in d) || str(d[k], n); }
+    function optNum(d, k) { return !(k in d) || num(d[k]); }
+
+    function validPlay(d) {
+      return d.keys().hasOnly(['scenarioId','scenarioName','scenarioType','date','result','attempts','party','solo','rules','notes',
+                               'created','updated','importKey','seq'])
+        && str(d.scenarioId, 100) && d.scenarioId.size() > 0 && str(d.scenarioName, 100)
+        && d.scenarioType in ['official','valkyrie','custom']
+        && str(d.date, 10) && (d.date == '' || d.date.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}'))
+        && d.result in ['pass','fail','abandoned']
+        && d.attempts is int && d.attempts >= 1 && d.attempts <= 99
+        && d.party is list && d.party.size() <= 8
+        && d.solo is bool && str(d.rules, 80) && str(d.notes, 4000)
+        && optNum(d, 'created') && optNum(d, 'updated') && optStr(d, 'importKey', 40) && (!('seq' in d) || d.seq is int);
+    }
+    function validScenario(d) {
+      return d.keys().hasOnly(['name','type','author','link','created','by'])
+        && str(d.name, 80) && d.name.size() > 0 && d.type in ['official','valkyrie','custom']
+        && optStr(d, 'author', 60) && optStr(d, 'link', 300) && (!('link' in d) || d.link == '' || d.link.matches('https://.*'))
+        && optNum(d, 'created') && optStr(d, 'by', 128);
+    }
+
+    // Each person's profile and log: only they can see or change them. Admins can read profiles (not plays).
+    match /users/{uid} {
+      allow read: if own(uid) || isAdmin();
+      allow create, update: if own(uid)
+        && request.resource.data.keys().hasOnly(['name','email','created','lastSeen','playCount','owned'])
+        && optStr(request.resource.data, 'name', 40) && optStr(request.resource.data, 'email', 200)
+        && optNum(request.resource.data, 'created') && optNum(request.resource.data, 'lastSeen') && optNum(request.resource.data, 'playCount')
+        && (!('owned' in request.resource.data) || (request.resource.data.owned is list && request.resource.data.owned.size() <= 40));
+      allow delete: if own(uid);
+
+      match /plays/{pid} {
+        allow read, delete: if own(uid);
+        allow create, update: if own(uid) && validPlay(request.resource.data);
+      }
+      match /scenarios/{sid} {
+        allow read, delete: if own(uid);
+        allow create, update: if own(uid) && validScenario(request.resource.data);
+      }
+    }
+
+    // Scenarios the admin shares with everyone (mostly Valkyrie ones).
+    match /scenarios/{sid} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() && validScenario(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /admins/{uid} {
+      allow get: if own(uid);
+    }
+
+    // Send feedback: anyone signed in can add; only admins read, mark done or delete.
+    match /feedback/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['kind','msg','page','ua','v','t','uid','name','done'])
+        && request.resource.data.kind in ['bug','idea','other'] && str(request.resource.data.msg, 3000)
+        && request.resource.data.done == false;
+      allow read, delete: if isAdmin();
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['done']);
+    }
+
+    // Errors recorded by js/config.js while someone is signed in; only admins read or clear them.
+    match /errors/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['msg','stack','page','ua','v','t','uid'])
+        && str(request.resource.data.msg, 500) && str(request.resource.data.stack, 2000);
+      allow read, delete: if isAdmin();
+    }
+  }
+}

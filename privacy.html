@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Privacy · Mansions of Madness Ledger</title>
+<meta name="description" content="Log your Mansions of Madness plays: official and Valkyrie scenarios, who played, which investigators, pass or fail, and notes.">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="MoM Ledger">
+<meta name="application-name" content="Mansions of Madness Ledger">
+<meta name="theme-color" content="#eceef0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1317" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="css/app.css">
+<script src="js/version.js"></script>
+<script>document.addEventListener('DOMContentLoaded',function(){document.getElementById('ver').textContent=self.APP_VERSION;});</script>
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="./"><img src="icon-192.png" alt="" width="34" height="34"><span><b>Mansions of Madness</b> Ledger</span></a></div></header>
+<main><section class="sec prose"><h2>Privacy</h2>
+<p>Mansions of Madness Ledger is a free, personal hobby site for logging board game plays. No ads, no tracking, no analytics.</p>
+<h3>What is stored</h3>
+<ul><li>Your sign-in (Google or email and password), handled by Google Firebase Authentication.</li>
+<li>Your name and email address, when you joined and last visited, and how many plays you've logged.</li>
+<li>What you log: scenarios, dates, results, the names you type for players and investigators, rules and notes. Only you can see your plays.</li>
+<li>Feedback you send, and technical details of errors the site hits while you're signed in (message, page, browser), so they can be fixed.</li></ul>
+<p>Everything is kept in Google Firebase (Cloud Firestore). The site's admin can see the account list (names, emails, play counts), feedback and errors, but not your plays. A copy of your plays is also kept in your browser so the app works offline.</p>
+<h3>Your choices</h3>
+<p>Settings has <b>Download CSV</b> and <b>Download backup</b> for a copy of your plays, <b>Delete all plays</b>, and <b>Delete my account</b>, which removes your plays, your scenarios, your profile and your sign-in.</p>
+<h3>Other people's names</h3>
+<p>If you write down who you played with, use names they're happy with; they're only visible to you.</p>
+</section></main>
+<footer class="foot"><span>Mansions of Madness Ledger</span><span>Unofficial fan project, not affiliated with Fantasy Flight Games</span><a href="privacy.html">Privacy</a><span id="ver" class="num"></span></footer>
+<div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>
