@@ -29,6 +29,12 @@ const rulesInv=[...(fs.readFileSync(path.join(root,'firestore.rules'),'utf8').ma
 const catInv=globalThis.MOM.INVESTIGATORS;
 if(JSON.stringify(rulesInv)!==JSON.stringify(catInv)){console.error('firestore.rules investigators() differs from js/catalog.js:\n  rules: '+rulesInv.length+'\n  catalog: '+catInv.length);process.exit(1);}
 console.log('investigators: '+catInv.length+' official, rules match');
+require('../js/reviews.js');
+const ids=new Set(globalThis.MOM.OFFICIAL.concat(globalThis.MOM.VALKYRIE).map(s=>s.id));
+const badRev=Object.keys(globalThis.MOM_REVIEWS).filter(k=>!ids.has(k));
+if(badRev.length){console.error('js/reviews.js names scenarios that don\'t exist: '+badRev.join(', '));process.exit(1);}
+for(const [k,v] of Object.entries(globalThis.MOM_REVIEWS))for(const r of v)if(!/^https:\/\//.test(r.url)||!r.summary||!r.source){console.error('incomplete review for '+k);process.exit(1);}
+console.log('reviews: '+Object.keys(globalThis.MOM_REVIEWS).length+' scenarios, all linked');
 
 const before=process.env.BEFORE;
 if(before&&!/^0+$/.test(before)){

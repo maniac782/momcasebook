@@ -123,42 +123,77 @@ function scenStats(){
   var st={};plays.forEach(function(p){var s=st[p.scenarioId]||(st[p.scenarioId]={n:0,pass:0,last:''});s.n++;if(p.result==='pass')s.pass++;if((p.date||'')>s.last)s.last=p.date;});
   return st;
 }
+// ---------- the Scenarios tab: one list to browse, filter and sort ----------
+var sf={src:'all',diff:'any',len:'any',rate:'any',sort:'box'};
+try{var sf0=JSON.parse(sessionStorage.getItem('mom-sf')||'null');if(sf0)for(var k0 in sf0)sf[k0]=sf0[k0];}catch(e){}
+// How long a scenario usually takes: Valkyrie players' real average when there are enough plays, else the middle of the author's estimate.
+function typicalMins(s){return s.avg&&s.plays>=10?s.avg:s.minutes?(s.minutes[0]?(s.minutes[0]+s.minutes[1])/2:s.minutes[1]):0;}
+function reviewsOf(s){return (window.MOM_REVIEWS||{})[s.id]||[];}
 function scenariosHtml(){
   var st=scenStats(),own=owned(),f=ui.sfilter,sq=(ui.sq||'').trim().toLowerCase();
-  var keep=function(s){var x=st[s.id];if(sq&&((s.name||'')+' '+(s.author||'')).toLowerCase().indexOf(sq)<0)return false;return f==='all'||(f==='new'&&!x)||(f==='unbeaten'&&(!x||!x.pass))||(f==='beaten'&&x&&x.pass);};
+  // everything this person can play: official (owned), Valkyrie (unless switched off; retired ones only if played), shared and their own
+  var seen={},all=[];
+  var add=function(s,from){var k=MOM.key(s.name);if(seen[k])return;seen[k]=1;var o={};for(var x in s)o[x]=s[x];o.from=from;all.push(o);};
+  MOM.OFFICIAL.forEach(function(s){if(own.indexOf(s.product)>=0||st[s.id])add(s,'official');});
+  MOM.VALKYRIE.forEach(function(s){if((showValk()&&!s.retired)||st[s.id])add(s,'valkyrie');});
+  shared.concat(mine).forEach(function(s){add(s,s.type==='valkyrie'?'valkyrie':s.type==='official'?'official':'yours');});
+  var D={easy:[0,0.35],medium:[0.35,0.6],hard:[0.6,0.8],vhard:[0.8,2]},L={short:[0,120],mid:[120,180],long:[180,240],xlong:[240,1e9]};
+  var list=all.filter(function(s){
+    var x=st[s.id];
+    if(sq&&((s.name||'')+' '+(s.author||'')).toLowerCase().indexOf(sq)<0)return false;
+    if(sf.src!=='all'&&s.from!==sf.src)return false;
+    if(f==='new'&&x||f==='unbeaten'&&x&&x.pass||f==='beaten'&&!(x&&x.pass))return false;
+    if(sf.diff!=='any'){var d=D[sf.diff];if(!s.difficulty||s.difficulty<d[0]||s.difficulty>=d[1])return false;}
+    if(sf.len!=='any'){var l=L[sf.len],m=typicalMins(s);if(!m||m<l[0]||m>=l[1])return false;}
+    if(sf.rate!=='any'&&!(s.rating&&s.plays>=10&&s.rating>=+sf.rate))return false;
+    return true;
+  });
+  var known=function(v){return v==null||v===0?null:v;};
+  var by=function(get,dir){return function(a,b){var x=known(get(a)),y=known(get(b));if(x==null&&y==null)return byName(a,b);if(x==null)return 1;if(y==null)return -1;return dir*(x-y)||byName(a,b);};};
+  var SORT={name:byName,rating:by(function(s){return s.plays>=10?s.rating:null;},-1),plays:by(function(s){return s.plays;},-1),
+    short:by(typicalMins,1),long:by(typicalMins,-1),easy:by(function(s){return s.difficulty;},1),hard:by(function(s){return s.difficulty;},-1),
+    win:by(function(s){return s.plays>=10?s.win:null;},-1),mine:by(function(s){var x=st[s.id];return x?x.last||'0':null;},-1)};
+  var sel=function(id,label,val,opts){return '<label class="field"><span class="lbl">'+label+'</span><select class="f" id="'+id+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(val===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>';};
+  var offIds=MOM.OFFICIAL.filter(function(s){return own.indexOf(s.product)>=0;}),beat=offIds.filter(function(s){return st[s.id]&&st[s.id].pass;}).length;
+  var h='<div class="filters"><label class="field grow"><span class="lbl">Search</span><input class="f" id="sq" type="search" value="'+esc(ui.sq||'')+'" placeholder="Scenario or author" autocomplete="off"></label>'+
+    sel('sf-src','From',sf.src,[['all','Everything'],['official','Official'],['valkyrie','Valkyrie'],['yours','Your own']])+
+    sel('sf-status','Your progress',f,[['all','Any'],['new','Not played'],['unbeaten','Not beaten yet'],['beaten','Beaten']])+
+    sel('sf-diff','Difficulty',sf.diff,[['any','Any'],['easy','Easy'],['medium','Medium'],['hard','Hard'],['vhard','Very hard']])+
+    sel('sf-len','Length',sf.len,[['any','Any'],['short','Under 2 hours'],['mid','2 to 3 hours'],['long','3 to 4 hours'],['xlong','Over 4 hours']])+
+    sel('sf-rate','Rating',sf.rate,[['any','Any'],['7','7 or more'],['8','8 or more'],['8.5','8.5 or more']])+
+    sel('sf-sort','Sort by',sf.sort,[['box','Box, then name'],['name','Name'],['rating','Highest rated'],['plays','Most played'],['short','Shortest'],['long','Longest'],['easy','Easiest'],['hard','Hardest'],['win','Easiest to pass'],['mine','Your most recent']])+
+    '<button class="btn" data-a="addsc">Add a scenario</button></div>';
+  var narrowed=sf.diff!=='any'||sf.len!=='any'||sf.rate!=='any';
+  h+='<p class="note count"><b>'+list.length+'</b> scenario'+(list.length===1?'':'s')+' \u00b7 official beaten: '+beat+' of '+offIds.length+
+    (narrowed&&sf.src!=='valkyrie'&&sf.src!=='yours'?' \u00b7 difficulty, length and rating are only known for Valkyrie scenarios, so official ones drop out with those filters':'')+
+    (narrowed||sf.src!=='all'||f!=='all'||sq?' \u00b7 <a href="#" data-a="sfclear">Clear filters</a>':'')+'</p>';
+  if(!list.length)return h+'<p class="note">Nothing matches. Loosen a filter, or use <b>Add a scenario</b> if one is missing.</p>';
   var row=function(s){
     var x=st[s.id],chip=!x?'<span class="chip muted">Not played</span>':x.pass?'<span class="chip ok">Beaten</span>':'<span class="chip bad">Not beaten yet</span>';
-    var meta=x?x.n+' play'+(x.n===1?'':'s')+(x.n?' · '+x.pass+' passed':'')+(x.last?' · last '+esc(fmtDate(x.last)):''):'';
-    var by=[s.author?'by '+esc(s.author):'',s.difficulty?diffName(s.difficulty):'',s.minutes?esc(lenText(s.minutes)):''].filter(Boolean).join(' \u00b7 ');
+    var src=s.from==='official'?esc(MOM.productName(s.product)||'Official'):s.from==='valkyrie'?'Valkyrie':'Your own';
+    var facts=[src,s.author?'by '+esc(s.author):'',s.difficulty?diffName(s.difficulty):'',
+      s.avg&&s.plays>=10?'usually '+esc(lenText([s.avg,s.avg])):s.minutes?esc(lenText(s.minutes)):''].filter(Boolean).join(' \u00b7 ');
+    var comm=s.plays>=10&&s.rating?'<span class="rating" title="Valkyrie players\u2019 average score, 1 to 10">\u2605 '+s.rating.toFixed(1)+'</span> '+
+      (s.win!=null?Math.round(s.win*100)+'% pass':'')+' \u00b7 '+s.plays.toLocaleString()+' plays on Valkyrie':'';
+    var yours=x?'You: '+x.n+' play'+(x.n===1?'':'s')+', '+x.pass+' passed'+(x.last?', last '+esc(fmtDate(x.last)):''):'';
+    var rv=reviewsOf(s);
     return '<li class="sc"><div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(s.name)+'</a>':esc(s.name))+'</b>'+chip+'</span>'+
-      (community(s,x)?'<span class="note community">'+community(s,x)+'</span>':'')+
-      ((meta||by||s.link)?'<span class="note">'+[meta,by].filter(Boolean).join(' · ')+(s.link&&/^https:\/\//.test(s.link)?(meta||by?' · ':'')+'<a href="'+esc(s.link)+'" target="_blank" rel="noopener">Details</a>':'')+'</span>':'')+'</div>'+
+      '<span class="note">'+facts+'</span>'+(comm?'<span class="note community">'+comm+'</span>':'')+(yours?'<span class="note">'+yours+'</span>':'')+
+      (s.link&&/^https:\/\//.test(s.link)?'<span class="note"><a href="'+esc(s.link)+'" target="_blank" rel="noopener">Details</a></span>':'')+
+      (rv.length?'<details class="reviews"><summary>'+rv.length+' review'+(rv.length===1?'':'s')+'</summary>'+rv.map(function(r){return '<p><span>'+esc(r.summary)+'</span> <a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.source)+'</a>'+(r.date?' <span class="note">('+esc(r.date)+')</span>':'')+'</p>';}).join('')+'</details>':'')+'</div>'+
       '<div class="row tight"><button class="btn sm" data-a="log" data-sc="'+esc(s.id)+'">Log a play</button>'+
       (s.mine&&!x?'<button class="btn sm ghost" data-a="delsc" data-id="'+esc(s.id)+'" aria-label="Remove '+esc(s.name)+'">Remove</button>':'')+'</div></li>';
   };
-  var group=function(title,list,sub){list=list.filter(keep);if(!list.length)return '';return '<section class="sec"><div class="sec-head"><h2>'+esc(title)+'</h2>'+(sub?'<span class="note">'+sub+'</span>':'')+'</div><ul class="scs">'+list.map(row).join('')+'</ul></section>';};
-  var offIds=MOM.OFFICIAL.filter(function(s){return own.indexOf(s.product)>=0;}),beat=offIds.filter(function(s){return st[s.id]&&st[s.id].pass;}).length;
-  var h='<div class="filters"><label class="field grow"><span class="lbl">Search</span><input class="f" id="sq" type="search" value="'+esc(ui.sq||'')+'" placeholder="Scenario or author" autocomplete="off"></label><div class="seg" role="radiogroup" aria-label="Show">'+[['all','All'],['new','Not played'],['unbeaten','Not beaten'],['beaten','Beaten']].map(function(o){return '<label><input type="radio" name="sf" value="'+o[0]+'"'+(f===o[0]?' checked':'')+'><span>'+o[1]+'</span></label>';}).join('')+'</div>'+
-    '<button class="btn pri" data-a="suggest">Suggest a scenario</button><button class="btn" data-a="addsc">Add a scenario</button></div>'+
-    '<p class="note count">Official scenarios beaten: <b>'+beat+' of '+offIds.length+'</b>'+(own.length<MOM.PRODUCTS.length?' (from the products you own; change them in Settings)':'')+'</p>';
-  MOM.PRODUCTS.forEach(function(p){if(own.indexOf(p.id)>=0)h+=group(p.name,MOM.OFFICIAL.filter(function(s){return s.product===p.id;}));});
-  var shownKeys={};MOM.OFFICIAL.forEach(function(s){shownKeys[MOM.key(s.name)]=1;});
-  var extra=function(list){return list.filter(function(s){var k=MOM.key(s.name);if(shownKeys[k])return false;shownKeys[k]=1;return true;});};
-  // the built-in Valkyrie list (or, with it switched off in Settings, just the ones you've played), then shared and your own
-  var valk=extra((showValk()?MOM.VALKYRIE.filter(function(s){return !s.retired||st[s.id];}):MOM.VALKYRIE.filter(function(s){return st[s.id];})).concat(shared,mine).filter(function(s){return s.type==='valkyrie';}));
-  var own2=extra(shared.concat(mine).filter(function(s){return s.type!=='valkyrie';}));
-  h+=group('Valkyrie scenarios',valk,showValk()?MOM.VALKYRIE.length+' from the Valkyrie app\u2019s catalogue':'The full list is switched off in Settings')+group('Other scenarios',own2,'Homemade and anything else');
-  if(sq&&h.indexOf('<ul class="scs">')<0)h+='<p class="note">No scenarios match \u201c'+esc(ui.sq)+'\u201d. Use <b>Add a scenario</b> if it\u2019s missing.</p>';
+  var section=function(title,items,sub){return items.length?'<section class="sec"><div class="sec-head"><h2>'+esc(title)+'</h2>'+(sub?'<span class="note">'+sub+'</span>':'')+'</div><ul class="scs">'+items.map(row).join('')+'</ul></section>':'';};
+  if(sf.sort==='box'){
+    MOM.PRODUCTS.forEach(function(p){h+=section(p.name,list.filter(function(s){return s.from==='official'&&s.product===p.id;}).sort(byName));});
+    h+=section('Official (other)',list.filter(function(s){return s.from==='official'&&!s.product;}).sort(byName));
+    h+=section('Valkyrie scenarios',list.filter(function(s){return s.from==='valkyrie';}).sort(byName),'From the Valkyrie app\u2019s catalogue, with its players\u2019 ratings');
+    h+=section('Your own',list.filter(function(s){return s.from==='yours';}).sort(byName));
+  }else h+=section(list.length+' scenario'+(list.length===1?'':'s'),list.sort(SORT[sf.sort]||byName));
   return h;
 }
 
-// How the Valkyrie community does on a scenario (from the catalogue), next to your own record when you have one.
-function community(s,mine){
-  if(s.win==null||!s.plays||s.plays<10)return '';
-  var t='Valkyrie players: <b>'+Math.round(s.win*100)+'%</b> pass over '+s.plays.toLocaleString()+' plays'+(s.avg?', about '+esc(lenText([s.avg,s.avg]))+' each':'');
-  if(mine&&mine.n)t+=' \u00b7 you: <b>'+pct(mine.pass,mine.n)+'</b>';
-  return t;
-}
 // Valkyrie's difficulty slider runs from 0 to 1.
 function diffName(d){return d<0.35?'Easy':d<0.6?'Medium':d<0.8?'Hard':'Very hard';}
 function lenText(m){var f=function(x){return x<120?x+' min':(Math.round(x/30)/2)+' h';};return m[0]&&m[0]!==m[1]?f(m[0]).replace(/ (min|h)$/,(m[1]<120)===(m[0]<120)?'':' $1')+'\u2013'+f(m[1]):f(m[1]);}
@@ -213,54 +248,6 @@ function settingsHtml(){
   h+='<section class="sec"><h2>Export</h2><p class="note">A copy of all your plays. The CSV opens in any spreadsheet and can be imported back here.</p><div class="row"><button class="btn" data-a="csv">Download CSV</button><button class="btn" data-a="json">Download backup (JSON)</button></div></section>';
   h+='<section class="sec danger"><h2>Delete</h2><div class="row"><button class="btn" data-a="wipe"'+(plays.length?'':' disabled')+'>Delete all plays…</button><button class="btn dng" data-a="delacct">Delete my account…</button></div></section>';
   return h;
-}
-
-// ---------- suggest a scenario ----------
-// A random pick from what you own, filtered by how far you've got with it and (for Valkyrie) length and difficulty.
-var sugg={from:'both',status:'unbeaten',len:'any',diff:'any',last:''};
-function suggestPool(){
-  var st=scenStats(),own=owned(),out=[];
-  if(sugg.from!=='valkyrie')MOM.OFFICIAL.forEach(function(s){if(own.indexOf(s.product)>=0)out.push(s);});
-  if(sugg.from!=='official')MOM.VALKYRIE.forEach(function(s){if(!s.retired)out.push(s);});
-  return out.filter(function(s){
-    var x=st[s.id];
-    if(sugg.status==='new'&&x)return false;
-    if(sugg.status==='unbeaten'&&x&&x.pass)return false;
-    // length: how long Valkyrie players actually take on average when known, otherwise the author's upper estimate
-    if(sugg.len!=='any'){var mins=s.avg||(s.minutes&&s.minutes[1]);if(!mins||mins>+sugg.len)return false;}
-    if(sugg.diff==='easier'&&!(s.difficulty&&s.difficulty<0.6))return false;
-    if(sugg.diff==='harder'&&!(s.difficulty&&s.difficulty>=0.6))return false;
-    return true;
-  });
-}
-function suggestBody(){
-  var seg=function(name,val,opts){return '<div class="seg" role="radiogroup">'+opts.map(function(o){return '<label><input type="radio" name="'+name+'" value="'+o[0]+'"'+(val===o[0]?' checked':'')+'><span>'+o[1]+'</span></label>';}).join('')+'</div>';};
-  var pool=suggestPool(),valkOnly=sugg.len!=='any'||sugg.diff!=='any';
-  var pick=pool.length?pool.filter(function(s){return s.id!==sugg.last;})[Math.floor(Math.random()*Math.max(1,pool.length-(pool.some(function(s){return s.id===sugg.last;})?1:0)))]||pool[0]:null;
-  if(pick)sugg.last=pick.id;
-  var st=scenStats(),x=pick&&st[pick.id];
-  var card=pick?'<div class="pick"><span class="lbl">'+(pick.type==='official'?esc(MOM.productName(pick.product)):'Valkyrie')+'</span><h3>'+esc(pick.name)+'</h3>'+
-      '<span class="note">'+[pick.author?'by '+esc(pick.author):'',pick.difficulty?diffName(pick.difficulty):'',pick.minutes?esc(lenText(pick.minutes)):''].filter(Boolean).join(' \u00b7 ')+'</span>'+
-      (community(pick,x)?'<span class="note">'+community(pick,x)+'</span>':'')+
-      '<span class="note">'+(x?'You\u2019ve played it '+x.n+' time'+(x.n===1?'':'s')+(x.pass?', passed '+x.pass:', not beaten yet')+'.':'You haven\u2019t played it yet.')+'</span></div>'
-    :'<p class="note">Nothing matches. Loosen a filter.</p>';
-  return '<div class="dlg-head"><h2>Suggest a scenario</h2><button class="x" type="button" data-close aria-label="Close">\u00d7</button></div>'+
-    '<div class="stack tight sugg">'+
-    '<div class="field"><span class="lbl">From</span>'+seg('sg-from',sugg.from,[['both','Both'],['official','Official I own'],['valkyrie','Valkyrie']])+'</div>'+
-    '<div class="field"><span class="lbl">Show</span>'+seg('sg-status',sugg.status,[['unbeaten','Not beaten yet'],['new','Never played'],['any','Anything']])+'</div>'+
-    '<div class="grid2"><label class="field"><span class="lbl">Length</span><select class="f" name="sg-len">'+[['any','Any'],['120','Up to 2 hours'],['180','Up to 3 hours'],['240','Up to 4 hours']].map(function(o){return '<option value="'+o[0]+'"'+(sugg.len===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>'+
-    '<label class="field"><span class="lbl">Difficulty</span><select class="f" name="sg-diff">'+[['any','Any'],['easier','Easy or medium'],['harder','Hard or very hard']].map(function(o){return '<option value="'+o[0]+'"'+(sugg.diff===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label></div>'+
-    (valkOnly&&sugg.from!=='valkyrie'?'<p class="note">Length and difficulty are only known for Valkyrie scenarios, so official ones drop out with these set. Length uses how long Valkyrie players actually take, when known.</p>':'')+
-    '<p class="note">'+pool.length+' scenario'+(pool.length===1?'':'s')+' match.</p></div>'+card+
-    '<div class="row end"><button class="btn" type="button" data-close>Close</button>'+(pool.length>1?'<button class="btn" type="button" data-sg="again">Another one</button>':'')+(pick?'<button class="btn pri" type="button" data-sg="log" data-id="'+esc(pick.id)+'">Log a play</button>':'')+'</div>';
-}
-function openSuggest(){
-  var d=openDialog(suggestBody(),'Suggest a scenario'),box=d.querySelector('.dlg');
-  var redraw=function(){box.innerHTML=suggestBody();};
-  box.addEventListener('change',function(e){var t=e.target;
-    if(t.name==='sg-from')sugg.from=t.value;else if(t.name==='sg-status')sugg.status=t.value;else if(t.name==='sg-len')sugg.len=t.value;else if(t.name==='sg-diff')sugg.diff=t.value;else return;redraw();});
-  box.addEventListener('click',function(e){var b=e.target.closest('[data-sg]');if(!b)return;
-    if(b.dataset.sg==='again')redraw();else if(b.dataset.sg==='log'){d.close();openPlay(null,b.dataset.id);}});
 }
 
 // ---------- players and groups ----------
@@ -580,7 +567,7 @@ app.addEventListener('click',function(e){
   else if(k==='scplays'){ui.q=ui.result=ui.player='';ui.scen=a.dataset.id;ui.tab='plays';render();window.scrollTo(0,0);}
   else if(k==='addsc')addScenarioDialog();
   else if(k==='fixinv')fixInvestigators();
-  else if(k==='suggest')openSuggest();
+  else if(k==='sfclear'){sf.src=sf.diff=sf.len=sf.rate='any';sf.src='all';ui.sfilter='all';ui.sq='';try{sessionStorage.setItem('mom-sf',JSON.stringify(sf));}catch(x){}render();}
   else if(k==='newperson')personDialog();
   else if(k==='newgroup')groupDialog();
   else if(k==='editperson'){var ps=people.filter(function(x){return x.id===a.dataset.id;})[0];if(ps)personDialog(ps);}
@@ -611,7 +598,8 @@ app.addEventListener('input',function(e){if(e.target.id==='q'){ui.q=e.target.val
 app.addEventListener('change',function(e){
   var t=e.target;
   if(t.id==='fres'){ui.result=t.value;render();}else if(t.id==='fpl'){ui.player=t.value;render();}else if(t.id==='fsc'){ui.scen=t.value;render();}
-  else if(t.name==='sf'){ui.sfilter=t.value;render();}
+  else if(t.id==='sf-status'){ui.sfilter=t.value;render();}
+  else if(/^sf-/.test(t.id)){sf[t.id.slice(3)]=t.value;try{sessionStorage.setItem('mom-sf',JSON.stringify(sf));}catch(x){}render();}
   else if(t.id==='s-valk')fb.db.doc('users/'+me.uid).set({hideValkyrie:!t.checked},{merge:true}).catch(function(err){toast(friendly(err));});
   else if(t.dataset.own){var o=owned().slice(),i=o.indexOf(t.dataset.own);if(t.checked&&i<0)o.push(t.dataset.own);if(!t.checked&&i>=0)o.splice(i,1);
     fb.db.doc('users/'+me.uid).set({owned:o},{merge:true}).catch(function(err){toast(friendly(err));});}

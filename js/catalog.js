@@ -1,5 +1,5 @@
 /* Mansions of Madness Casebook — the built-in list of official scenarios (Mansions of Madness Second Edition app),
-   grouped by the product that unlocks them, plus investigator names offered as suggestions.
+   grouped by the product that unlocks them, plus the official investigators.
    Valkyrie scenarios are built in from js/valkyrie.js; others can be added on the admin page (shared) or by each player (just theirs).
    Investigators are a fixed official list: plays can only name these. */
 (function(root){

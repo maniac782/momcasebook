@@ -233,9 +233,12 @@ select.grp{margin-bottom:8px}
 .fixes li{display:flex;flex-direction:column;gap:6px}
 .seat select.f{min-width:0}
 
-/* suggester, community numbers, location */
-.pick{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;background:var(--surface)}
-.pick h3{font-size:26px;line-height:1.15}
-.sugg .seg{align-self:flex-start}
+/* scenario list: ratings and reviews */
 .community b{color:var(--ink)}
 .pl-loc{color:var(--muted);font-size:14px}
+
+.rating{font-weight:700;color:var(--accent)}
+.reviews{margin-top:4px;font-size:14px}
+.reviews summary{cursor:pointer;color:var(--accent);font-weight:600;width:max-content}
+.reviews p{margin:6px 0 0;padding-left:10px;border-left:2px solid var(--line)}
+.filters .field{min-width:130px}
