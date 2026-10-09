@@ -6,7 +6,7 @@
 'use strict';
 var PRODUCTS=[
   {id:'core',name:'Core game',scenarios:['Escape from Innsmouth','Shattered Bonds','Cycle of Eternity','Rising Tide']},
-  {id:'dlc',name:'Digital (app purchase)',scenarios:['What Lies Within','Dark Reflections','Altered Fates','Turn of a Page']},
+  {id:'dlc',name:'Digital (app purchase)',scenarios:['What Lies Within','Dark Reflections','Altered Fates','Turn of a Page','Mirror of a Man']},
   {id:'rn',name:'Recurring Nightmares',scenarios:['Dearly Departed']},
   {id:'sm',name:'Suppressed Memories',scenarios:['Cult of Sentinel Hill']},
   {id:'btt',name:'Beyond the Threshold',scenarios:['Gates of Silverwood Manor','Vengeful Impulses']},

@@ -35,6 +35,11 @@ const badRev=Object.keys(globalThis.MOM_REVIEWS).filter(k=>!ids.has(k));
 if(badRev.length){console.error('js/reviews.js names scenarios that don\'t exist: '+badRev.join(', '));process.exit(1);}
 for(const [k,v] of Object.entries(globalThis.MOM_REVIEWS))for(const r of v)if(!/^https:\/\//.test(r.url)||!r.summary||!r.source){console.error('incomplete review for '+k);process.exit(1);}
 console.log('reviews: '+Object.keys(globalThis.MOM_REVIEWS).length+' scenarios, all linked');
+require('../js/official-info.js');
+const oi=globalThis.MOM_OFFICIAL_INFO,offIds=new Set(globalThis.MOM.OFFICIAL.map(s=>s.id));
+const badOi=Object.keys(oi).filter(k=>!offIds.has(k)||!oi[k].text||!/^https:\/\//.test(oi[k].url)||!oi[k].source);
+if(badOi.length){console.error('js/official-info.js has bad entries: '+badOi.join(', '));process.exit(1);}
+console.log('official premises: '+Object.keys(oi).length+' of '+offIds.size+', all sourced');
 
 const before=process.env.BEFORE;
 if(before&&!/^0+$/.test(before)){

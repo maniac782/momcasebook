@@ -164,7 +164,7 @@ function scenariosHtml(){
   var D={easy:[0,0.35],medium:[0.35,0.6],hard:[0.6,0.8],vhard:[0.8,2]},L={short:[0,120],mid:[120,180],long:[180,240],xlong:[240,1e9]};
   var list=all.filter(function(s){
     var x=st[s.id];
-    if(sq&&((s.name||'')+' '+(s.author||'')+' '+(s.desc||'')).toLowerCase().indexOf(sq)<0)return false;
+    if(sq&&((s.name||'')+' '+(s.author||'')+' '+(s.desc||'')+' '+((officialInfo(s)||{}).text||'')).toLowerCase().indexOf(sq)<0)return false;
     if(sf.src!=='all'&&s.from!==sf.src)return false;
     if(f==='new'&&x||f==='unbeaten'&&x&&x.pass||f==='beaten'&&!(x&&x.pass))return false;
     if(sf.diff!=='any'){var d=D[sf.diff];if(!s.difficulty||s.difficulty<d[0]||s.difficulty>=d[1])return false;}
@@ -209,6 +209,7 @@ function scenariosHtml(){
     return '<li class="sc"><div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(s.name)+'</a>':esc(s.name))+'</b>'+chip+'</span>'+
       '<span class="note">'+facts+'</span>'+(comm?'<span class="note community">'+comm+'</span>':'')+(yours?'<span class="note">'+yours+'</span>':'')+
       (s.link&&/^https:\/\//.test(s.link)?'<span class="note"><a href="'+esc(s.link)+'" target="_blank" rel="noopener">Details</a></span>':'')+
+      (officialInfo(s)?'<details class="desc"><summary>Premise</summary><p>'+esc(officialInfo(s).text)+'</p><p class="note">Written for this site from <a href="'+esc(officialInfo(s).url)+'" target="_blank" rel="noopener">'+esc(officialInfo(s).source)+'</a>; no spoilers.</p></details>':'')+
       (s.desc?'<details class="desc"><summary>Description'+(s.descLang?' <span class="note">(in '+esc(s.descLang)+')</span>':'')+'</summary><p>'+esc(s.desc).replace(/\n/g,'<br>')+'</p><p class="note">By '+esc(s.author||'the author')+', from the Valkyrie scenario catalogue.</p></details>':'')+
       (rv.length?'<details class="reviews"><summary>'+rv.length+' review'+(rv.length===1?'':'s')+'</summary>'+rv.map(function(r){return '<p><span>'+esc(r.summary)+'</span> <a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.source)+'</a>'+(r.date?' <span class="note">('+esc(r.date)+')</span>':'')+'</p>';}).join('')+'</details>':'')+'</div>'+
       '<div class="row tight">'+(x?'<button class="btn sm again" data-a="again" data-sc="'+esc(s.id)+'" title="Same players, investigators, rules and place as last time">'+ICON_AGAIN+'Play again</button>':'<button class="btn sm" data-a="log" data-sc="'+esc(s.id)+'">Log a play</button>')+
@@ -233,6 +234,8 @@ function scenariosHtml(){
   return h;
 }
 
+// Our own short premise for an official scenario (js/official-info.js), if there is one.
+function officialInfo(s){return s.type==='official'&&(window.MOM_OFFICIAL_INFO||{})[s.id]||null;}
 // Languages in the filter, most scenarios first, with counts.
 function langChoices(){var c={};MOM.VALKYRIE.forEach(function(s){if(s.retired)return;langsOf(s).forEach(function(l){c[l]=(c[l]||0)+1;});});
   return Object.keys(c).sort(function(a,b){return c[b]-c[a]||a.localeCompare(b);}).map(function(l){return [l,l+' ('+c[l]+')'];});}

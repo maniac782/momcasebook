@@ -28,7 +28,7 @@ const g=I.gvizRows({cols:[{label:'Scenario'},{label:'Played'}],rows:[{c:[{v:'Ris
 assert.deepStrictEqual(g,[['Scenario','Played'],['Rising Tide','Y']]);
 assert.strictEqual(I.sheetId('https://docs.google.com/spreadsheets/d/1qOKghDouy9aFbaexfI-Gt7JSxcLmRkDMsIfRJfvD5Ug/edit?usp=sharing'),'1qOKghDouy9aFbaexfI-Gt7JSxcLmRkDMsIfRJfvD5Ug');
 assert.strictEqual(I.normDate('3/14/2025'),'2025-03-14');assert.strictEqual(I.normDate('Date(2025,2,14)'),'2025-03-14');
-assert.strictEqual(MOM.OFFICIAL.length,23);
+assert.strictEqual(MOM.OFFICIAL.length,24);
 // Valkyrie: the built-in list is there, and a sheet row naming one matches it
 assert.ok(MOM.VALKYRIE.length>100,'valkyrie list loaded');
 assert.ok(MOM.VALKYRIE.every(s=>/^v-[a-z0-9-]+$/.test(s.id)&&s.type==='valkyrie'&&s.name),'valkyrie entries well formed');

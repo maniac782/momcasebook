@@ -157,6 +157,11 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('.desc p:has-text("meteorite")').isVisible(),'description shown');
   assert.ok(await p.locator('.desc p.note:has-text("By Bruce")').first().isVisible(),'author credited');
   assert.ok(await p.locator('.credit a[href*="valkyrie-store"]').count(),'catalogue credited');
+  // official scenarios get a premise written for the site, with its source linked
+  await p.fill('#sq','silverwood');await p.waitForFunction(n=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent===n),'Gates of Silverwood Manor');
+  await p.locator('.scs li',{hasText:'Gates of Silverwood Manor'}).locator('.desc summary').click();
+  assert.ok(await p.locator('.scs li',{hasText:'Gates of Silverwood Manor'}).locator('.desc p.note a[href*="fantasyflightgames"]').isVisible(),'premise source linked');
+  await p.screenshot({path:out+'/5i-premise.png'});
   await p.screenshot({path:out+'/5h-description.png'});
   await p.fill('#sq','exotic');await p.waitForFunction(n=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent===n),'Exotic Material');
   await p.locator('.scs li',{hasText:'Exotic Material'}).locator('[data-a=log]').click();
