@@ -164,7 +164,7 @@ function scenariosHtml(){
   var D={easy:[0,0.35],medium:[0.35,0.6],hard:[0.6,0.8],vhard:[0.8,2]},L={short:[0,120],mid:[120,180],long:[180,240],xlong:[240,1e9]};
   var list=all.filter(function(s){
     var x=st[s.id];
-    if(sq&&((s.name||'')+' '+(s.author||'')).toLowerCase().indexOf(sq)<0)return false;
+    if(sq&&((s.name||'')+' '+(s.author||'')+' '+(s.desc||'')).toLowerCase().indexOf(sq)<0)return false;
     if(sf.src!=='all'&&s.from!==sf.src)return false;
     if(f==='new'&&x||f==='unbeaten'&&x&&x.pass||f==='beaten'&&!(x&&x.pass))return false;
     if(sf.diff!=='any'){var d=D[sf.diff];if(!s.difficulty||s.difficulty<d[0]||s.difficulty>=d[1])return false;}
@@ -181,7 +181,7 @@ function scenariosHtml(){
     lang:function(a,b){var x=a.lang||'',y=b.lang||'';if(!x!==!y)return x?-1:1;return x.localeCompare(y)||byName(a,b);},mine:by(function(s){var x=st[s.id];return x?x.last||'0':null;},-1)};
   var sel=function(id,label,val,opts){return '<label class="field"><span class="lbl">'+label+'</span><select class="f" id="'+id+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(val===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>';};
   var offIds=MOM.OFFICIAL.filter(function(s){return own.indexOf(s.product)>=0;}),beat=offIds.filter(function(s){return st[s.id]&&st[s.id].pass;}).length;
-  var h='<div class="filters"><label class="field grow"><span class="lbl">Search</span><input class="f" id="sq" type="search" value="'+esc(ui.sq||'')+'" placeholder="Scenario or author" autocomplete="off"></label>'+
+  var h='<div class="filters"><label class="field grow"><span class="lbl">Search</span><input class="f" id="sq" type="search" value="'+esc(ui.sq||'')+'" placeholder="Name, author or words in the description" autocomplete="off"></label>'+
     sel('sf-src','From',sf.src,[['all','Everything'],['official','Official'],['valkyrie','Valkyrie']])+
     sel('sf-status','Your progress',f,[['all','Any'],['new','Not played'],['unbeaten','Not beaten yet'],['beaten','Beaten']])+
     sel('sf-diff','Difficulty',sf.diff,[['any','Any'],['easy','Easy'],['medium','Medium'],['hard','Hard'],['vhard','Very hard']])+
@@ -209,6 +209,7 @@ function scenariosHtml(){
     return '<li class="sc"><div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(s.name)+'</a>':esc(s.name))+'</b>'+chip+'</span>'+
       '<span class="note">'+facts+'</span>'+(comm?'<span class="note community">'+comm+'</span>':'')+(yours?'<span class="note">'+yours+'</span>':'')+
       (s.link&&/^https:\/\//.test(s.link)?'<span class="note"><a href="'+esc(s.link)+'" target="_blank" rel="noopener">Details</a></span>':'')+
+      (s.desc?'<details class="desc"><summary>Description'+(s.descLang?' <span class="note">(in '+esc(s.descLang)+')</span>':'')+'</summary><p>'+esc(s.desc).replace(/\n/g,'<br>')+'</p><p class="note">By '+esc(s.author||'the author')+', from the Valkyrie scenario catalogue.</p></details>':'')+
       (rv.length?'<details class="reviews"><summary>'+rv.length+' review'+(rv.length===1?'':'s')+'</summary>'+rv.map(function(r){return '<p><span>'+esc(r.summary)+'</span> <a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.source)+'</a>'+(r.date?' <span class="note">('+esc(r.date)+')</span>':'')+'</p>';}).join('')+'</details>':'')+'</div>'+
       '<div class="row tight">'+(x?'<button class="btn sm again" data-a="again" data-sc="'+esc(s.id)+'" title="Same players, investigators, rules and place as last time">'+ICON_AGAIN+'Play again</button>':'<button class="btn sm" data-a="log" data-sc="'+esc(s.id)+'">Log a play</button>')+
 '</div></li>';
@@ -228,6 +229,7 @@ function scenariosHtml(){
   var valBody=sf.sort==='lang'?byLang(val):ul(sf.sort==='box'?val.slice().sort(byName):sorted(val));
   h+=box('official','Official',off,offBody,'beaten '+beat+' of '+offIds.length);
   h+=box('valkyrie','Valkyrie',val,valBody,'ratings from Valkyrie players');
+  if(val.length)h+='<p class="note credit">Valkyrie scenario details, ratings and descriptions come from the <a href="https://github.com/NPBruce/valkyrie-store" target="_blank" rel="noopener">Valkyrie scenario catalogue</a> (Apache License 2.0); descriptions are by each scenario\u2019s author.</p>';
   return h;
 }
 

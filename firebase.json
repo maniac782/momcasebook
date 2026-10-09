@@ -8,6 +8,7 @@
       "CLAUDE.md",
       "test/**",
       "scripts/**",
+      "third_party/**",
       ".github/**",
       "**/.*",
       "**/node_modules/**"

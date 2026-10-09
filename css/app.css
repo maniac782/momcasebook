@@ -238,8 +238,8 @@ select.grp{margin-bottom:8px}
 .pl-loc{color:var(--muted);font-size:14px}
 
 .rating{font-weight:700;color:var(--accent)}
-.reviews{margin-top:4px;font-size:14px}
-.reviews summary{cursor:pointer;color:var(--accent);font-weight:600;width:max-content}
+.reviews,.desc{margin-top:4px;font-size:14px}
+.reviews summary,.desc summary{cursor:pointer;color:var(--accent);font-weight:600;width:max-content}
 .reviews p{margin:6px 0 0;padding-left:10px;border-left:2px solid var(--line)}
 .filters .field{min-width:130px}
 
@@ -269,3 +269,7 @@ details.pbox>.plays{margin:12px 16px 16px}
 /* import: names that need a scenario chosen */
 .unmatched{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:10px}
 .unmatched p{margin:0}
+
+.desc p{margin:6px 0 0;padding-left:10px;border-left:2px solid var(--line);max-width:70ch}
+.desc p.note{border-left:0;padding-left:10px}
+.credit{margin-top:4px}

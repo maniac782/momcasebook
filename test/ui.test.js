@@ -146,17 +146,25 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.screenshot({path:out+'/5g-by-language.png',fullPage:true});
   await p.selectOption('#sf-sort','box');await p.selectOption('#sf-src','all');
   await p.fill('#sq','exotic');
-  await p.waitForFunction(()=>document.querySelectorAll('.scs li').length===1);
+  await p.waitForFunction(n=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent===n),'Exotic Material');
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('text=by Bruce').count(),'author shown');
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('.community:has-text("plays on Valkyrie")').count(),'community numbers shown');
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('.rating').count(),'rating shown');
   await p.screenshot({path:out+'/5b-scenarios-search.png'});
+  // descriptions: searchable, and shown with the author's credit
+  await p.fill('#sq','meteorite');await p.waitForFunction(()=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent==='Exotic Material'));
+  await p.locator('.scs li',{hasText:'Exotic Material'}).locator('.desc summary').click();
+  assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('.desc p:has-text("meteorite")').isVisible(),'description shown');
+  assert.ok(await p.locator('.desc p.note:has-text("By Bruce")').first().isVisible(),'author credited');
+  assert.ok(await p.locator('.credit a[href*="valkyrie-store"]').count(),'catalogue credited');
+  await p.screenshot({path:out+'/5h-description.png'});
+  await p.fill('#sq','exotic');await p.waitForFunction(n=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent===n),'Exotic Material');
   await p.locator('.scs li',{hasText:'Exotic Material'}).locator('[data-a=log]').click();
   assert.strictEqual(await p.inputValue('select[name=sc]'),'v-exotic-material');
   await p.check('.seg.big .fail input',{force:true});await p.click('form[data-form=play] button[type=submit]');
   await p.waitForSelector('.pl-name >> text=Exotic Material');
   assert.ok(await p.locator('details[data-box=p-valkyrie] .play',{hasText:'Exotic Material'}).count(),'in the Valkyrie box');
-  await p.click('[data-t=scenarios]');await p.fill('#sq','exotic');await p.waitForFunction(()=>document.querySelectorAll('.scs li').length===1);
+  await p.click('[data-t=scenarios]');await p.fill('#sq','exotic');await p.waitForFunction(n=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent===n),'Exotic Material');
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('text=You: 1 play').count(),'your record next to the community');
   await p.screenshot({path:out+'/5e-community.png'});
   // played scenarios offer Play again, filled from last time (it was a fail, so attempt 2)
@@ -176,13 +184,13 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(check.all,'every row matches the filters: '+rows.join(', '));assert.ok(check.sorted,'sorted by rating');
   await p.screenshot({path:out+'/5d-list.png',fullPage:true});
   // reviews show on official scenarios that have them
-  await p.click('[data-a=sfclear]');await p.fill('#sq','escape from innsmouth');await p.waitForFunction(()=>document.querySelectorAll('.scs li').length===1);
-  await p.click('.reviews summary');assert.ok(await p.isVisible('.reviews p a'),'review link shown');
+  await p.click('[data-a=sfclear]');await p.fill('#sq','escape from innsmouth');await p.waitForFunction(n=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent===n),'Escape from Innsmouth');
+  await p.locator('.scs li',{hasText:'Escape from Innsmouth'}).locator('.reviews summary').click();assert.ok(await p.locator('.scs li',{hasText:'Escape from Innsmouth'}).locator('.reviews p a').isVisible(),'review link shown');
   await p.screenshot({path:out+'/5f-review.png'});
   await p.fill('#sq','');
   // log a play from the list
-  await p.fill('#sq','a time and place');await p.waitForFunction(()=>document.querySelectorAll('.scs li').length===1);
-  const pick2='A Time and Place';assert.strictEqual(await p.locator('.scs li [data-a=again]').count(),0,'unplayed shows Log a play');await p.click('.scs li [data-a=log]');await p.waitForSelector('form[data-form=play]');
+  await p.fill('#sq','a time and place');await p.waitForFunction(n=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent===n),'A Time and Place');
+  const pick2='A Time and Place';assert.strictEqual(await p.locator('.scs li',{hasText:'A Time and Place'}).locator('[data-a=again]').count(),0,'unplayed shows Log a play');await p.locator('.scs li',{hasText:'A Time and Place'}).locator('[data-a=log]').click();await p.waitForSelector('form[data-form=play]');
   assert.strictEqual(await p.evaluate(()=>document.querySelector('select[name=sc]').selectedOptions[0].textContent.replace(' • new','')),pick2,'Log a play opens with that scenario');
   // location: saved, shown, remembered next time, counted in stats
   await p.fill('input[name=loc]','Gerri\u2019s house');await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
