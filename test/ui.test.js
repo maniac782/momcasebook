@@ -242,6 +242,39 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.waitForFunction(()=>!document.querySelector('[data-a=editperson]')||![...document.querySelectorAll('li')].some(li=>li.querySelector('[data-a=editperson]')&&li.textContent.includes('Sam')));
   assert.ok(await p.locator('li',{hasText:'Sam'}).locator('[data-a=addname]').count(),'Sam is back under not-saved because a past play names him');
   assert.strictEqual(await p.locator('li',{has:p.locator('b:text("Thursday group")')}).locator('.chip').count(),3,'deleted player left the group');
+  // star a scenario: it moves to the Starred box at the top; schedule it; it shows as the next game; calendar; log it
+  await p.click('[data-t=scenarios]');await p.fill('#sq','shattered bonds');
+  await p.waitForFunction(n=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent===n),'Shattered Bonds');
+  await p.locator('.scs li',{hasText:'Shattered Bonds'}).locator('[data-a=star]').first().click();
+  await p.fill('#sq','');await p.waitForSelector('details[data-box=starred]');
+  assert.strictEqual(await p.evaluate(()=>document.querySelector('details[data-box]').dataset.box),'starred','Starred box comes first');
+  assert.ok(await p.locator('details[data-box=starred] .scs li',{hasText:'Shattered Bonds'}).count(),'starred scenario listed');
+  assert.strictEqual(await p.locator('details[data-box=official] .scs li',{hasText:'Shattered Bonds'}).locator('.star.on').count(),1,'filled star in its own box too');
+  await p.locator('details[data-box=starred] .scs li',{hasText:'Shattered Bonds'}).locator('[data-a=plan]').click();
+  const tomorrow=await p.evaluate(()=>{const d=new Date();d.setDate(d.getDate()+1);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);});
+  await p.fill('input[name=pdate]',tomorrow);await p.fill('input[name=ptime]','19:00');await p.fill('input[name=ploc]','Gerri\u2019s house');
+  await p.selectOption('select[name=pgrp]',{label:'Thursday group'});await p.fill('input[name=pnote]','bring snacks');
+  await p.click('.dlg button[type=submit]');await p.waitForSelector('details[data-box=starred] .plan');
+  assert.ok(/7 pm/.test(await p.textContent('details[data-box=starred] .plan')),'plan shows the time');
+  await p.screenshot({path:out+'/5j-starred.png'});
+  // calendar: Google link and .ics
+  await p.locator('details[data-box=starred] [data-a=calmenu]').click();
+  const gurl=await p.getAttribute('.calmenu a','href');assert.ok(gurl.includes('calendar.google.com')&&gurl.includes(tomorrow.replace(/-/g,'')+'T190000'),'Google Calendar link');
+  const [ics]=await Promise.all([p.waitForEvent('download'),p.click('.calmenu [data-ics]')]);
+  const icsTxt=fs.readFileSync(await ics.path(),'utf8');assert.ok(/BEGIN:VEVENT/.test(icsTxt)&&/DTSTART:\d{8}T190000/.test(icsTxt)&&/Shattered Bonds/.test(icsTxt),'ics file');
+  // next game on the Plays tab
+  await p.click('[data-t=plays]');assert.ok(await p.locator('.nextup:has-text("Shattered Bonds")').count(),'next game card');
+  await p.screenshot({path:out+'/3f-next-game.png'});
+  // log it: filled in from the plan; afterwards it's off the starred list
+  await p.locator('.nextup [data-a=logplan]').click();await p.waitForSelector('form[data-form=play]');
+  assert.strictEqual(await p.inputValue('select[name=sc]'),'o-shattered-bonds');
+  assert.strictEqual(await p.inputValue('input[name=loc]'),'Gerri\u2019s house');
+  assert.strictEqual(await p.locator('.seat').count(),3,'seats from the group');
+  await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
+  await p.waitForSelector('.nextup',{state:'detached'});
+  assert.deepStrictEqual(await p.evaluate(()=>__fake.store['users/u-danexamplecom'].starred),{},'taken off the starred list');
+  // that play shouldn't change later counts: remove it
+  await p.evaluate(async()=>{const db=firebase.app().firestore();for(const [k,v] of Object.entries(__fake.store))if(k.includes('/plays/')&&v&&v.scenarioName==='Shattered Bonds')await db.doc(k).delete();});
   // profile picture: choose, crop, save; it shows on the account button; then remove it
   const png=Buffer.from((await p.evaluate(()=>{const c=document.createElement('canvas');c.width=640;c.height=420;const g=c.getContext('2d');
     const gr=g.createLinearGradient(0,0,640,420);gr.addColorStop(0,'#1d5c63');gr.addColorStop(1,'#a3322a');g.fillStyle=gr;g.fillRect(0,0,640,420);
