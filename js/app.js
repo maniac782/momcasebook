@@ -636,7 +636,8 @@ function playForm(p,preset){
   [['official','Official (added)'],['valkyrie','Valkyrie']].forEach(function(g){var l=ex.filter(function(s){return s.type===g[0];});
     if(l.length)opts+='<optgroup label="'+g[1]+'">'+l.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===scId?' selected':'')+'>'+esc(s.name)+'</option>';}).join('')+'</optgroup>';});
   if(scId&&!scenById(scId)&&p.scenarioName)opts+='<option value="" selected disabled>'+esc(p.scenarioName)+' (not in the list: choose one)</option>';
-  var seat=function(s){return '<div class="seat"><input class="f combo" name="pp" data-suggest="dl-pl" autocomplete="off" placeholder="Player" maxlength="40" value="'+esc(s.player||'')+'" aria-label="Player">'+
+  var seat=function(s){return '<div class="seat"><span class="pp-wrap"><input class="f combo" name="pp" data-suggest="dl-pl" autocomplete="off" placeholder="Player" maxlength="40" value="'+esc(s.player||'')+'" aria-label="Player">'+
+    '<select class="pp-pick" tabindex="-1" aria-label="Choose a player"><option value="">Choose a player</option></select></span>'+
     invSelect(s.investigator||'')+
     '<button class="x" type="button" data-f="rmseat" aria-label="Remove this seat">×</button></div>';};
   var ppl=people.map(function(x){return x.name;}).sort();names('player').forEach(function(n){if(!personByName(n)&&ppl.indexOf(n)<0)ppl.push(n);});if(myName()&&!ppl.some(function(n){return lc(n)===lc(myName());}))ppl.unshift(myName());
@@ -685,7 +686,7 @@ function openPlay(p,preset){
   });
   f.addEventListener('click',function(e){
     var b=e.target.closest('[data-f]');if(!b)return;var k=b.getAttribute('data-f');
-    if(k==='addseat'){var box=f.querySelector('.seats');if(box.children.length>=8)return;box.insertAdjacentHTML('beforeend',seatHtml);var s=box.lastElementChild;s.querySelectorAll('input').forEach(function(i){i.value='';});s.querySelector('input').focus();}
+    if(k==='addseat'){var box=f.querySelector('.seats');if(box.children.length>=8)return;box.insertAdjacentHTML('beforeend',seatHtml);var s=box.lastElementChild;s.querySelectorAll('input').forEach(function(i){i.value='';});if(!matchMedia('(pointer:coarse)').matches)s.querySelector('input').focus();}
     else if(k==='rmseat'){var all=f.querySelectorAll('.seat');if(all.length>1)b.closest('.seat').remove();else b.closest('.seat').querySelectorAll('input').forEach(function(i){i.value='';});}
     else if(k==='del'){
       if(b.dataset.sure){b.disabled=true;fb.db.doc('users/'+me.uid+'/plays/'+f.dataset.id).delete().then(function(){d.close();toast('Play deleted.');}).catch(function(e2){b.disabled=false;showErr(friendly(e2));});}

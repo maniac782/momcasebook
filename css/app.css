@@ -71,6 +71,11 @@ select.f:hover{border-color:var(--muted)}
 input.f.combo{padding-right:38px;background-image:var(--chev);background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
 input.f.combo::-webkit-calendar-picker-indicator{display:none!important;opacity:0}
 .dd-new .dd-txt{font-style:italic}
+.pp-wrap{position:relative;display:block;min-width:0}
+.pp-pick{display:none}
+/* phones and tablets: the device's own picker, invisible over the box (js/shared.js); "Someone new…" uncovers it for typing */
+@media (pointer:coarse){.pp-pick{display:block;position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;-webkit-appearance:none;appearance:none;cursor:pointer}
+  .pp-wrap.typing .pp-pick{display:none}}
 select.f::-ms-expand{display:none}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:8px 14px;border:1px solid var(--line);border-radius:6px;
   background:var(--surface);color:var(--ink);font-weight:600;font-size:15px;cursor:pointer;text-decoration:none;white-space:nowrap}

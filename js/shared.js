@@ -296,17 +296,16 @@ window.accountMenu=function(user,opts){
 /* ---------- Pick-or-type boxes ----------
    A text box with data-suggest="<datalist id>" (the player names when logging a play) shows a list of the known names
    under it as soon as it's tapped or typed in, narrowed as you type; pick one, or just keep typing a new name. It looks
-   like the dropdown menus above. Names already used elsewhere in the same form (another seat) are left out. Works the
-   same on phones, where the browser's own datalist suggestions are easy to miss. */
+   like the dropdown menus above. The same name can be picked for more than one seat (one person, two investigators).
+   On phones and tablets the box is covered by a real <select class="pp-pick"> instead, so a tap opens the device's own
+   picker with the known names and "Someone new…", which uncovers the box for typing. */
 (function(){
   var cur=null;   // {inp, wrap, list, items, active}
   var norm=function(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();};
   var isCombo=function(t){return t&&t.tagName==='INPUT'&&t.hasAttribute('data-suggest');};
   function names(inp){
     var dl=document.getElementById(inp.getAttribute('data-suggest'));if(!dl)return [];
-    var form=inp.form||document,used={};
-    form.querySelectorAll('input[data-suggest="'+inp.getAttribute('data-suggest')+'"]').forEach(function(o){if(o!==inp&&o.value.trim())used[norm(o.value)]=1;});
-    return Array.prototype.map.call(dl.options,function(o){return o.value;}).filter(function(v){return v&&!used[norm(v)];});
+    return Array.prototype.map.call(dl.options,function(o){return o.value;}).filter(Boolean);
   }
   function place(){
     if(!cur)return;var r=cur.inp.getBoundingClientRect(),vv=window.visualViewport,vh=vv?vv.height+vv.offsetTop:innerHeight,vw=innerWidth,p=cur.panel;
@@ -334,7 +333,9 @@ window.accountMenu=function(user,opts){
     setActive(-1);
     place();
   }
+  var touch=function(){try{return matchMedia('(pointer:coarse)').matches;}catch(e){return false;}};
   function open(inp){
+    if(touch())return;
     if(cur&&cur.inp===inp){fill();return;}close();
     if(!names(inp).length&&!inp.value.trim())return;
     var wrap=document.createElement('div'),id='cb'+Date.now().toString(36);wrap.className='dd-wrap combo';
@@ -367,6 +368,26 @@ window.accountMenu=function(user,opts){
     else if(k==='Escape'&&cur){e.preventDefault();e.stopPropagation();close();}
     else if(k==='Tab')close();
   },true);
+  // phones: the device's own picker over the box
+  var NEW='__someone_new__';
+  function pickerOptions(sel){
+    var inp=sel.parentNode.querySelector('input[data-suggest]');if(!inp)return;var v=inp.value.trim(),list=names(inp),k=norm(v),h='';
+    var o=function(val,txt,on,dis){return '<option value="'+esc(val)+'"'+(on?' selected':'')+(dis?' disabled':'')+'>'+esc(txt)+'</option>';};
+    h+=v?'':o('','Choose a player',true,true);
+    if(v&&!list.some(function(n){return norm(n)===k;}))h+=o(v,v,true);
+    list.forEach(function(n){h+=o(n,n,norm(n)===k);});
+    h+=o(NEW,'Someone new…');sel.innerHTML=h;
+  }
+  document.addEventListener('touchstart',function(e){var t=e.target;if(t&&t.classList&&t.classList.contains('pp-pick'))pickerOptions(t);},{capture:true,passive:true});
+  document.addEventListener('focusin',function(e){var t=e.target;if(t&&t.classList&&t.classList.contains('pp-pick'))pickerOptions(t);});
+  document.addEventListener('change',function(e){
+    var sel=e.target;if(!sel.classList||!sel.classList.contains('pp-pick'))return;e.stopPropagation();
+    var wrap=sel.parentNode,inp=wrap.querySelector('input[data-suggest]');if(!inp)return;
+    if(sel.value===NEW){wrap.classList.add('typing');if(names(inp).some(function(n){return norm(n)===norm(inp.value);}))inp.value='';inp.focus();return;}
+    inp.value=sel.value;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
+  },true);
+  // a new name typed in: cover the box with the picker again (which then lists it)
+  document.addEventListener('focusout',function(e){var t=e.target,w=t&&t.parentNode;if(t.tagName==='INPUT'&&w&&w.classList&&w.classList.contains('pp-wrap')&&t.value.trim())w.classList.remove('typing');});
   window.addEventListener('resize',function(){if(cur)place();});
   if(window.visualViewport)visualViewport.addEventListener('resize',function(){if(cur)place();});
   document.addEventListener('scroll',function(e){if(cur&&!(e.target.nodeType===1&&cur.panel.contains(e.target)))place();},true);

@@ -126,7 +126,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.selectOption('#fpl','Gerri');assert.strictEqual(await p.locator('.plays > li').count(),2);
   await p.click('[data-a=clearf]');
   // players: pick from known players or type a new one; a known player brings their usual investigator
-  await p.click('.bar [data-a=log]');await p.waitForSelector('.dlg');
+  await p.click('.bar [data-a=log]');await p.waitForSelector('.dlg');await p.waitForTimeout(150);   // the form moves focus to its first field just after opening
   await p.locator('.seat [name=pp]').first().fill('');await p.locator('.seat [name=pi]').first().selectOption('');
   await p.locator('.seat [name=pp]').first().click();await p.waitForSelector('.dd-wrap.combo .dd-opt');
   assert.ok(await p.locator('.dd-wrap.combo .dd-opt:has-text("Gerri")').count(),'known players listed');
@@ -137,7 +137,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.locator('.seat [name=pp]').first().inputValue(),'Gerri','picked a known player');
   assert.ok((await p.locator('.seat [name=pi]').first().inputValue())!=='','their usual investigator filled in');
   await p.click('[data-f=addseat]');await p.waitForTimeout(150);
-  assert.strictEqual(await p.locator('.dd-wrap.combo .dd-opt:has-text("Gerri")').count(),0,'a player already in this play isn’t offered again');
+  assert.ok(await p.locator('.dd-wrap.combo .dd-opt:has-text("Gerri")').count(),'a player already in this play can be picked again (two investigators)');
   await p.keyboard.type('Robin Q');await p.waitForTimeout(100);
   assert.ok(await p.locator('.dd-wrap.combo .dd-new:has-text("Robin Q")').count(),'a new name is offered as new');
   await p.keyboard.press('Escape');assert.strictEqual(await p.locator('.dlg').count(),1,'Escape closes only the list');
@@ -441,6 +441,21 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   const sw=await q.evaluate(()=>document.documentElement.scrollWidth);assert.ok(sw<=390,'no sideways scroll on a phone ('+sw+')');
   await q.screenshot({path:out+'/9-phone-plays-dark.png'});
   await q.click('.bar [data-a=log]');await q.waitForSelector('.dlg');await q.screenshot({path:out+'/10-phone-form-dark.png'});
+  // player boxes on a phone: the phone's own picker with the known players and "Someone new…"
+  assert.ok(await q.locator('.seat .pp-pick').first().isVisible(),'phone picker over the player box');
+  await q.locator('.seat .pp-pick').first().focus();
+  const opts=await q.locator('.seat .pp-pick').first().locator('option').allTextContents();
+  assert.ok(opts.includes('Dan')&&opts.includes('Someone new…'),'known players and Someone new in the phone picker: '+opts.join('|'));
+  assert.strictEqual(await q.locator('.dd-wrap.combo').count(),0,'no custom list on a phone');
+  await q.locator('.seat .pp-pick').first().selectOption('__someone_new__');
+  assert.ok(await q.locator('.seat .pp-wrap.typing').count(),'Someone new uncovers the box for typing');
+  assert.strictEqual(await q.locator('.seat [name=pp]').first().inputValue(),'','cleared for a new name');
+  await q.locator('.seat [name=pp]').first().fill('Robin');await q.locator('.dlg h2').first().click();
+  assert.strictEqual(await q.locator('.seat .pp-wrap.typing').count(),0,'covered again once a name is typed');
+  await q.locator('.seat .pp-pick').first().focus();
+  assert.strictEqual(await q.locator('.seat .pp-pick').first().inputValue(),'Robin','the typed name is listed and chosen');
+  await q.locator('.seat .pp-pick').first().selectOption('Dan');
+  assert.strictEqual(await q.locator('.seat [name=pp]').first().inputValue(),'Dan','picked on the phone');
   await q.tap('.dlg select[name=sc]');await q.waitForTimeout(300);
   assert.strictEqual(await q.locator('.dd-wrap').count(),0,'a tap on a phone gets the phone\'s own picker, not ours');
   await q.keyboard.press('Escape');await q.waitForTimeout(100);if(await q.locator('.dlg').count())await q.keyboard.press('Escape');await q.click('[data-t=stats]');await q.screenshot({path:out+'/11-phone-stats-dark.png',fullPage:true});
