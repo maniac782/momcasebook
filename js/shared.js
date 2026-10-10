@@ -293,4 +293,82 @@ window.accountMenu=function(user,opts){
   document.addEventListener('mousedown',function(e){if(cur&&!cur.wrap.contains(e.target)&&e.target!==cur.sel)close(false);},true);
   window.closeDropdown=function(){close(false);};
 })();
+/* ---------- Pick-or-type boxes ----------
+   A text box with data-suggest="<datalist id>" (the player names when logging a play) shows a list of the known names
+   under it as soon as it's tapped or typed in, narrowed as you type; pick one, or just keep typing a new name. It looks
+   like the dropdown menus above. Names already used elsewhere in the same form (another seat) are left out. Works the
+   same on phones, where the browser's own datalist suggestions are easy to miss. */
+(function(){
+  var cur=null;   // {inp, wrap, list, items, active}
+  var norm=function(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();};
+  var isCombo=function(t){return t&&t.tagName==='INPUT'&&t.hasAttribute('data-suggest');};
+  function names(inp){
+    var dl=document.getElementById(inp.getAttribute('data-suggest'));if(!dl)return [];
+    var form=inp.form||document,used={};
+    form.querySelectorAll('input[data-suggest="'+inp.getAttribute('data-suggest')+'"]').forEach(function(o){if(o!==inp&&o.value.trim())used[norm(o.value)]=1;});
+    return Array.prototype.map.call(dl.options,function(o){return o.value;}).filter(function(v){return v&&!used[norm(v)];});
+  }
+  function place(){
+    if(!cur)return;var r=cur.inp.getBoundingClientRect(),vv=window.visualViewport,vh=vv?vv.height+vv.offsetTop:innerHeight,vw=innerWidth,p=cur.panel;
+    if(r.bottom<0||r.top>vh){close();return;}
+    var w=Math.min(Math.max(r.width,220),vw-16),left=Math.min(Math.max(8,r.left),vw-w-8),below=vh-r.bottom-10,above=r.top-10,up=below<160&&above>below;
+    p.style.width=w+'px';p.style.left=left+'px';p.style.maxHeight=Math.max(120,Math.min(300,up?above:below))+'px';
+    if(up){p.style.top='';p.style.bottom=(innerHeight-r.top+4)+'px';p.classList.add('up');}else{p.style.bottom='';p.style.top=(r.bottom+4)+'px';p.classList.remove('up');}
+  }
+  function setActive(i){if(!cur)return;cur.items.forEach(function(x,k){x.el.classList.toggle('on',k===i);});cur.active=i;
+    if(i>=0&&cur.items[i]){cur.items[i].el.scrollIntoView({block:'nearest'});cur.inp.setAttribute('aria-activedescendant',cur.items[i].el.id);}else cur.inp.removeAttribute('aria-activedescendant');}
+  function fill(){
+    if(!cur)return;var q=norm(cur.inp.value),all=names(cur.inp),list=cur.list,id=cur.id;
+    var hits=all.filter(function(n){return !q||norm(n).indexOf(q)>=0;});
+    // names starting with what's typed come first
+    if(q)hits.sort(function(a,b){return (norm(a).indexOf(q)===0?0:1)-(norm(b).indexOf(q)===0?0:1);});
+    var exact=all.some(function(n){return norm(n)===q;})||hits.some(function(n){return norm(n)===q;});
+    list.innerHTML='';cur.items=[];
+    var add=function(v,i,isNew){var el=document.createElement('div');el.className='dd-opt'+(isNew?' dd-new':'');el.id=id+'-'+i;el.setAttribute('role','option');
+      el.innerHTML='<span class="dd-tick" aria-hidden="true"></span><span class="dd-txt"></span>'+(isNew?'<span class="dd-tag">new player</span>':'');el.querySelector('.dd-txt').textContent=v;
+      list.appendChild(el);cur.items.push({el:el,v:v});};
+    hits.slice(0,60).forEach(function(n,i){add(n,i);});
+    if(q&&!exact){if(hits.length){var sep=document.createElement('div');sep.className='dd-sep';list.appendChild(sep);}add(cur.inp.value.trim(),'new',true);}
+    // nothing to choose: no names, or just the one already typed in full
+    if(!cur.items.length||(cur.items.length===1&&norm(cur.items[0].v)===q&&!cur.items[0].el.classList.contains('dd-new'))){close();return;}
+    setActive(-1);
+    place();
+  }
+  function open(inp){
+    if(cur&&cur.inp===inp){fill();return;}close();
+    if(!names(inp).length&&!inp.value.trim())return;
+    var wrap=document.createElement('div'),id='cb'+Date.now().toString(36);wrap.className='dd-wrap combo';
+    wrap.innerHTML='<div class="dd" role="presentation"><div class="dd-list" role="listbox" id="'+id+'" aria-label="Known players"></div></div>';
+    document.body.appendChild(wrap);
+    cur={inp:inp,wrap:wrap,panel:wrap.querySelector('.dd'),list:wrap.querySelector('.dd-list'),items:[],active:-1,id:id};
+    inp.setAttribute('aria-expanded','true');inp.setAttribute('aria-controls',id);
+    // keep the typing focus in the box while picking
+    wrap.addEventListener('mousedown',function(e){e.preventDefault();});
+    wrap.addEventListener('click',function(e){var el=e.target.closest('.dd-opt');if(!el||!cur)return;var x=cur.items.filter(function(y){return y.el===el;})[0];if(x)pick(x.v,true);});
+    wrap.addEventListener('mousemove',function(e){var el=e.target.closest('.dd-opt');if(!el||!cur)return;var i=-1;cur.items.some(function(y,k){if(y.el===el){i=k;return true;}});if(i!==cur.active)setActive(i);});
+    fill();
+  }
+  function close(){if(!cur)return;var c=cur;cur=null;c.inp.setAttribute('aria-expanded','false');c.inp.removeAttribute('aria-activedescendant');c.wrap.remove();}
+  function pick(v,byTap){
+    if(!cur)return;var inp=cur.inp;inp.value=v;close();
+    inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
+    // after a tap on a phone, put the keyboard away
+    if(byTap&&window.matchMedia&&matchMedia('(pointer:coarse)').matches)inp.blur();
+  }
+  document.addEventListener('focusin',function(e){if(isCombo(e.target)){e.target.removeAttribute('list');e.target.setAttribute('autocomplete','off');e.target.setAttribute('role','combobox');e.target.setAttribute('aria-autocomplete','list');open(e.target);}});
+  document.addEventListener('focusout',function(e){if(cur&&e.target===cur.inp)setTimeout(function(){if(cur&&document.activeElement!==cur.inp)close();},120);});
+  document.addEventListener('input',function(e){if(isCombo(e.target)&&e.isTrusted!==false){if(cur&&cur.inp===e.target)fill();else open(e.target);}});
+  document.addEventListener('click',function(e){if(isCombo(e.target)&&!cur)open(e.target);});
+  document.addEventListener('keydown',function(e){
+    if(!isCombo(e.target))return;var k=e.key;
+    if(k==='ArrowDown'||k==='ArrowUp'){e.preventDefault();if(!cur){open(e.target);return;}var n=cur.items.length;if(!n)return;setActive(k==='ArrowDown'?(cur.active+1)%n:(cur.active<=0?n-1:cur.active-1));}
+    // Enter takes the highlighted name, or just keeps what's typed and closes the list
+    else if(k==='Enter'&&cur){e.preventDefault();if(cur.active>=0)pick(cur.items[cur.active].v);else close();}
+    else if(k==='Escape'&&cur){e.preventDefault();e.stopPropagation();close();}
+    else if(k==='Tab')close();
+  },true);
+  window.addEventListener('resize',function(){if(cur)place();});
+  if(window.visualViewport)visualViewport.addEventListener('resize',function(){if(cur)place();});
+  document.addEventListener('scroll',function(e){if(cur&&!(e.target.nodeType===1&&cur.panel.contains(e.target)))place();},true);
+})();
 })();

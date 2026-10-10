@@ -100,8 +100,8 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('.bar [data-a=log]');
   assert.strictEqual(await p.locator('select[name=sc] option[value=__new]').count(),0,'no way to add a custom scenario');await p.selectOption('select[name=sc]','v-the-sea-devils');
   await p.check('.seg.big .pass input',{force:true});
-  await p.fill('.seat [name=pp]','Dan');await p.selectOption('.seat [name=pi]','Agatha Crane');
-  await p.click('[data-f=addseat]');await p.locator('.seat').nth(1).locator('[name=pp]').fill('Gerri');await p.locator('.seat').nth(1).locator('[name=pi]').selectOption('Ursula Downs');
+  await p.fill('.seat [name=pp]','Dan');if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');await p.selectOption('.seat [name=pi]','Agatha Crane');
+  await p.click('[data-f=addseat]');await p.locator('.seat').nth(1).locator('[name=pp]').fill('Gerri');if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');await p.locator('.seat').nth(1).locator('[name=pi]').selectOption('Ursula Downs');
   await p.fill('textarea[name=notes]','Escaped the lighthouse with one turn to spare.');
   await p.screenshot({path:out+'/4-log-form.png',fullPage:true});
   await p.click('form[data-form=play] button[type=submit]');
@@ -119,12 +119,30 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('details[data-box=p-official] > summary');
   // edit an imported play to add players
   await p.locator('.play',{hasText:'10:50 to Arkham'}).click();
-  await p.locator('.seat').nth(0).locator('[name=pp]').fill('Gerri');
+  await p.locator('.seat').nth(0).locator('[name=pp]').fill('Gerri');if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');
   await p.click('form[data-form=play] button[type=submit]');await p.waitForTimeout(200);
   // filters
   await p.selectOption('#fres','pass');assert.strictEqual(await p.locator('.plays > li').count(),6);
   await p.selectOption('#fpl','Gerri');assert.strictEqual(await p.locator('.plays > li').count(),2);
   await p.click('[data-a=clearf]');
+  // players: pick from known players or type a new one; a known player brings their usual investigator
+  await p.click('.bar [data-a=log]');await p.waitForSelector('.dlg');
+  await p.locator('.seat [name=pp]').first().fill('');await p.locator('.seat [name=pi]').first().selectOption('');
+  await p.locator('.seat [name=pp]').first().click();await p.waitForSelector('.dd-wrap.combo .dd-opt');
+  assert.ok(await p.locator('.dd-wrap.combo .dd-opt:has-text("Gerri")').count(),'known players listed');
+  await p.keyboard.type('ger');await p.waitForTimeout(100);
+  assert.ok(/Gerri/.test(await p.locator('.dd-wrap.combo .dd-opt').first().textContent()),'typing narrows to matching players');
+  await p.screenshot({path:out+'/4b-player-combo.png'});
+  await p.click('.dd-wrap.combo .dd-opt:has-text("Gerri")');await p.waitForSelector('.dd-wrap.combo',{state:'detached'});
+  assert.strictEqual(await p.locator('.seat [name=pp]').first().inputValue(),'Gerri','picked a known player');
+  assert.ok((await p.locator('.seat [name=pi]').first().inputValue())!=='','their usual investigator filled in');
+  await p.click('[data-f=addseat]');await p.waitForTimeout(150);
+  assert.strictEqual(await p.locator('.dd-wrap.combo .dd-opt:has-text("Gerri")').count(),0,'a player already in this play isn’t offered again');
+  await p.keyboard.type('Robin Q');await p.waitForTimeout(100);
+  assert.ok(await p.locator('.dd-wrap.combo .dd-new:has-text("Robin Q")').count(),'a new name is offered as new');
+  await p.keyboard.press('Escape');assert.strictEqual(await p.locator('.dlg').count(),1,'Escape closes only the list');
+  assert.strictEqual(await p.locator('.seat').nth(1).locator('[name=pp]').inputValue(),'Robin Q','typed name kept');
+  await p.keyboard.press('Escape');await p.waitForSelector('.dlg',{state:'detached'});
   // our own dropdown menu: mouse, keyboard, search on long lists, and Escape only closes the menu inside a dialog
   await p.click('#fres');await p.waitForSelector('.dd .dd-opt.sel');
   assert.strictEqual((await p.textContent('.dd .dd-opt.sel')).trim(),'Any','current choice ticked');
@@ -359,8 +377,8 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(/usually (Carson Sinclair|Agatha Crane)/.test(danLine),'usual investigator: '+danLine);
   // the form saves solo by people: one person, two characters
   await p.click('.bar [data-a=log]');await p.selectOption('select[name=sc]','o-rising-tide');
-  await p.locator('.seat [name=pp]').first().fill('Dan');await p.locator('.seat [name=pi]').first().selectOption('Agatha Crane');
-  await p.click('[data-f=addseat]');await p.locator('.seat').nth(1).locator('[name=pp]').fill('Dan');await p.locator('.seat').nth(1).locator('[name=pi]').selectOption('Preston Fairmont');
+  await p.locator('.seat [name=pp]').first().fill('Dan');if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');await p.locator('.seat [name=pi]').first().selectOption('Agatha Crane');
+  await p.click('[data-f=addseat]');await p.locator('.seat').nth(1).locator('[name=pp]').fill('Dan');if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');await p.locator('.seat').nth(1).locator('[name=pi]').selectOption('Preston Fairmont');
   await p.check('.seg.big .fail input',{force:true});await p.fill('textarea[name=notes]','solo check');await p.click('form[data-form=play] button[type=submit]');await p.waitForTimeout(200);
   assert.strictEqual(await p.evaluate(()=>Object.values(__fake.store).find(v=>v&&v.notes==='solo check').solo),true,'saved as solo');
   // remove these so later counts hold
@@ -399,7 +417,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
    // no account needed
    await w.click('[data-a=trylocal]');await w.waitForSelector('.localban');
    assert.ok(await w.locator('text=Saved in this browser only').count());
-   await w.click('.bar [data-a=log]');await w.selectOption('select[name=sc]','o-rising-tide');await w.fill('.seat [name=pp]','Robin');
+   await w.click('.bar [data-a=log]');await w.selectOption('select[name=sc]','o-rising-tide');await w.fill('.seat [name=pp]','Robin');if(await w.locator('.dd-wrap.combo').count())await w.keyboard.press('Escape');
    await w.selectOption('.seat [name=pi]','Agatha Crane');await w.click('.seg.big .pass');await w.click('form[data-form=play] button[type=submit]');
    await w.waitForSelector('.plays > li');await w.reload();await w.waitForSelector('.plays > li');
    assert.strictEqual(await w.locator('.plays > li').count(),1,'browser casebook survives a reload');

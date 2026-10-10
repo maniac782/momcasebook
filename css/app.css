@@ -67,6 +67,10 @@ textarea.f{resize:vertical;min-height:90px;height:auto}
 select.f{-webkit-appearance:none;appearance:none;padding-right:38px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;cursor:pointer;
   background-image:var(--chev);background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
 select.f:hover{border-color:var(--muted)}
+/* pick-or-type boxes (players when logging a play): the same chevron as a dropdown, and the same menu */
+input.f.combo{padding-right:38px;background-image:var(--chev);background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
+input.f.combo::-webkit-calendar-picker-indicator{display:none!important;opacity:0}
+.dd-new .dd-txt{font-style:italic}
 select.f::-ms-expand{display:none}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:8px 14px;border:1px solid var(--line);border-radius:6px;
   background:var(--surface);color:var(--ink);font-weight:600;font-size:15px;cursor:pointer;text-decoration:none;white-space:nowrap}

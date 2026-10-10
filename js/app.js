@@ -636,7 +636,7 @@ function playForm(p,preset){
   [['official','Official (added)'],['valkyrie','Valkyrie']].forEach(function(g){var l=ex.filter(function(s){return s.type===g[0];});
     if(l.length)opts+='<optgroup label="'+g[1]+'">'+l.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===scId?' selected':'')+'>'+esc(s.name)+'</option>';}).join('')+'</optgroup>';});
   if(scId&&!scenById(scId)&&p.scenarioName)opts+='<option value="" selected disabled>'+esc(p.scenarioName)+' (not in the list: choose one)</option>';
-  var seat=function(s){return '<div class="seat"><input class="f" name="pp" list="dl-pl" placeholder="Player" maxlength="40" value="'+esc(s.player||'')+'" aria-label="Player">'+
+  var seat=function(s){return '<div class="seat"><input class="f combo" name="pp" data-suggest="dl-pl" autocomplete="off" placeholder="Player" maxlength="40" value="'+esc(s.player||'')+'" aria-label="Player">'+
     invSelect(s.investigator||'')+
     '<button class="x" type="button" data-f="rmseat" aria-label="Remove this seat">×</button></div>';};
   var ppl=people.map(function(x){return x.name;}).sort();names('player').forEach(function(n){if(!personByName(n)&&ppl.indexOf(n)<0)ppl.push(n);});if(myName()&&!ppl.some(function(n){return lc(n)===lc(myName());}))ppl.unshift(myName());
@@ -671,6 +671,9 @@ function playAgain(scId){
 function openPlay(p,preset){
   var d=openDialog(playForm(p,preset),p&&p.id?'Edit play':'Log a play'),f=d.querySelector('form'),err=f.querySelector('.err');
   var seatHtml=f.querySelector('.seat').outerHTML;
+  // picking a known player fills in the investigator they usually take, if that seat has none yet
+  f.addEventListener('change',function(e){var t=e.target;if(t.name!=='pp'||!t.value.trim())return;var s=t.closest('.seat'),iv=s&&s.querySelector('[name=pi]');
+    if(!iv||iv.value)return;var fav=personStats(t.value).fav;if(fav&&MOM.isInvestigator(fav)){iv.value=fav;}});
   // picking a group fills the seats with its members, keeping any investigator already chosen for someone
   if(f.grp)f.grp.addEventListener('change',function(){
     var g=groups.filter(function(y){return y.id===f.grp.value;})[0];if(!g)return;
