@@ -44,6 +44,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.waitForSelector('.plays');
   assert.strictEqual(await p.locator('.plays > li').count(),10,'10 plays imported');
   await p.screenshot({path:out+'/3-plays.png',fullPage:true});
+  assert.strictEqual(await p.locator('.play:has-text("No date")').count(),0,'no "No date" on cards');
   assert.strictEqual(await p.locator('.sec.notice').count(),0,'a fresh import has only official investigators');
   assert.ok(await p.locator('.pl-party:has-text("\\"Ashcan\\" Pete")').count(),'imported Ashcan Pete is the official name');
   // plays saved before this version could hold anything: simulate that, then fix it from the banner
@@ -205,7 +206,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.evaluate(()=>document.querySelector('select[name=sc]').selectedOptions[0].textContent.replace(' • new','')),pick2,'Log a play opens with that scenario');
   // location: saved, shown, remembered next time, counted in stats
   await p.fill('input[name=loc]','Gerri\u2019s house');await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
-  await p.waitForSelector('.pl-loc:has-text("at Gerri")');
+  await p.waitForSelector('.pl-meta:has-text("at Gerri")');
   await p.click('.bar [data-a=log]');assert.strictEqual(await p.inputValue('input[name=loc]'),'Gerri\u2019s house','last place remembered');await p.keyboard.press('Escape');
   await p.click('[data-t=stats]');assert.ok(await p.locator('h2:text-is("Where you played")').count(),'location stats');
   // switching the list off in Settings keeps played ones only

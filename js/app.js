@@ -124,11 +124,14 @@ function playsHtml(){
   h+='<p class="note count">'+list.length+' of '+plays.length+' play'+(plays.length===1?'':'s')+(any?' · <a href="#" data-a="clearf">Clear filters</a>':'')+'</p>';
   if(!list.length)return h+'<p class="note">Nothing matches.</p>';
   // one collapsible box each for Official and Valkyrie scenarios (plus any still needing a scenario), like the Scenarios tab
+  // date and place on one quiet line; left out entirely when the play has neither
+  var plMeta=function(p){var bits=[p.date?esc(fmtDate(p.date)):'',p.location?(p.date?'at ':'At ')+esc(p.location):''].filter(Boolean);
+    return bits.length?'<span class="pl-meta">'+bits.join(' \u00b7 ')+'</span>':'';};
   var prow=function(p){
     var t='';  // the box already says Official or Valkyrie
     // the result sits at the right, centred on the card, so results line up down the list
     return '<li><button class="play" data-a="edit" data-id="'+esc(p.id)+'"><span class="pl-main">'+
-      '<span class="pl-top"><span class="pl-date num">'+esc(fmtDate(p.date))+'</span>'+(p.location?'<span class="pl-loc">at '+esc(p.location)+'</span>':'')+t+'</span>'+
+      plMeta(p)+
       '<span class="pl-name">'+esc(p.scenarioName)+'</span>'+
       (partyText(p)?'<span class="pl-party">'+partyText(p)+'</span>':'<span class="pl-party none">Players not recorded</span>')+
       (p.rules&&p.rules!=='Normal rules'?'<span class="pl-rules">'+esc(p.rules)+'</span>':'')+
