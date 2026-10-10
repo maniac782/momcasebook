@@ -45,7 +45,7 @@ const before=process.env.BEFORE;
 if(before&&!/^0+$/.test(before)){
   let changed;try{changed=execSync('git diff --name-only '+before+' HEAD',{cwd:root}).toString().trim().split('\n').filter(Boolean);}
   catch(e){console.log('version: previous commit not available, skipped');process.exit(0);}
-  const published=changed.filter(f=>!/^(README\.md|CLAUDE\.md|test\/|scripts\/|third_party\/|\.github\/|\.gitignore|\.firebaserc)/.test(f));
+  const published=changed.filter(f=>!/^(README\.md|CLAUDE\.md|test\/|scripts\/|docs\/|art\/|third_party\/|\.github\/|\.gitignore|\.firebaserc)/.test(f));
   if(published.length){
     const v=s=>+((s.match(/APP_VERSION\s*=\s*'v(\d+)'/)||[])[1]||0);
     let old='';try{old=execSync('git show '+before+':js/version.js',{cwd:root}).toString();}catch(e){}

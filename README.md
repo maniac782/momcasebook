@@ -1,8 +1,14 @@
 # Mansions of Madness Casebook
 
-A play log for Mansions of Madness (Second Edition), official app scenarios and Valkyrie ones alike: who played, which investigators they took, pass or fail, attempts, the rules you used, and notes. Sign in with Google or an email, and it works on phones and computers, installs like an app and keeps working offline.
+A play log for Mansions of Madness (Second Edition), at **https://momcasebook.web.app**.
 
-It's a free, unofficial fan project, not affiliated with or endorsed by Fantasy Flight Games.
+Log every game, official app scenarios and Valkyrie ones alike: who played, which investigators they took, whether you made it out, which attempt it was, the rules you used and what happened. Find your next scenario by difficulty, length and rating, star the ones you want to play and schedule the night. Sign in with Google or an email, or try it first with no account: the casebook is saved in your browser and moves to your account when you sign up. It works on phones and computers, installs like an app and keeps working offline.
+
+It's a free, unofficial fan project, not affiliated with or endorsed by Fantasy Flight Games. You need Mansions of Madness Second Edition and its free companion app to play.
+
+This repo is the code behind the live site. It isn't packaged for running your own copy; to use it, just use the site.
+
+![The Plays tab: the next scheduled game, filters, and plays in the Official box with who played which investigator, pass or fail and notes](docs/screenshots/plays.png)
 
 ## What it does
 
@@ -23,6 +29,46 @@ It's a free, unofficial fan project, not affiliated with or endorsed by Fantasy 
 - **Export.** CSV (opens in any spreadsheet, and imports back) and a JSON backup. Delete all plays, or the whole account, from Settings.
 - **Dropdown menus.** Every dropdown opens the site's own menu rather than the browser's plain list: a tick on the current choice, group headings, hover and keyboard highlighting (arrows, Enter, Escape, type a letter to jump), and a search box on long lists such as scenarios and investigators. On phones and tablets a tap opens the device's own picker instead. The underlying fields are still ordinary selects, so forms and filters work as before (`js/shared.js`, *Dropdowns*).
 - **Installable and offline.** Install app is in the account menu. Plays logged offline sync when you're back online.
+
+<table>
+<tr>
+<td width="33%"><img src="docs/screenshots/log-phone.png" alt="Logging a play on a phone: scenario, date, attempt, result and who played which investigator"></td>
+<td width="33%"><img src="docs/screenshots/scenarios-phone.png" alt="The Scenarios tab on a phone: filters and the Starred box with a scheduled game"></td>
+<td width="33%"><img src="docs/screenshots/stats-phone.png" alt="Stats on a phone: plays, pass rate and win rates by player"></td>
+</tr>
+<tr>
+<td align="center">Log a play at the table</td>
+<td align="center">Find, star and schedule scenarios</td>
+<td align="center">Your stats</td>
+</tr>
+</table>
+
+**Scenarios:** all 24 official scenarios and the Valkyrie catalogue, with difficulty, length, the Valkyrie players' ratings and pass rates, descriptions and premises, your own record, and filters to find the next one. Starred ones sit at the top with their plans.
+
+![The Scenarios tab: filters, and the Starred box with a scheduled Valkyrie scenario and its description open](docs/screenshots/scenarios.png)
+
+**The next game:** schedule a starred scenario with a date, time, place and group, and add it to Google Calendar, Apple Calendar or Outlook.
+
+![The next game on the Plays tab with the Add to calendar menu open](docs/screenshots/next-game.png)
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/players.png" alt="The Players tab: groups and regular players with their plays, pass rate and usual investigator"></td>
+<td width="50%"><img src="docs/screenshots/stats.png" alt="The Stats tab: totals and win rates by player and investigator"></td>
+</tr>
+<tr>
+<td align="center">Players and groups</td>
+<td align="center">Stats</td>
+</tr>
+</table>
+
+**Signed out:** an intro beside the sign-in card, and the sample casebook to look around in.
+
+![The welcome page: intro, sign-in card and the sample casebook](docs/screenshots/welcome.png)
+
+<sub>Screenshots use the made-up sample casebook (`js/demo.js`). Retake them with `scripts/screenshots.js`.</sub>
+
+---
 
 ## Setup (one time)
 
@@ -60,12 +106,14 @@ Plain HTML, CSS and JavaScript, no build step. Firebase compat SDK 10 (Authentic
 | `js/importer.js` | Google Sheets / CSV import and CSV export (pure functions, tested in Node) |
 | `js/config.js` | Firebase start-up (settings from `/__/firebase/init.json`), error reporting, service worker registration |
 | `js/shared.js` | Account menu, Install app, Send feedback, dialogs, toasts |
+| `js/localfb.js`, `js/demo.js` | A casebook kept in the browser with no account, and the sample casebook on the welcome page (a small in-browser stand-in for the Firebase calls the app makes) |
 | `js/version.js` | **The version number**, bumped on every change |
 | `sw.js` | Offline copy of the site; cache named after the version |
 | `css/app.css` | All styles, light and dark themes |
 | `firestore.rules` | Who can read and write what |
 | `.github/workflows/deploy.yml` | Tests, then deploys Hosting and the rules on every push to `main` |
 | `.github/workflows/valkyrie-refresh.yml` | Every Monday: refreshes `js/valkyrie.js` from the Valkyrie catalogue, bumps the version, commits and deploys |
+| `docs/screenshots/`, `scripts/screenshots.js` | The README pictures, taken from the sample casebook in dark mode. They aren't published on the site. Retake: `PW=<playwright> CHROME=<chromium> FONTS=<google/fonts clone> node scripts/screenshots.js` |
 | `test/` | `importer.test.js`, `house-rules.test.js` (version bump, no yellow), `ui.test.js` (headless end-to-end with a fake Firebase) |
 
 ### Data

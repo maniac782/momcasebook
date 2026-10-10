@@ -10,6 +10,7 @@
       "scripts/**",
       "third_party/**",
       "art/**",
+      "docs/**",
       ".github/**",
       "**/.*",
       "**/node_modules/**"
