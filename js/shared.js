@@ -161,4 +161,139 @@ window.accountMenu=function(user,opts){
   },true);
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&window.__acctOpen){setOpen(false);var b=document.querySelector('.acctbtn');if(b)b.focus();}});
 })();
+/* ---------- Dropdowns ----------
+   Every <select class="f"> stays a real select (forms, values, change events and layout all work as before), but clicking,
+   tapping or pressing Enter/Space/arrow keys on it opens our own menu instead of the browser's plain one: a tick on the
+   current choice, hover and keyboard highlighting, group headings, and a search box on long lists. On narrow screens it
+   opens as a sheet from the bottom. */
+(function(){
+  var cur=null;   // {sel, wrap, panel, list, input, items, active, sheet}
+  var norm=function(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[“”"]/g,'');};
+  var isSep=function(o){return o.disabled&&/^[─\-\s]+$/.test(o.textContent);};
+  var phone=function(){try{return matchMedia('(max-width:560px)').matches;}catch(e){return false;}};
+  function labelFor(sel){
+    var f=sel.closest('.field'),l=f&&f.querySelector('.lbl');
+    return (l&&l.textContent)||sel.getAttribute('aria-label')||'Choose';
+  }
+  function close(refocus){
+    if(!cur)return;var c=cur;cur=null;
+    c.sel.classList.remove('dd-open');c.sel.removeAttribute('aria-expanded');
+    c.wrap.classList.add('dd-out');setTimeout(function(){c.wrap.remove();},140);
+    window.removeEventListener('resize',onResize);document.removeEventListener('scroll',onScroll,true);
+    if(refocus&&c.sel.isConnected)try{c.sel.focus({preventScroll:true});}catch(e){}
+  }
+  function choose(o){
+    var c=cur;if(!c||!o||o.disabled)return;var sel=c.sel,changed=sel.value!==o.value||sel.selectedIndex!==o.index;
+    close(true);
+    // the page may have redrawn while the menu was open; use the select that's there now
+    if(!sel.isConnected&&sel.id&&document.getElementById(sel.id)){sel=document.getElementById(sel.id);changed=sel.value!==o.value;
+      var m=Array.prototype.filter.call(sel.options,function(y){return y.value===o.value;})[0];if(!m)return;o=m;}
+    if(changed){sel.selectedIndex=o.index;sel.dispatchEvent(new Event('input',{bubbles:true}));sel.dispatchEvent(new Event('change',{bubbles:true}));}
+  }
+  function setActive(i,scroll){
+    if(!cur)return;var it=cur.items;if(cur.active>=0&&it[cur.active])it[cur.active].el.classList.remove('on');
+    cur.active=i;if(i<0||!it[i])return;it[i].el.classList.add('on');
+    (cur.input||cur.list).setAttribute('aria-activedescendant',it[i].el.id);
+    if(scroll!==false)it[i].el.scrollIntoView({block:'nearest'});
+  }
+  function visible(){return cur.items.filter(function(x){return !x.el.hidden;});}
+  function move(d){
+    var v=visible().filter(function(x){return !x.o.disabled;});if(!v.length)return;
+    var at=v.indexOf(cur.items[cur.active]),n=at<0?(d>0?0:v.length-1):Math.min(v.length-1,Math.max(0,at+d));
+    setActive(cur.items.indexOf(v[n]));
+  }
+  function filter(q){
+    q=norm(q).trim();var any=false;
+    cur.list.querySelectorAll('.dd-grp').forEach(function(g){g._n=0;});
+    cur.items.forEach(function(x){var hit=!q||norm(x.o.textContent).indexOf(q)>=0;x.el.hidden=!hit;if(hit){any=true;if(x.grp)x.grp._n++;}});
+    cur.list.querySelectorAll('.dd-grp').forEach(function(g){g.hidden=!!q&&!g._n;});
+    cur.list.querySelectorAll('.dd-sep').forEach(function(s){s.hidden=!!q;});
+    cur.empty.hidden=any;
+    var first=visible().filter(function(x){return !x.o.disabled;})[0];setActive(first?cur.items.indexOf(first):-1,!!q);
+    if(!q){var s=cur.items.filter(function(x){return x.o.selected;})[0];if(s)setActive(cur.items.indexOf(s));}
+  }
+  function place(){
+    if(!cur||cur.sheet)return;var r=cur.sel.getBoundingClientRect(),vw=innerWidth,vh=innerHeight,p=cur.panel;
+    var w=Math.min(Math.max(r.width,240),vw-16),left=Math.min(Math.max(8,r.left),vw-w-8);
+    var below=vh-r.bottom-12,above=r.top-12,up=below<240&&above>below,room=Math.min(380,up?above:below);
+    p.style.width=w+'px';p.style.left=left+'px';p.style.maxHeight=Math.max(160,room)+'px';
+    if(up){p.style.top='';p.style.bottom=(vh-r.top+6)+'px';p.classList.add('up');}else{p.style.bottom='';p.style.top=(r.bottom+6)+'px';p.classList.remove('up');}
+  }
+  function onResize(){if(cur&&!cur.sheet)close(false);}
+  function onScroll(e){if(cur&&!cur.sheet&&!(e.target.nodeType===1&&cur.panel.contains(e.target)))close(false);}
+  function open(sel){
+    if(cur){var same=cur.sel===sel;close(false);if(same)return;}
+    if(sel.disabled)return;
+    var sheet=phone(),opts=Array.prototype.slice.call(sel.options),searchable=opts.length>12,id='dd'+Date.now().toString(36);
+    var wrap=document.createElement('div');wrap.className='dd-wrap'+(sheet?' sheet':'');
+    wrap.innerHTML=(sheet?'<div class="dd-bg"></div>':'')+'<div class="dd" role="presentation">'+
+      (sheet?'<div class="dd-head"><span class="dd-grab" aria-hidden="true"></span><b>'+esc(labelFor(sel))+'</b><button type="button" class="x" data-dd-close aria-label="Close">×</button></div>':'')+
+      (searchable?'<div class="dd-search"><input type="text" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-controls="'+id+'" placeholder="Search…" autocomplete="off" spellcheck="false"></div>':'')+
+      '<div class="dd-list" role="listbox" id="'+id+'" tabindex="-1" aria-label="'+esc(labelFor(sel))+'"></div><p class="dd-empty" hidden>No matches</p></div>';
+    var list=wrap.querySelector('.dd-list'),items=[],lastGrp=null;
+    opts.forEach(function(o,i){
+      var g=o.parentNode.tagName==='OPTGROUP'?o.parentNode:null;
+      if(g!==lastGrp){lastGrp=g;if(g){var h=document.createElement('div');h.className='dd-grp';h.textContent=g.label;h.setAttribute('role','presentation');list.appendChild(h);lastGrp._el=h;}}
+      if(isSep(o)){var s=document.createElement('div');s.className='dd-sep';s.setAttribute('role','separator');list.appendChild(s);return;}
+      if(o.hidden||(o.value===''&&(o.disabled||sel.required)))return;   // a "Choose…" placeholder isn't a choice
+      var el=document.createElement('div');el.className='dd-opt'+(o.selected?' sel':'')+(o.disabled?' dis':'');el.id=id+'-'+i;
+      el.setAttribute('role','option');el.setAttribute('aria-selected',String(o.selected));if(o.disabled)el.setAttribute('aria-disabled','true');
+      var t=o.textContent,m=/^(.*?) \u2022 ([^\u2022]{1,16})$/.exec(t);   // "Name • new" shows the end as a small tag
+      el.innerHTML='<span class="dd-tick" aria-hidden="true"></span><span class="dd-txt"></span>'+(m?'<span class="dd-tag"></span>':'');
+      el.querySelector('.dd-txt').textContent=m?m[1]:t;if(m)el.querySelector('.dd-tag').textContent=m[2];
+      list.appendChild(el);items.push({o:o,el:el,grp:g&&g._el});
+    });
+    document.body.appendChild(wrap);
+    cur={sel:sel,wrap:wrap,panel:wrap.querySelector('.dd'),list:list,input:wrap.querySelector('.dd-search input'),empty:wrap.querySelector('.dd-empty'),items:items,active:-1,sheet:sheet};
+    sel.classList.add('dd-open');sel.setAttribute('aria-expanded','true');
+    place();
+    var s=items.filter(function(x){return x.o.selected&&!x.o.disabled;})[0]||(sheet?null:items.filter(function(x){return !x.o.disabled;})[0]);
+    if(s){setActive(items.indexOf(s),false);s.el.scrollIntoView({block:'center'});}
+    // keep keyboard focus inside the menu (no on-screen keyboard popping up for a phone sheet unless they tap search)
+    if(cur.input&&!sheet)cur.input.focus({preventScroll:true});else list.focus({preventScroll:true});
+    wrap.addEventListener('click',function(e){
+      if(e.target.closest('[data-dd-close]')||e.target.classList.contains('dd-bg')){close(true);return;}
+      var el=e.target.closest('.dd-opt');if(!el)return;var x=items.filter(function(y){return y.el===el;})[0];if(x)choose(x.o);
+    });
+    wrap.addEventListener('mousemove',function(e){var el=e.target.closest('.dd-opt');if(!el||!cur)return;var i=-1;cur.items.some(function(y,k){if(y.el===el){i=k;return true;}});if(i>=0&&i!==cur.active&&!cur.items[i].o.disabled)setActive(i,false);});
+    wrap.addEventListener('keydown',keys);
+    if(cur.input)cur.input.addEventListener('input',function(){filter(cur.input.value);});
+    window.addEventListener('resize',onResize);document.addEventListener('scroll',onScroll,true);
+  }
+  var typed='',typedAt=0;
+  function keys(e){
+    if(!cur)return;var k=e.key;
+    if(k==='Escape'){e.preventDefault();e.stopPropagation();close(true);return;}
+    if(k==='ArrowDown'){e.preventDefault();move(1);return;}
+    if(k==='ArrowUp'){e.preventDefault();move(-1);return;}
+    if(k==='PageDown'){e.preventDefault();move(8);return;}
+    if(k==='PageUp'){e.preventDefault();move(-8);return;}
+    if((k==='Home'||k==='End')&&!cur.input){e.preventDefault();move(k==='Home'?-1e6:1e6);return;}
+    if(k==='Enter'||(k===' '&&!cur.input)){e.preventDefault();e.stopPropagation();var x=cur.items[cur.active];if(x)choose(x.o);return;}
+    if(k==='Tab'){close(false);return;}
+    // type-ahead when there's no search box
+    if(!cur.input&&k.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+      var now=Date.now();typed=(now-typedAt<700?typed:'')+norm(k);typedAt=now;
+      var v=cur.items.filter(function(x){return !x.o.disabled;}),hit=v.filter(function(x){return norm(x.o.textContent).indexOf(typed)===0;})[0];
+      if(hit)setActive(cur.items.indexOf(hit));
+    }
+  }
+  var isDD=function(t){return t&&t.tagName==='SELECT'&&t.classList.contains('f')&&!t.multiple;};
+  document.addEventListener('mousedown',function(e){
+    if(!isDD(e.target)||e.button!==0)return;e.preventDefault();
+    try{e.target.focus({preventScroll:true});}catch(x){}open(e.target);
+  },true);
+  // touch: open on a tap (not a scroll), and stop the phone's own picker
+  var tx=0,ty=0,tmoved=false;
+  document.addEventListener('touchstart',function(e){if(!isDD(e.target))return;var t=e.touches[0];tx=t.clientX;ty=t.clientY;tmoved=false;},{capture:true,passive:true});
+  document.addEventListener('touchmove',function(e){if(!isDD(e.target))return;var t=e.touches[0];if(Math.abs(t.clientX-tx)>8||Math.abs(t.clientY-ty)>8)tmoved=true;},{capture:true,passive:true});
+  document.addEventListener('touchend',function(e){if(!isDD(e.target))return;e.preventDefault();if(!tmoved)open(e.target);},{capture:true,passive:false});
+  document.addEventListener('keydown',function(e){
+    if(!isDD(e.target))return;var k=e.key;
+    if(k==='Enter'||k===' '||k==='ArrowDown'||k==='ArrowUp'||(k==='F4')){e.preventDefault();open(e.target);}
+  },true);
+  // clicking anywhere else closes it
+  document.addEventListener('mousedown',function(e){if(cur&&!cur.wrap.contains(e.target)&&e.target!==cur.sel)close(false);},true);
+  window.closeDropdown=function(){close(false);};
+})();
 })();

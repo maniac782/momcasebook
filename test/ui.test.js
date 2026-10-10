@@ -125,6 +125,26 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.selectOption('#fres','pass');assert.strictEqual(await p.locator('.plays > li').count(),6);
   await p.selectOption('#fpl','Gerri');assert.strictEqual(await p.locator('.plays > li').count(),2);
   await p.click('[data-a=clearf]');
+  // our own dropdown menu: mouse, keyboard, search on long lists, and Escape only closes the menu inside a dialog
+  await p.click('#fres');await p.waitForSelector('.dd .dd-opt.sel');
+  assert.strictEqual((await p.textContent('.dd .dd-opt.sel')).trim(),'Any','current choice ticked');
+  assert.strictEqual(await p.locator('.dd-search').count(),0,'no search box on a short list');await p.waitForTimeout(250);
+  await p.screenshot({path:out+'/3g-dropdown.png'});
+  await p.click('.dd .dd-opt:has-text("Failed")');await p.waitForSelector('.dd-wrap',{state:'detached'});
+  assert.strictEqual(await p.inputValue('#fres'),'fail','menu choice sets the filter');
+  assert.ok(await p.locator('.plays > li').count()>0);
+  await p.focus('#fres');await p.keyboard.press('ArrowDown');await p.waitForSelector('.dd');
+  await p.keyboard.press('ArrowUp');await p.keyboard.press('Enter');await p.waitForTimeout(150);
+  assert.strictEqual(await p.inputValue('#fres'),'pass','keyboard choice');
+  await p.click('[data-a=clearf]');
+  await p.click('.bar [data-a=log]');await p.waitForSelector('.dlg');await p.click('.dlg select[name=sc]');await p.waitForSelector('.dd-search input');
+  await p.keyboard.type('sea dev');await p.waitForTimeout(250);await p.screenshot({path:out+'/3h-dropdown-search.png'});
+  assert.ok(await p.locator('.dd-opt:visible').count()<=3,'search narrows the list');
+  await p.keyboard.press('Enter');await p.waitForTimeout(150);
+  assert.strictEqual(await p.inputValue('.dlg select[name=sc]'),'v-the-sea-devils','search and Enter picks it');
+  await p.click('.dlg select[name=sc]');await p.waitForSelector('.dd');await p.keyboard.press('Escape');await p.waitForTimeout(200);
+  assert.strictEqual(await p.locator('.dlg').count(),1,'Escape closes only the menu');assert.strictEqual(await p.locator('.dd-wrap').count(),0);
+  await p.keyboard.press('Escape');await p.waitForSelector('.dlg',{state:'detached'});
   await p.click('[data-t=scenarios]');await p.waitForSelector('#sf-sort');
   assert.ok(await p.locator('.scs >> text=The Sea Devils').count());assert.strictEqual(await p.locator('details[data-box=yours]').count(),0,'no Your own box');
   await p.screenshot({path:out+'/5-scenarios.png',fullPage:true});
@@ -375,6 +395,9 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   const sw=await q.evaluate(()=>document.documentElement.scrollWidth);assert.ok(sw<=390,'no sideways scroll on a phone ('+sw+')');
   await q.screenshot({path:out+'/9-phone-plays-dark.png'});
   await q.click('.bar [data-a=log]');await q.waitForSelector('.dlg');await q.screenshot({path:out+'/10-phone-form-dark.png'});
+  await q.tap('.dlg select[name=sc]');await q.waitForSelector('.dd-wrap.sheet .dd-opt');assert.strictEqual(await q.locator('.dd-opt:has-text("Choose a scenario")').count(),0,'placeholder not listed');await q.waitForTimeout(300);await q.screenshot({path:out+'/10b-phone-dropdown-dark.png'});
+  await q.tap('.dd-opt:has-text("Escape from Innsmouth")');await q.waitForSelector('.dd-wrap',{state:'detached'});
+  assert.strictEqual(await q.inputValue('.dlg select[name=sc]'),'o-escape-from-innsmouth','phone sheet picks a scenario');
   await q.keyboard.press('Escape');await q.click('[data-t=stats]');await q.screenshot({path:out+'/11-phone-stats-dark.png',fullPage:true});
   await browser.close();
   if(errors.length){console.error(errors.join('\n'));process.exit(1);}
