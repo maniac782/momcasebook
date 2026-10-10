@@ -32,6 +32,8 @@
 <li>What you log: scenarios, dates, results, the names you type for players and investigators, rules and notes. Only you can see your plays.</li>
 <li>Feedback you send, and technical details of errors the site hits while you're signed in (message, page, browser), so they can be fixed.</li></ul>
 <p>Everything is kept in Google Firebase (Cloud Firestore). The site's admin can see the account list (names, emails, play counts), feedback and errors, but not your plays. A copy of your plays is also kept in your browser so the app works offline.</p>
+<h3>Without an account</h3>
+<p>If you start a casebook without an account, it's kept only in this browser (its local storage) and isn't sent anywhere. Clearing the browser's site data removes it. When you choose <b>Save to an account</b> and sign in, it's copied to your account and cleared from the browser. The sample casebook on the front page is invented and nothing in it is saved.</p>
 <h3>Your choices</h3>
 <p>Settings has <b>Download CSV</b> and <b>Download backup</b> for a copy of your plays, <b>Delete all plays</b>, and <b>Delete my account</b>, which removes your plays, your scenarios, your profile and your sign-in.</p>
 <h3>Other people's names</h3>

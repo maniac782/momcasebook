@@ -173,15 +173,38 @@ li:has(.chip.bad)>.play{border-left-color:var(--bad)}
 .mini{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:14px;max-height:320px;overflow:auto}
 
 /* sign-in */
-.hero{padding:12px 2px 0}
-.hero h2{font-size:clamp(28px,6vw,40px);line-height:1.1}
-.hero p{max-width:60ch;color:var(--muted);font-size:17px}
 .auth{max-width:440px}
 .btn.google{width:100%}
 .btn.google .g{font-family:Arial,sans-serif;font-weight:700;color:var(--accent)}
 .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px}
 .or::before,.or::after{content:"";flex:1;border-top:1px solid var(--line)}
-.links a{font-weight:600}
+.auth .stack .btn.pri{width:100%}
+.authlinks{justify-content:space-between}
+.auth .fine{font-size:12px;text-align:center}
+
+/* signed out: the intro beside the sign-in card, then the sample casebook (laid out like the Arkham Horror RPG Ledger's) */
+.welcome{display:grid;grid-template-columns:minmax(0,1fr) 400px;grid-template-areas:"intro auth" "demo demo";gap:32px;align-items:start;margin-top:8px}
+#introbox{grid-area:intro;min-width:0}#authbox{grid-area:auth;min-width:0}.welcome .demo{grid-area:demo;min-width:0}
+.welcome .auth{margin:0;max-width:none}
+.intro{display:flex;flex-direction:column;gap:14px;padding-top:8px}
+.intro h2{font-size:clamp(28px,4.4vw,38px);line-height:1.12}
+.intro p{margin:0;line-height:1.6}
+.intro .note{line-height:1.5}
+.cta{gap:10px}.narrow-only{display:none}
+.demo{display:flex;flex-direction:column;gap:10px}
+.demohead{display:flex;flex-direction:column;gap:2px}
+.demohead h2{font-size:24px}
+#demoframe{display:block;width:100%;height:min(780px,82vh);border:1px solid var(--line);border-radius:8px;background:var(--bg);box-shadow:0 10px 30px rgba(0,0,0,.12)}
+@media (max-width:780px){.welcome{grid-template-columns:1fr;grid-template-areas:"intro" "demo" "auth";gap:24px;margin-top:0}.narrow-only{display:inline-flex}#demoframe{height:78vh}}
+.savewrap{max-width:440px;width:100%;margin:8px auto 0;display:flex;flex-direction:column;gap:12px;align-items:flex-start}.savewrap .auth{width:100%;max-width:none}
+.savenote{margin:0;padding:10px 12px;background:var(--surface2);border-radius:6px;line-height:1.5}
+/* a casebook kept in this browser, and the sample */
+.localban{flex-direction:row;align-items:center;gap:12px;flex-wrap:wrap;border-style:dashed}
+.localban .grow{display:flex;flex-direction:column;gap:2px;min-width:220px}
+.demoban{margin:0;padding:10px 14px;font-size:14px;color:var(--muted)}
+/* the sample inside its frame on the welcome page: no header or footer */
+html.embed .top,html.embed .foot{display:none}
+html.embed main{padding-top:4px}
 .empty{align-items:flex-start}
 
 /* account menu */

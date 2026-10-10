@@ -384,6 +384,34 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.screenshot({path:out+'/7-admin.png',fullPage:true});
   await c.close();
   // phone, dark
+  // signed out: the welcome page with the sample casebook, and a casebook kept in this browser without an account
+  {const c3=await ctx({viewport:{width:1280,height:900}});const w=await c3.newPage();
+   w.on('pageerror',e=>errors.push('pageerror(welcome): '+e.message));
+   await w.goto('https://momcasebook.test/');await w.waitForSelector('#demoframe');
+   const fr=w.frameLocator('#demoframe');await fr.locator('.plays > li').first().waitFor();
+   assert.ok(await fr.locator('.plays > li').count()>=8,'sample casebook has plays');
+   assert.ok(await fr.locator('text=nothing you change here is saved').count(),'sample says nothing is saved');
+   assert.ok(await fr.locator('text=Next game').count(),'sample has a scheduled game');
+   assert.strictEqual(await fr.locator('.top').isVisible(),false,'no header inside the sample frame');
+   await w.waitForTimeout(400);await w.screenshot({path:out+'/0-welcome.png',fullPage:true});
+   await w.click('[data-a=mode][data-m=signup]');assert.ok(await w.locator('#au-name').count(),'create-account form');
+   assert.strictEqual(await w.locator('#demoframe').count(),1,'sample frame kept when switching forms');
+   // no account needed
+   await w.click('[data-a=trylocal]');await w.waitForSelector('.localban');
+   assert.ok(await w.locator('text=Saved in this browser only').count());
+   await w.click('.bar [data-a=log]');await w.selectOption('select[name=sc]','o-rising-tide');await w.fill('.seat [name=pp]','Robin');
+   await w.selectOption('.seat [name=pi]','Agatha Crane');await w.click('.seg.big .pass');await w.click('form[data-form=play] button[type=submit]');
+   await w.waitForSelector('.plays > li');await w.reload();await w.waitForSelector('.plays > li');
+   assert.strictEqual(await w.locator('.plays > li').count(),1,'browser casebook survives a reload');
+   await w.screenshot({path:out+'/0b-local.png'});
+   await w.click('.localban a');await w.waitForSelector('text=Save your casebook');await w.screenshot({path:out+'/0c-save.png'});
+   await w.fill('#au-em','robin@example.com');await w.fill('#au-pw','secret1');await w.click('form[data-form=auth] button[type=submit]');
+   await w.waitForSelector('.acctbtn');await w.waitForFunction(()=>Object.keys(window.__fake.store).some(k=>/^users\/u-robinexamplecom\/plays\//.test(k)));
+   await w.waitForTimeout(200);
+   assert.strictEqual(await w.evaluate(()=>localStorage.getItem('mom-local-db')),null,'browser copy cleared after moving');
+   assert.strictEqual(await w.locator('.localban').count(),0,'no browser-only banner once saved');
+   assert.ok(!(await w.evaluate(()=>location.search)).includes('save'),'back to the normal address');
+   await c3.close();}
   const c2=await ctx({viewport:{width:390,height:844},deviceScaleFactor:2,colorScheme:'dark',isMobile:true,hasTouch:true});const q=await c2.newPage();
   q.on('pageerror',e=>errors.push('pageerror(phone): '+e.message));
   await q.goto('https://momcasebook.test/');await q.waitForSelector('text=Continue with Google');

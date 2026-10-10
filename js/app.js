@@ -68,22 +68,43 @@ function friendly(e){
 // ---------- rendering ----------
 function render(){
   if(!authKnown){app.innerHTML='<p class="note pad">Loading…</p>';return;}
-  if(!me){acctEl.innerHTML='';app.innerHTML=signInHtml();return;}
-  acctEl.innerHTML=accountMenu(me,{admin:isAdmin,photo:profile&&profile.photo,name:myName()});
+  if(!me){acctEl.innerHTML='';welcomeView();return;}
+  var LM=window.LocalMoM||{};
+  acctEl.innerHTML=LM.embed?'':accountMenu(me,{admin:isAdmin,photo:profile&&profile.photo,name:myName()||(LM.mode?'You':''),local:!!LM.mode});
   var keep=document.activeElement&&/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)&&document.activeElement.id;
   var tabs=[['plays','Plays'],['scenarios','Scenarios'],['players','Players'],['stats','Stats'],['settings','Settings']];
   var h='<div class="bar"><div class="tabs" role="tablist">'+tabs.map(function(t){return '<button class="tab" role="tab" aria-selected="'+(ui.tab===t[0])+'" data-a="tab" data-t="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div>'+
     '<button class="btn pri" data-a="log">+ Log a play</button></div>';
+  if(LM.mode==='demo')h+='<p class="sec localban demoban">This is a sample casebook with invented players, so nothing you change here is saved.</p>';
+  else if(LM.mode==='local')h+='<section class="sec localban"><div class="grow"><b>Saved in this browser only.</b><span class="note">Make a free account to keep your casebook safe and use it on your other devices. Everything moves over with you.</span></div><a class="btn pri" href="./?save=1">Save to an account</a></section>';
   h+=ui.tab==='scenarios'?scenariosHtml():ui.tab==='players'?playersHtml():ui.tab==='stats'?statsHtml():ui.tab==='settings'?settingsHtml():playsHtml();
   app.innerHTML=h;
   if(keep){var el=document.getElementById(keep);if(el){el.focus();try{var n=el.value.length;el.setSelectionRange(n,n);}catch(e){}}}
 }
 
-function signInHtml(){
-  var m=ui.authMode;
-  return '<section class="hero"><h2>Every night in the mansion, written down.</h2>'+
-    '<p>Keep a log of your Mansions of Madness games, official scenarios and Valkyrie ones alike: who played, which investigators they took, whether you made it out, and what happened. It works on phones and computers, installs like an app and keeps working offline.</p></section>'+
-    '<section class="sec auth"><h2>'+(m==='signup'?'Create an account':m==='reset'?'Reset your password':'Sign in')+'</h2>'+
+// Signed out: an intro beside the sign-in card, then the sample casebook to look around (js/demo.js), as on the
+// Arkham Horror RPG Ledger. The sample's frame is made once, so switching sign-in modes doesn't reload it.
+function welcomeView(){
+  var LM=window.LocalMoM||{};
+  // Came from "Save to an account": just the sign-in card.
+  if(LM.save){app.innerHTML='<div class="savewrap"><a class="btn sm" href="./">‹ Back to your casebook</a>'+authHtml()+'</div>';return;}
+  var fr=document.getElementById('demoframe');
+  if(fr&&app.contains(fr)){document.getElementById('authbox').innerHTML=authHtml();return;}
+  app.innerHTML='<div class="welcome"><div id="introbox">'+introHtml()+'</div><div id="authbox">'+authHtml()+'</div>'+
+    '<section class="demo" aria-label="Sample casebook"><div class="demohead"><h2>Have a look around</h2><span class="note">A sample casebook with invented players. Open a play, filter the scenarios, star one or try the stats. Nothing here is saved.</span></div>'+
+    '<iframe id="demoframe" src="./?demo=1&amp;embed=1" title="Sample casebook" loading="lazy"></iframe></section></div>';
+}
+function introHtml(){
+  return '<section class="intro"><h2>Every night in the mansion, written down.</h2>'+
+    '<p>Keep a log of your Mansions of Madness games, official scenarios and Valkyrie ones alike: who played, which investigators they took, whether you made it out, and what happened. Find your next scenario by difficulty, length and rating, star the ones you want to play and schedule the night. It works on phones and computers, installs like an app and keeps working offline.</p>'+
+    '<div class="row cta"><button class="btn pri" data-a="trylocal">Start a casebook, no account needed</button><a class="btn narrow-only" href="#signin">Sign in</a></div>'+
+    '<p class="note">It’s saved in this browser until you make an account, then it moves over with you.</p>'+
+    '<p class="note">Free, no ads. An unofficial fan project, not affiliated with Fantasy Flight Games. You’ll need Mansions of Madness Second Edition and its free companion app to play.</p></section>';
+}
+function authHtml(){
+  var m=ui.authMode,LM=window.LocalMoM||{};
+  return '<section class="sec auth" id="signin"><h2>'+(m==='reset'?'Reset your password':LM.save?'Save your casebook':m==='signup'?'Create an account':'Sign in')+'</h2>'+
+    (LM.save&&m!=='reset'?'<p class="note savenote">Create a free account, or sign in to one you have, and the casebook in this browser moves over to it. Nothing is lost.</p>':'')+
     (m==='reset'?'':'<button class="btn google" data-a="google"><span class="g" aria-hidden="true">G</span> Continue with Google</button><div class="or"><span>or with email</span></div>')+
     '<form class="stack" data-form="auth">'+
     (m==='signup'?'<label class="field"><span class="lbl">Your name</span><input class="f" id="au-name" autocomplete="name" maxlength="40" placeholder="How you appear in your own plays"></label>':'')+
@@ -91,7 +112,9 @@ function signInHtml(){
     (m==='reset'?'':'<label class="field"><span class="lbl">Password</span><input class="f" id="au-pw" type="password" autocomplete="'+(m==='signup'?'new-password':'current-password')+'" required minlength="6"></label>')+
     (ui.authErr?'<p class="err" role="alert">'+esc(ui.authErr)+'</p>':'')+
     '<button class="btn pri" type="submit"'+(ui.busy?' disabled':'')+'>'+(m==='signup'?'Create account':m==='reset'?'Send reset link':'Sign in')+'</button></form>'+
-    '<p class="note links">'+(m==='signin'?'New here? <a href="#" data-a="mode" data-m="signup">Create an account</a> · <a href="#" data-a="mode" data-m="reset">Forgot password?</a>':'<a href="#" data-a="mode" data-m="signin">Back to sign in</a>')+'</p></section>';
+    '<div class="row authlinks">'+(m==='signin'?'<button class="btn sm" type="button" data-a="mode" data-m="reset">Forgot password?</button><button class="btn sm" type="button" data-a="mode" data-m="signup">Create an account</button>':
+      m==='signup'?'<span class="note">Already have an account?</span><button class="btn sm" type="button" data-a="mode" data-m="signin">Sign in</button>':'<button class="btn sm" type="button" data-a="mode" data-m="signin">Back to sign in</button>')+'</div>'+
+    '<p class="note fine">See our <a href="privacy.html">privacy policy</a>.</p></section>';
 }
 
 function filtered(){
@@ -387,7 +410,7 @@ function settingsHtml(){
   }
   h+='</section>';
   h+='<section class="sec"><h2>Export</h2><p class="note">A copy of all your plays. The CSV opens in any spreadsheet and can be imported back here.</p><div class="row"><button class="btn" data-a="csv">Download CSV</button><button class="btn" data-a="json">Download backup (JSON)</button></div></section>';
-  h+='<section class="sec danger"><h2>Delete</h2><div class="row"><button class="btn" data-a="wipe"'+(plays.length?'':' disabled')+'>Delete all plays…</button><button class="btn dng" data-a="delacct">Delete my account…</button></div></section>';
+  if(!(window.LocalMoM&&LocalMoM.mode==='demo'))h+='<section class="sec danger"><h2>Delete</h2><div class="row"><button class="btn" data-a="wipe"'+(plays.length?'':' disabled')+'>Delete all plays…</button><button class="btn dng" data-a="delacct">'+(window.LocalMoM&&LocalMoM.mode?'Delete this casebook…':'Delete my account…')+'</button></div></section>';
   return h;
 }
 
@@ -766,11 +789,12 @@ app.addEventListener('click',function(e){
   else if(k==='csv')download('mansions-plays.csv',I.toCSV(plays.slice().sort(sortPlays)),'text/csv');
   else if(k==='json')download('mansions-backup.json',JSON.stringify({exported:new Date().toISOString(),version:self.APP_VERSION,plays:plays,scenarios:mine},null,1),'application/json');
   else if(k==='wipe')confirmDialog('Delete all plays','All '+plays.length+' plays go for good. Download a copy first if you might want them.','Delete all plays',function(){return deleteAll('plays').then(function(){toast('All plays deleted.');});});
-  else if(k==='delacct')confirmDialog('Delete my account','Your plays, your scenarios and your sign-in all go for good. This can’t be undone.','Delete my account',async function(){
+  else if(k==='delacct')confirmDialog(LocalMoM.mode?'Delete this casebook':'Delete my account',LocalMoM.mode?'Your plays, players and groups in this browser all go for good. This can’t be undone.':'Your plays, your scenarios and your sign-in all go for good. This can’t be undone.',LocalMoM.mode?'Delete this casebook':'Delete my account',async function(){
     await deleteAll('plays');await deleteAll('scenarios');await deleteAll('people');await deleteAll('groups');await fb.db.doc('users/'+me.uid).delete();
     try{await me.delete();}catch(err){if(err.code==='auth/requires-recent-login'){await fb.auth.signOut();throw {msg:'Your plays are deleted. To remove the sign-in too, sign in again and choose Delete my account once more.'};}throw err;}
     location.href='./';
   });
+  else if(k==='trylocal'){LocalMoM.start();location.href='./';}
   else if(k==='google')googleSignIn();
   else if(k==='mode'){ui.authMode=a.dataset.m;ui.authErr='';render();}
 });
@@ -816,6 +840,31 @@ async function emailAuth(){
   ui.busy=false;render();
 }
 
+// ---------- moving a browser-only casebook into an account ----------
+// After "Save to an account" (index.html?save=1) and signing in: copy the plays, players, groups, stars and profile
+// from this browser (js/localfb.js) into the account, then clear the browser copy. Anything already in the account stays;
+// for the profile, the account's own name, picture and settings win.
+var moving=false;
+async function moveLocal(user){
+  if(moving||!window.LocalMoM||!LocalMoM.save)return;moving=true;
+  var d=LocalMoM.dump(),base='users/'+user.uid,ops=[];
+  ['plays','people','groups'].forEach(function(c){Object.keys(d[c]).forEach(function(id){ops.push([base+'/'+c+'/'+id,d[c][id]]);});});
+  try{
+    var snap=await fb.db.doc(base).get(),cur=snap.exists?snap.data():{},lp=d.profile||{},prof={};
+    var st={};Object.keys(lp.starred||{}).forEach(function(k){st[k]=lp.starred[k];});Object.keys(cur.starred||{}).forEach(function(k){st[k]=cur.starred[k];});
+    if(Object.keys(st).length)prof.starred=st;
+    if(!cur.name&&lp.name)prof.name=String(lp.name).slice(0,40);
+    if(!cur.photo&&lp.photo)prof.photo=lp.photo;
+    if(cur.owned==null&&Array.isArray(lp.owned))prof.owned=lp.owned;
+    if(cur.hideValkyrie==null&&typeof lp.hideValkyrie==='boolean')prof.hideValkyrie=lp.hideValkyrie;
+    for(var i=0;i<ops.length;i+=400){var b=fb.db.batch();ops.slice(i,i+400).forEach(function(o){b.set(fb.db.doc(o[0]),o[1]);});await b.commit();}
+    if(Object.keys(prof).length)await fb.db.doc(base).set(prof,{merge:true});
+    LocalMoM.clear();LocalMoM.save=false;history.replaceState(null,'','./');
+    toast(ops.length?'Your casebook is saved to your account.':'Signed in.');
+  }catch(e){console.warn(e);toast('Couldn’t move everything over: '+friendly(e)+' The copy in this browser is kept.');}
+  moving=false;render();
+}
+
 // ---------- data ----------
 function listen(user){
   unsub.forEach(function(u){u();});unsub=[];plays=[];mine=[];shared=[];people=[];groups=[];profile=null;loaded.plays=false;
@@ -845,7 +894,7 @@ momFirebase().then(function(x){
   var wantAccount=/[?&]account=1/.test(location.search);
   fb.auth.onAuthStateChanged(function(u){
     authKnown=true;me=u;
-    if(u){listen(u);if(wantAccount){wantAccount=false;history.replaceState(null,'',location.pathname);setTimeout(openAccount,400);}}else{unsub.forEach(function(f){f();});unsub=[];plays=[];isAdmin=false;}
+    if(u){listen(u);if(window.LocalMoM&&LocalMoM.save&&!LocalMoM.mode)moveLocal(u);if(wantAccount){wantAccount=false;history.replaceState(null,'',location.pathname);setTimeout(openAccount,400);}}else{unsub.forEach(function(f){f();});unsub=[];plays=[];isAdmin=false;}
     render();
   });
 }).catch(function(e){

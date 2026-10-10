@@ -125,7 +125,7 @@ function cropDialog(img){
 /* ---------- Account button and menu ----------
    The same as the Arkham Horror RPG Ledger's top-right corner (same markup, class names and styles, so the two sites
    look and behave alike): your picture or initial, your name and a caret; on phones just the picture. The menu has
-   Your account, Admin (for admins), Install app, Send feedback, Sign out and the version. opts: {name, photo, admin, home}.
+   Your account, Admin (for admins), Install app, Send feedback, Sign out and the version. opts: {name, photo, admin, home, local}.
    The open state lives in window.__acctOpen, so the menu stays open when the page redraws behind it. */
 // The round icon: your chosen picture, else your Google photo, else your initial in white on slate.
 window.acctIcon=function(name,photo,gphoto){
@@ -141,8 +141,10 @@ window.accountMenu=function(user,opts){
     (opts.home?'<a role="menuitem" href="./?account=1">Your account</a>':'<button role="menuitem" type="button" data-acct="account">Your account</button>')+
     (opts.admin?'<a role="menuitem" href="admin.html">Admin</a>':'')+(opts.home?'<a role="menuitem" href="./">Back to my plays</a>':'')+
     (isInstalledApp()?'':'<button role="menuitem" type="button" data-acct="install">Install app</button>')+
+    // a casebook kept in this browser (js/localfb.js) has no sign-in yet: offer to save it to an account instead
+    (opts.local?'<a role="menuitem" href="./?save=1">Save to an account</a>':
     '<button role="menuitem" type="button" data-acct="feedback">Send feedback</button>'+
-    '<button role="menuitem" type="button" data-acct="signout">Sign out</button>'+
+    '<button role="menuitem" type="button" data-acct="signout">Sign out</button>')+
     '<span class="acctver">Mansions of Madness Casebook '+esc(self.APP_VERSION||'')+'</span></div></span>';
 };
 (function(){
