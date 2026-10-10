@@ -203,7 +203,7 @@ function scenariosHtml(){
     sel('sf-len','Length',sf.len,[['any','Any'],['short','Under 2 hours'],['mid','2 to 3 hours'],['long','3 to 4 hours'],['xlong','Over 4 hours']])+
     sel('sf-rate','Rating',sf.rate,[['any','Any'],['7','7 or more'],['8','8 or more'],['8.5','8.5 or more']])+
     sel('sf-lang','Language',sf.lang,[['any','Any']].concat(langChoices()))+
-    sel('sf-sort','Sort by',sf.sort,[['box','Box, then name'],['name','Name'],['rating','Highest rated'],['plays','Most played'],['short','Shortest'],['long','Longest'],['easy','Easiest'],['hard','Hardest'],['win','Easiest to pass'],['lang','Language'],['mine','Your most recent']])+
+    sel('sf-sort','Sort by',sf.sort,[['box','Expansion'],['name','Name (A–Z)'],['rating','Highest rated'],['plays','Most played'],['short','Shortest'],['long','Longest'],['easy','Easiest'],['hard','Hardest'],['win','Easiest to pass'],['lang','Language'],['mine','Your most recent']])+
     '</div>';
   var narrowed=sf.diff!=='any'||sf.len!=='any'||sf.rate!=='any';
   var anyFilter=narrowed||sf.lang!=='any';
