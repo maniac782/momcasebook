@@ -9,6 +9,7 @@
       "test/**",
       "scripts/**",
       "third_party/**",
+      "art/**",
       ".github/**",
       "**/.*",
       "**/node_modules/**"
