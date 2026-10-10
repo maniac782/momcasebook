@@ -651,7 +651,7 @@ function playForm(p,preset){
     '<fieldset class="field"><legend class="lbl">Who played</legend>'+
     (groups.length?'<select class="f grp" name="grp" aria-label="Fill in from a group"><option value="">Fill in from a group\u2026</option>'+groups.slice().sort(byName).map(function(g){return '<option value="'+esc(g.id)+'">'+esc(g.name)+' ('+groupMembers(g).length+')</option>';}).join('')+'</select>':'')+
     '<div class="seats">'+party.map(seat).join('')+'</div><div class="row"><button class="btn sm" type="button" data-f="addseat">+ Add a player</button></div></fieldset>'+
-    '<label class="field"><span class="lbl">Where (optional)</span><input class="f" name="loc" list="dl-loc" maxlength="60" placeholder="e.g. Gerri\u2019s house" value="'+esc(p.location||'')+'" autocomplete="off"></label>'+
+    '<label class="field"><span class="lbl">Where (optional)</span><input class="f" name="loc" list="dl-loc" maxlength="60" placeholder="e.g. home, a friend\u2019s house or the game store" value="'+esc(p.location||'')+'" autocomplete="off"></label>'+
     '<datalist id="dl-loc">'+places().map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
     '<label class="field"><span class="lbl">Rules</span><input class="f" name="rules" list="dl-rules" maxlength="80" placeholder="Normal rules" value="'+esc(p.rules||'')+'"></label>'+
     '<label class="field"><span class="lbl">Notes</span><textarea class="f" name="notes" rows="4" maxlength="4000" placeholder="What happened? Anything to remember next time?">'+esc(p.notes||'')+'</textarea></label>'+
