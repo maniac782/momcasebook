@@ -164,6 +164,21 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.locator('.dlg').count(),1,'Escape closes only the menu');assert.strictEqual(await p.locator('.dd-wrap').count(),0);
   await p.keyboard.press('Escape');await p.waitForSelector('.dlg',{state:'detached'});
   await p.click('[data-t=scenarios]');await p.waitForSelector('#sf-sort');
+  // packing lists for Valkyrie scenarios (Dan's valkyrie-tools packlist): needs line, tiles by index, ticks kept
+  await p.fill('#sq','Exotic Material');await p.waitForTimeout(150);
+  assert.ok(await p.locator('.scs li:has-text("Exotic Material") .needs').count(),'needs line');
+  await p.locator('.scs li:has-text("Exotic Material") [data-a=pack]').first().click();await p.waitForSelector('.pk-list');
+  assert.ok(await p.locator('.pk-list .pk').count()>=8,'tiles and monsters listed');
+  assert.ok(await p.locator('.pk-idx:has-text("9")').count(),'tile index numbers');
+  await p.locator('.pk input').first().check();await p.locator('.pk input').nth(1).check();
+  assert.ok(/^2 of /.test(await p.textContent('.pk-count')),'ticks counted');
+  await p.screenshot({path:out+'/5k-packing-list.png'});
+  await p.click('.dlg [data-close]');await p.locator('.scs li:has-text("Exotic Material") [data-a=pack]').first().click();await p.waitForSelector('.pk-list');
+  assert.ok(/^2 of /.test(await p.textContent('.pk-count')),'ticks kept on this device');
+  await p.click('[data-pk=clear]');assert.ok(/^0 of /.test(await p.textContent('.pk-count')),'clear ticks');await p.click('.dlg [data-close]');
+  await p.fill('#sq','');await p.selectOption('#sf-own','own');await p.waitForTimeout(150);
+  const ownCount=+(await p.textContent('.count b'));await p.selectOption('#sf-own','any');await p.waitForTimeout(150);
+  assert.ok(ownCount>0&&ownCount<=+(await p.textContent('.count b')),'collection filter');
   assert.ok(await p.locator('.scs >> text=The Sea Devils').count());assert.strictEqual(await p.locator('details[data-box=yours]').count(),0,'no Your own box');
   await p.screenshot({path:out+'/5-scenarios.png',fullPage:true});
   // the built-in Valkyrie list: search it and log a play straight from it

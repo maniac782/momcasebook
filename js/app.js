@@ -140,7 +140,7 @@ function playsHtml(){
   // the next scheduled game, if any
   var np=nextPlan();
   if(np)h='<section class="sec nextup"><div class="grow"><span class="lbl">Next game</span><b>'+esc(np.sc.name)+'</b><span class="note">'+esc(planText(np.plan))+'</span></div>'+
-    '<div class="row tight"><span class="placewrap"><button class="btn sm" data-a="calmenu" data-sc="'+esc(np.id)+'">Add to calendar</button></span><button class="btn sm pri" data-a="logplan" data-sc="'+esc(np.id)+'">Log this game</button></div></section>'+h;
+    '<div class="row tight"><span class="placewrap"><button class="btn sm" data-a="calmenu" data-sc="'+esc(np.id)+'">Add to calendar</button></span>'+(packOf(np.sc)?'<button class="btn sm" data-a="pack" data-sc="'+esc(np.id)+'">'+ICON_BOX+'Packing list</button>':'')+'<button class="btn sm pri" data-a="logplan" data-sc="'+esc(np.id)+'">Log this game</button></div></section>'+h;
   if(probs.length)h='<section class="sec notice" role="status"><div class="grow"><b>Some investigator names aren\u2019t official ones</b><span class="note">'+probs.length+' name'+(probs.length===1?'':'s')+' ('+probs.slice(0,3).map(function(x){return '\u201c'+esc(x.text)+'\u201d';}).join(', ')+(probs.length>3?'\u2026':'')+') need matching to an official investigator.</span></div><button class="btn pri" data-a="fixinv">Fix them</button></section>'+h;
   if(sprobs.length)h='<section class="sec notice" role="status"><div class="grow"><b>'+sprobs.length+' play'+(sprobs.length===1?' isn\u2019t':'s aren\u2019t')+' matched to an official or Valkyrie scenario</b><span class="note">Every play needs a real scenario. Pick the right one for each name; good guesses are filled in.</span></div><button class="btn pri" data-a="fixsc">Match them</button></section>'+h;
   var any=ui.q||ui.result||ui.player||ui.scen;
@@ -182,7 +182,7 @@ function scenStats(){
 // text colour so it suits both themes. Original drawing (CC0); decorative, as the button text says what it does.
 var ICON_AGAIN='<svg class="ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12a8 8 0 1 0 2.34-5.66"/><path d="M4 4.4v4.1h4.1"/><path d="M10.1 8.4v7.2l5.7-3.6z" fill="currentColor" stroke-width="1.3"/></svg>';
 // ---------- the Scenarios tab: one list to browse, filter and sort ----------
-var sf={src:'all',diff:'any',len:'any',rate:'any',lang:'any',sort:'box'};
+var sf={src:'all',diff:'any',len:'any',rate:'any',lang:'any',own:'any',sort:'box'};
 // which of the Official / Valkyrie boxes are open; remembered on this device
 var boxes={starred:true,official:true,valkyrie:true,yours:true};
 try{var bx0=JSON.parse(localStorage.getItem('mom-boxes')||'null');if(bx0)for(var kb in bx0)boxes[kb]=!!bx0[kb];}catch(e){}
@@ -209,6 +209,7 @@ function scenariosHtml(){
     if(sf.len!=='any'){var l=L[sf.len],m=typicalMins(s);if(!m||m<l[0]||m>=l[1])return false;}
     if(sf.rate!=='any'&&!(s.rating&&s.plays>=10&&s.rating>=+sf.rate))return false;
     if(sf.lang!=='any'&&s.from==='valkyrie'&&langsOf(s).indexOf(sf.lang)<0)return false;
+    if(sf.own==='own'&&s.from==='valkyrie'&&!canPlay(s))return false;
     return true;
   });
   var known=function(v){return v==null||v===0?null:v;};
@@ -226,10 +227,11 @@ function scenariosHtml(){
     sel('sf-len','Length',sf.len,[['any','Any'],['short','Under 2 hours'],['mid','2 to 3 hours'],['long','3 to 4 hours'],['xlong','Over 4 hours']])+
     sel('sf-rate','Rating',sf.rate,[['any','Any'],['7','7 or more'],['8','8 or more'],['8.5','8.5 or more']])+
     sel('sf-lang','Language',sf.lang,[['any','Any']].concat(langChoices()))+
+    sel('sf-own','Your collection',sf.own||'any',[['any','Anything'],['own','Playable with what I own']])+
     sel('sf-sort','Sort by',sf.sort,[['box','Expansion'],['name','Name (A–Z)'],['rating','Highest rated'],['plays','Most played'],['short','Shortest'],['long','Longest'],['easy','Easiest'],['hard','Hardest'],['win','Easiest to pass'],['lang','Language'],['mine','Your most recent']])+
     '</div>';
   var narrowed=sf.diff!=='any'||sf.len!=='any'||sf.rate!=='any';
-  var anyFilter=narrowed||sf.lang!=='any';
+  var anyFilter=narrowed||sf.lang!=='any'||(sf.own||'any')!=='any';
   h+='<p class="note count"><b>'+list.length+'</b> scenario'+(list.length===1?'':'s')+' \u00b7 official beaten: '+beat+' of '+offIds.length+
     (narrowed&&sf.src!=='valkyrie'?' \u00b7 difficulty, length and rating are only known for Valkyrie scenarios, so official ones drop out with those filters':'')+
     (sf.lang!=='any'&&sf.src!=='valkyrie'?' \u00b7 the language filter applies to Valkyrie scenarios; official ones are in the app\u2019s own languages':'')+
@@ -246,7 +248,7 @@ function scenariosHtml(){
     var yours=x?'You: '+x.n+' play'+(x.n===1?'':'s')+', '+x.pass+' passed'+(x.last?', last '+esc(fmtDate(x.last)):''):'';
     var rv=reviewsOf(s);
     return '<li class="sc">'+starBtn(s.id,!!star)+'<div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(s.name)+'</a>':esc(s.name))+'</b>'+chip+'</span>'+
-      '<span class="note">'+facts+'</span>'+(plan?'<span class="plan">'+ICON_CAL+'<span>'+esc(planText(plan))+'</span></span>':'')+(comm?'<span class="note community">'+comm+'</span>':'')+(yours?'<span class="note">'+yours+'</span>':'')+
+      '<span class="note">'+facts+'</span>'+needsHtml(s)+(plan?'<span class="plan">'+ICON_CAL+'<span>'+esc(planText(plan))+'</span></span>':'')+(comm?'<span class="note community">'+comm+'</span>':'')+(yours?'<span class="note">'+yours+'</span>':'')+
       (s.link&&/^https:\/\//.test(s.link)?'<span class="note"><a href="'+esc(s.link)+'" target="_blank" rel="noopener">Details</a></span>':'')+
       (officialInfo(s)?'<details class="desc"><summary>Premise</summary><p>'+esc(officialInfo(s).text)+'</p><p class="note">Written for this site from <a href="'+esc(officialInfo(s).url)+'" target="_blank" rel="noopener">'+esc(officialInfo(s).source)+'</a>; no spoilers.</p></details>':'')+
       (s.desc?'<details class="desc"><summary>Description'+(s.descLang?' <span class="note">(in '+esc(s.descLang)+')</span>':'')+'</summary><p>'+esc(s.desc).replace(/\n/g,'<br>')+'</p><p class="note">By '+esc(s.author||'the author')+', from the Valkyrie scenario catalogue.</p></details>':'')+
@@ -254,6 +256,7 @@ function scenariosHtml(){
       '<div class="row tight acts">'+
       (star?'<button class="btn sm" data-a="plan" data-sc="'+esc(s.id)+'">'+(plan?'Edit plan':'Schedule')+'</button>':'')+
       (plan?'<span class="placewrap"><button class="btn sm" data-a="calmenu" data-sc="'+esc(s.id)+'" aria-haspopup="true">Add to calendar</button></span><button class="btn sm pri" data-a="logplan" data-sc="'+esc(s.id)+'">Log this game</button>':'')+
+      (packOf(s)?'<button class="btn sm" data-a="pack" data-sc="'+esc(s.id)+'">'+ICON_BOX+'Packing list</button>':'')+
       (plan?'':x?'<button class="btn sm again" data-a="again" data-sc="'+esc(s.id)+'" title="Same players, investigators, rules and place as last time">'+ICON_AGAIN+'Play again</button>':'<button class="btn sm" data-a="log" data-sc="'+esc(s.id)+'">Log a play</button>')+
 '</div></li>';
   };
@@ -348,6 +351,42 @@ function logFromPlan(id){
     party:g?groupMembers(g).map(function(x){return {player:x.name,investigator:''};}):null,location:pl.location||'',notes:pl.note||'',attempts:1});
 }
 // Our own short premise for an official scenario (js/official-info.js), if there is one.
+// ---------- packing lists (Valkyrie scenarios; js/packlists.js, built by scripts/fetch-packlists.py) ----------
+// Which tiles and monster figures to take out of the box, with the community Tiles Index numbers, from Dan's
+// valkyrie-tools packlist. Ticks are kept on this device only, per scenario, so you can pack at the table.
+var ICON_BOX='<svg class="ic" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg>';
+function packOf(s){var t=s&&(s.type||s.from);return t==='valkyrie'&&s.vkey&&(window.MOM_PACKLISTS||{})[s.vkey]||null;}
+function boxName(id){return id?(MOM.productName(id)||id):'fan-made tile';}
+function canPlay(s){var p=packOf(s);if(!p||p.other)return false;var o=owned();return p.need.every(function(b){return o.indexOf(b)>=0;});}
+function needsHtml(s){var p=packOf(s);if(!p||!p.need.length)return '';var o=owned();
+  var parts=p.need.map(function(b){var have=o.indexOf(b)>=0;return have?esc(boxName(b)):'<span class="missing" title="Not ticked in Settings, Your collection">'+esc(boxName(b))+'</span>';});
+  if(p.other)parts.push('<span class="missing">fan-made pack '+esc(p.other.join(', '))+'</span>');
+  return '<span class="note needs">Needs '+parts.join(' + ')+'</span>';}
+function packDialog(id){
+  var s=scenById(id),p=packOf(s);if(!p)return;var KEY='mom-pack-'+s.vkey,done={};
+  try{(JSON.parse(localStorage.getItem(KEY)||'[]')||[]).forEach(function(k){done[k]=1;});}catch(e){}
+  var idx=function(i){var m=/^(\d+)([SML])$/.exec(i||'');return m?m[1]+'\u2009'+m[2]:'';};
+  var item=function(k,name,sub,badge){return '<li><label class="pk'+(done[k]?' on':'')+'"><input type="checkbox" data-k="'+k+'"'+(done[k]?' checked':'')+'>'+
+    (badge?'<span class="pk-idx num">'+badge+'</span>':'')+'<span class="pk-txt"><b>'+esc(name)+'</b><span class="note">'+sub+'</span></span></label></li>';};
+  var tile=function(t,i){return item('t'+i,t.n,esc(boxName(t.x))+(t.b?' \u00b7 other side: '+esc(t.b):''),idx(t.i)||'\u2014');};
+  var normal=[],six=[];p.tiles.forEach(function(t,i){(t.six?six:normal).push(tile(t,i));});
+  var mons=p.monsters.map(function(m,i){return item('m'+i,m.n,esc(boxName(m.x))+(m.as?' \u00b7 plays '+esc(m.as.join(', ')):''),'');});
+  var o=owned(),miss=p.need.filter(function(b){return o.indexOf(b)<0;});
+  var d=openDialog('<div class="dlg-head"><h2>Packing list: '+esc(s.name)+'</h2><button class="x" type="button" data-close aria-label="Close">\u00d7</button></div>'+
+    '<p class="note">Needs '+p.need.map(function(b){return esc(boxName(b));}).join(' + ')+(p.other?' + fan-made pack '+esc(p.other.join(', ')):'')+'.'+
+    (miss.length?' <span class="missing">Not ticked in your collection: '+esc(miss.map(boxName).join(', '))+'.</span>':'')+'</p>'+
+    '<div class="row pk-bar"><span class="note pk-count"></span><button class="btn sm ghost" type="button" data-pk="clear">Clear ticks</button></div>'+
+    (normal.length?'<h3 class="pk-h">Tiles <span class="note">'+normal.length+'</span></h3><ul class="pk-list">'+normal.join('')+'</ul>':'')+
+    (six.length?'<h3 class="pk-h">Tiles for 6 players only <span class="note">'+six.length+'</span></h3><ul class="pk-list">'+six.join('')+'</ul>':'')+
+    (mons.length?'<h3 class="pk-h">Monster figures <span class="note">'+mons.length+'</span></h3><ul class="pk-list">'+mons.join('')+'</ul>':'')+
+    '<p class="note fine">Tile numbers follow the community <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L for small, medium, large); a \u2014 means that tile isn\u2019t numbered there yet, so look for it by name or by its other side. From the scenario file in the Valkyrie catalogue.</p>'+
+    '<div class="row end"><button class="btn" type="button" data-close>Done</button></div>','Packing list');
+  var count=function(){var all=d.querySelectorAll('.pk input'),n=0;all.forEach(function(c){if(c.checked)n++;});d.querySelector('.pk-count').textContent=n+' of '+all.length+' packed';};
+  var save=function(){var l=[];d.querySelectorAll('.pk input:checked').forEach(function(c){l.push(c.dataset.k);});try{if(l.length)localStorage.setItem(KEY,JSON.stringify(l));else localStorage.removeItem(KEY);}catch(e){}};
+  d.addEventListener('change',function(e){var c=e.target;if(!c.dataset.k)return;c.closest('.pk').classList.toggle('on',c.checked);count();save();});
+  d.querySelector('[data-pk=clear]').addEventListener('click',function(){d.querySelectorAll('.pk input').forEach(function(c){c.checked=false;c.closest('.pk').classList.remove('on');});count();save();});
+  count();
+}
 function officialInfo(s){return s.type==='official'&&(window.MOM_OFFICIAL_INFO||{})[s.id]||null;}
 // Languages in the filter, most scenarios first, with counts.
 function langChoices(){var c={};MOM.VALKYRIE.forEach(function(s){if(s.retired)return;langsOf(s).forEach(function(l){c[l]=(c[l]||0)+1;});});
@@ -768,6 +807,7 @@ app.addEventListener('click',function(e){
   else if(k==='again')playAgain(a.dataset.sc);
   else if(k==='star')toggleStar(a.dataset.sc);
   else if(k==='plan')planDialog(a.dataset.sc);
+  else if(k==='pack')packDialog(a.dataset.sc);
   else if(k==='calmenu')calMenu(a);
   else if(k==='logplan')logFromPlan(a.dataset.sc);
   else if(k==='edit'){var p=plays.filter(function(x){return x.id===a.dataset.id;})[0];if(p)openPlay(p);}
@@ -775,7 +815,7 @@ app.addEventListener('click',function(e){
   else if(k==='scplays'){ui.q=ui.result=ui.player='';ui.scen=a.dataset.id;ui.tab='plays';render();window.scrollTo(0,0);}
   else if(k==='fixinv')fixInvestigators();
   else if(k==='fixsc')fixScenarios();
-  else if(k==='sfclear'){sf.src=sf.diff=sf.len=sf.rate=sf.lang='any';sf.src='all';ui.sfilter='all';ui.sq='';try{sessionStorage.setItem('mom-sf',JSON.stringify(sf));}catch(x){}render();}
+  else if(k==='sfclear'){sf.src=sf.diff=sf.len=sf.rate=sf.lang=sf.own='any';sf.src='all';ui.sfilter='all';ui.sq='';try{sessionStorage.setItem('mom-sf',JSON.stringify(sf));}catch(x){}render();}
   else if(k==='newperson')personDialog();
   else if(k==='newgroup')groupDialog();
   else if(k==='editperson'){var ps=people.filter(function(x){return x.id===a.dataset.id;})[0];if(ps)personDialog(ps);}

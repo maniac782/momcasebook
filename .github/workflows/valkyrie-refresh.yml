@@ -1,7 +1,7 @@
 name: Refresh Valkyrie scenarios
 
-# Every Monday, pull the scenario list the Valkyrie app downloads (github.com/NPBruce/valkyrie-store) and, if anything
-# changed (new scenarios, or updated community numbers), bump the version, run the tests, commit and deploy.
+# Every Monday, pull the scenario list the Valkyrie app downloads (github.com/NPBruce/valkyrie-store) and rebuild the
+# packing lists of new or updated scenarios; if anything changed, bump the version, run the tests, commit and deploy.
 # Can also be run by hand from the Actions tab.
 on:
   schedule:
@@ -30,8 +30,18 @@ jobs:
         id: fetch
         run: python3 scripts/fetch-valkyrie.py
 
+      # Packing lists: Valkyrie's game content (tile and monster names and boxes) plus each new or updated scenario file
+      - name: Fetch Valkyrie's game content
+        run: |
+          git clone -q --depth 1 --filter=blob:none --sparse https://github.com/NPBruce/valkyrie "$RUNNER_TEMP/valkyrie"
+          git -C "$RUNNER_TEMP/valkyrie" sparse-checkout set --no-cone '/unity/Assets/StreamingAssets/content/MoM/**/tiles.ini' '/unity/Assets/StreamingAssets/content/MoM/**/monsters.ini' '/unity/Assets/StreamingAssets/content/MoM/**/content_pack.ini'
+
+      - name: Build the packing lists
+        id: pack
+        run: python3 scripts/fetch-packlists.py --content "$RUNNER_TEMP/valkyrie/unity/Assets/StreamingAssets/content/MoM"
+
       - name: Bump the version, test and commit
-        if: steps.fetch.outputs.changed == 'true'
+        if: steps.fetch.outputs.changed == 'true' || steps.pack.outputs.packlists_changed == 'true'
         run: |
           n=$(sed -n "s/.*APP_VERSION='v\([0-9]*\)'.*/\1/p" js/version.js)
           next=$((n+1))
@@ -40,15 +50,15 @@ jobs:
           node test/house-rules.test.js
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add js/valkyrie.js js/version.js
+          git add js/valkyrie.js js/packlists.js js/version.js
           added="${{ steps.fetch.outputs.added }}"
-          if [ "${added:-0}" != "0" ]; then msg="$added new"; else msg="updated community numbers"; fi
+          if [ "${added:-0}" != "0" ]; then msg="$added new"; elif [ "${{ steps.fetch.outputs.changed }}" = "true" ]; then msg="updated community numbers"; else msg="updated packing lists"; fi
           git commit -m "Weekly Valkyrie refresh: $msg, v$next"
           git push
 
       # A push made by this workflow doesn't start other workflows on its own, so start the deploy explicitly.
       - name: Deploy
-        if: steps.fetch.outputs.changed == 'true'
+        if: steps.fetch.outputs.changed == 'true' || steps.pack.outputs.packlists_changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run deploy.yml --ref main
