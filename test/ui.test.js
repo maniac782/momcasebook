@@ -450,6 +450,12 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await q.locator('.seat .pp-pick').first().selectOption('__someone_new__');
   assert.ok(await q.locator('.seat .pp-wrap.typing').count(),'Someone new uncovers the box for typing');
   assert.strictEqual(await q.locator('.seat [name=pp]').first().inputValue(),'','cleared for a new name');
+  assert.ok(await q.locator('.seat .pp-pick').first().isVisible(),'the arrow still opens the picker while typing');
+  assert.ok((await q.locator('.seat .pp-pick').first().boundingBox()).width<60,'and only the arrow, so the box takes typing');
+  await q.locator('.seat .pp-pick').first().selectOption('Dan');
+  assert.strictEqual(await q.locator('.seat .pp-wrap.typing').count(),0,'changing your mind back to a known player');
+  assert.strictEqual(await q.locator('.seat [name=pp]').first().inputValue(),'Dan');
+  await q.locator('.seat .pp-pick').first().selectOption('__someone_new__');
   await q.locator('.seat [name=pp]').first().fill('Robin');await q.locator('.dlg h2').first().click();
   assert.strictEqual(await q.locator('.seat .pp-wrap.typing').count(),0,'covered again once a name is typed');
   await q.locator('.seat .pp-pick').first().focus();

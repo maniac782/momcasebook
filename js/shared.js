@@ -298,7 +298,8 @@ window.accountMenu=function(user,opts){
    under it as soon as it's tapped or typed in, narrowed as you type; pick one, or just keep typing a new name. It looks
    like the dropdown menus above. The same name can be picked for more than one seat (one person, two investigators).
    On phones and tablets the box is covered by a real <select class="pp-pick"> instead, so a tap opens the device's own
-   picker with the known names and "Someone new…", which uncovers the box for typing. */
+   picker with the known names and "Someone new…", which uncovers the box for typing while the arrow on its right still
+   opens the picker, so you can change your mind. */
 (function(){
   var cur=null;   // {inp, wrap, list, items, active}
   var norm=function(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();};
@@ -383,8 +384,9 @@ window.accountMenu=function(user,opts){
   document.addEventListener('change',function(e){
     var sel=e.target;if(!sel.classList||!sel.classList.contains('pp-pick'))return;e.stopPropagation();
     var wrap=sel.parentNode,inp=wrap.querySelector('input[data-suggest]');if(!inp)return;
-    if(sel.value===NEW){wrap.classList.add('typing');if(names(inp).some(function(n){return norm(n)===norm(inp.value);}))inp.value='';inp.focus();return;}
-    inp.value=sel.value;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
+    if(sel.value===NEW){wrap.classList.add('typing');if(names(inp).some(function(n){return norm(n)===norm(inp.value);}))inp.value='';
+      inp.placeholder='Type a name';try{inp.focus({preventScroll:true});}catch(x){inp.focus();}return;}
+    wrap.classList.remove('typing');inp.placeholder='Player';inp.value=sel.value;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
   },true);
   // a new name typed in: cover the box with the picker again (which then lists it)
   document.addEventListener('focusout',function(e){var t=e.target,w=t&&t.parentNode;if(t.tagName==='INPUT'&&w&&w.classList&&w.classList.contains('pp-wrap')&&t.value.trim())w.classList.remove('typing');});
