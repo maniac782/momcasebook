@@ -123,30 +123,42 @@ function cropDialog(img){
 }
 
 /* ---------- Account button and menu ----------
-   Shows the person's picture (or initial); the menu has Install app, Admin (for admins), Send feedback, Sign out and the version.
-   opts.photo is their chosen profile picture, if any. */
+   The same as the Arkham Horror RPG Ledger's top-right corner (same markup, class names and styles, so the two sites
+   look and behave alike): your picture or initial, your name and a caret; on phones just the picture. The menu has
+   Your account, Admin (for admins), Install app, Send feedback, Sign out and the version. opts: {name, photo, admin, home}.
+   The open state lives in window.__acctOpen, so the menu stays open when the page redraws behind it. */
+// The round icon: your chosen picture, else your Google photo, else your initial in white on slate.
+window.acctIcon=function(name,photo,gphoto){
+  var src=picOk(photo)?photo:gphoto||'';
+  if(src)return '<img class="av" src="'+esc(src)+'" alt="" referrerpolicy="no-referrer">';
+  return '<span class="av" aria-hidden="true" style="background:#56606f">'+esc((String(name||'?').trim().charAt(0)||'?').toUpperCase())+'</span>';
+};
 window.accountMenu=function(user,opts){
-  opts=opts||{};
-  var name=opts.name||user.displayName||user.email||'You';
-  return '<span class="acct"><button class="acct-btn" type="button" data-acct="toggle" aria-haspopup="true" aria-expanded="false" title="Your account" aria-label="Your account">'+avatarHtml(name,opts.photo,googlePic(user))+'<b class="acct-name">'+esc(name)+'</b><span class="caret" aria-hidden="true">\u25be</span></button>'+
-    '<span class="acct-menu" role="menu" hidden><span class="acct-who">'+avatarHtml(name,opts.photo,googlePic(user),'lg')+'<span><b>'+esc(name)+'</b>'+(user.email&&user.email!==name?'<small>'+esc(user.email)+'</small>':'')+'</span></span>'+
+  opts=opts||{};var open=!!window.__acctOpen;
+  var name=opts.name||user.displayName||(user.email||'').split('@')[0]||'You',ic=acctIcon(name,opts.photo,googlePic(user));
+  return '<span class="acctwrap"><button class="acctbtn" type="button" data-acct="toggle" aria-haspopup="menu" aria-expanded="'+open+'" title="Your account">'+ic+'<b class="acctname">'+esc(name)+'</b><span class="caret" aria-hidden="true">\u25be</span></button>'+
+    '<div class="acctmenu" role="menu"'+(open?'':' hidden')+'><div class="acctmenu-head">'+ic+'<span><b>'+esc(name)+'</b>'+(user.email?'<span class="note">'+esc(user.email)+'</span>':'')+'</span></div>'+
     (opts.home?'<a role="menuitem" href="./?account=1">Your account</a>':'<button role="menuitem" type="button" data-acct="account">Your account</button>')+
-    (isInstalledApp()?'':'<button role="menuitem" type="button" data-acct="install">Install app</button>')+
     (opts.admin?'<a role="menuitem" href="admin.html">Admin</a>':'')+(opts.home?'<a role="menuitem" href="./">Back to my plays</a>':'')+
+    (isInstalledApp()?'':'<button role="menuitem" type="button" data-acct="install">Install app</button>')+
     '<button role="menuitem" type="button" data-acct="feedback">Send feedback</button>'+
     '<button role="menuitem" type="button" data-acct="signout">Sign out</button>'+
-    '<span class="acct-ver">Mansions of Madness Casebook '+esc(self.APP_VERSION||'')+'</span></span></span>';
+    '<span class="acctver">Mansions of Madness Casebook '+esc(self.APP_VERSION||'')+'</span></div></span>';
 };
-document.addEventListener('click',function(e){
-  var a=e.target.closest('[data-acct]'),open=document.querySelector('.acct-menu:not([hidden])');
-  if(!a){if(open&&!e.target.closest('.acct-menu')){open.hidden=true;open.previousElementSibling.setAttribute('aria-expanded','false');}return;}
-  var k=a.getAttribute('data-acct');
-  if(k==='toggle'){var m=a.nextElementSibling;m.hidden=!m.hidden;a.setAttribute('aria-expanded',String(!m.hidden));return;}
-  if(open){open.hidden=true;}
-  if(k==='account')window.dispatchEvent(new CustomEvent('acct-account'));
-  else if(k==='install')openInstall();
-  else if(k==='feedback')openFeedback();
-  else if(k==='signout')firebase.app().auth().signOut().then(function(){location.href='./';});
-});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){var m=document.querySelector('.acct-menu:not([hidden])');if(m){m.hidden=true;m.previousElementSibling.focus();}}});
+(function(){
+  function setOpen(v){window.__acctOpen=v;document.querySelectorAll('.acctwrap').forEach(function(w){var m=w.querySelector('.acctmenu'),b=w.querySelector('.acctbtn');if(m)m.hidden=!v;if(b)b.setAttribute('aria-expanded',String(v));});}
+  document.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('[data-acct]'),k=t&&t.dataset.acct;
+    if(k==='toggle'){e.stopPropagation();setOpen(!window.__acctOpen);return;}
+    if(k){setOpen(false);
+      if(k==='account')window.dispatchEvent(new CustomEvent('acct-account'));
+      else if(k==='install')openInstall();
+      else if(k==='feedback')openFeedback();
+      else if(k==='signout')firebase.app().auth().signOut().then(function(){location.href='./';});
+      return;}
+    if(window.__acctOpen&&!(e.target.closest&&e.target.closest('.acctmenu')))setOpen(false);
+    else if(window.__acctOpen&&e.target.closest('.acctmenu a'))setOpen(false);
+  },true);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&window.__acctOpen){setOpen(false);var b=document.querySelector('.acctbtn');if(b)b.focus();}});
+})();
 })();

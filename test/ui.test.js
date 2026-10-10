@@ -286,7 +286,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
     const gr=g.createLinearGradient(0,0,640,420);gr.addColorStop(0,'#1d5c63');gr.addColorStop(1,'#a3322a');g.fillStyle=gr;g.fillRect(0,0,640,420);
     g.fillStyle='#e4e7ea';g.beginPath();g.arc(320,210,120,0,7);g.fill();return c.toDataURL('image/png');})).split(',')[1],'base64');
   // it lives under the account menu's "Your account", like the Arkham site
-  await p.click('.acct-btn');assert.ok(await p.isVisible('.acct-btn .acct-name'),'name on the account button');
+  await p.click('.acctbtn');assert.ok(await p.isVisible('.acctbtn .acctname'),'name on the account button');
   await p.screenshot({path:out+'/6a-menu.png'});
   await p.click('[data-acct=account]');await p.waitForSelector('.dlg h2:text("Your account")');
   const [chooser]=await Promise.all([p.waitForEvent('filechooser'),p.click('[data-ac=pic]')]);
@@ -297,18 +297,23 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.mouse.move(box.x+130,box.y+130);await p.mouse.down();await p.mouse.move(box.x+90,box.y+120);await p.mouse.up();
   await p.screenshot({path:out+'/6b-crop.png'});
   await p.click('[data-use]');
-  await p.waitForSelector('.acct-btn .avatar img');
+  await p.waitForSelector('.acctbtn img.av');
   const photo=await p.evaluate(()=>__fake.store['users/u-danexamplecom'].photo);
   assert.ok(/^data:image\/jpeg;base64,/.test(photo)&&photo.length<=60000,'photo saved as small jpeg ('+photo.length+')');
   await p.waitForSelector('.dlg .picrow .avatar img');
   await p.fill('.dlg [name=aname]','Dan M');await p.click('.dlg [data-ac-form] button');await p.waitForTimeout(150);
   assert.strictEqual(await p.evaluate(()=>__fake.store['users/u-danexamplecom'].name),'Dan M','name saved from Your account');
   await p.screenshot({path:out+'/6c-account.png'});
-  await p.click('[data-ac=picrm]');await p.waitForSelector('.acct-btn .avatar:not(:has(img))');
+  await p.click('[data-ac=picrm]');await p.waitForSelector('.acctbtn span.av');
   await Promise.all([p.waitForEvent('filechooser').then(c=>c.setFiles({name:'me.png',mimeType:'image/png',buffer:png})),p.click('[data-ac=pic]')]);
-  await p.waitForSelector('.crop canvas');await p.click('[data-use]');await p.waitForSelector('.acct-btn .avatar img');
+  await p.waitForSelector('.crop canvas');await p.click('[data-use]');await p.waitForSelector('.acctbtn img.av');
   await p.click('.dlg [data-close]');
-  await p.click('.acct-btn');await p.screenshot({path:out+'/6d-menu.png'});await p.keyboard.press('Escape');
+  await p.click('.acctbtn');await p.waitForSelector('.acctmenu:not([hidden])');await p.screenshot({path:out+'/6d-menu.png'});
+  // menu order matches the Arkham site; it stays open while the page redraws behind it; a click outside closes it
+  assert.deepStrictEqual(await p.$$eval('.acctmenu [role=menuitem]',xs=>xs.map(x=>x.textContent)),['Your account','Install app','Send feedback','Sign out']);
+  await p.evaluate(()=>window.dispatchEvent(new Event('resize')));await p.click('[data-t=stats]',{position:{x:5,y:5}});
+  assert.ok(await p.isHidden('.acctmenu'),'click outside closes it');
+  await p.click('.acctbtn');await p.keyboard.press('Escape');assert.ok(await p.isHidden('.acctmenu'),'Escape closes it');
   await p.click('[data-t=settings]');assert.strictEqual(await p.locator('h2:text-is("You")').count(),0,'no longer in Settings');
   // one person playing two characters in a game counts once for that game
   const rowVal=async(table,name)=>{await p.click('[data-t=stats]');return p.evaluate(([t,n])=>{const sec=[...document.querySelectorAll('section.sec')].find(s=>s.querySelector('h2')&&s.querySelector('h2').textContent===t);
