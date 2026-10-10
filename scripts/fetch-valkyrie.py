@@ -32,7 +32,9 @@ def author(sec):
         if re.match('^'+pre+r'\s*:?\s*$',l,re.I) and i+1<len(lines): return lines[i+1][:60]
         m=re.match('^'+pre+r'\s*:?\s+(.+)$',l,re.I)
         if m: return m.group(1)[:60]
-    return lines[0][:60] if lines and len(lines[0])<=40 else ''
+    # the first line is itself a heading ending in a colon ("Historia e narracao:"): the name is on the next line
+    if len(lines)>1 and lines[0].endswith(':') and not lines[1].endswith(':'): return lines[1][:60]
+    return lines[0][:60] if lines and len(lines[0])<=40 and not lines[0].endswith(':') else ''
 out=[];seen=set()
 for key in cp.sections():
     sec=dict(cp.items(key))

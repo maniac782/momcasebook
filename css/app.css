@@ -294,3 +294,9 @@ details[data-box=starred]>summary h2::before{content:"\2605  ";color:var(--accen
 /* keep scenario names readable: the buttons wrap below the text before squeezing it */
 .scs li>.grow{min-width:min(100%,280px)}
 .scs li>.acts{margin-left:auto}
+
+/* star sits at the start of each scenario row, so names and buttons line up */
+.scs li.sc{flex-wrap:nowrap;align-items:flex-start}
+.scs li.sc>.star{flex:none;width:32px;height:32px;margin:-4px -2px 0 -6px}
+.scs li.sc>.grow{flex:1}
+@media (max-width:560px){.scs li.sc{flex-wrap:wrap}.scs li.sc>.grow{flex:1 1 calc(100% - 40px)}.scs li.sc>.acts{margin-left:34px}}

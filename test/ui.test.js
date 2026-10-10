@@ -172,6 +172,12 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('[data-t=scenarios]');await p.fill('#sq','exotic');await p.waitForFunction(n=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent===n),'Exotic Material');
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('text=You: 1 play').count(),'your record next to the community');
   await p.screenshot({path:out+'/5e-community.png'});
+  // a played, never-passed scenario says Failed, and the star sits before the name
+  assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('.chip:text-is("Failed")').count(),'Failed chip');
+  assert.ok(await p.evaluate(()=>{const li=[...document.querySelectorAll('.scs li.sc')].find(l=>l.textContent.includes('Exotic Material'));return li.firstElementChild.classList.contains('star');}),'star first in the row');
+  await p.selectOption('#sf-status','failed');await p.waitForFunction(()=>document.querySelectorAll('.scs li .chip').length>0);
+  assert.ok(await p.evaluate(()=>[...document.querySelectorAll('.scs li.sc')].every(l=>l.querySelector('.chip').textContent==='Failed')),'Failed filter');
+  await p.selectOption('#sf-status','all');
   // played scenarios offer Play again, filled from last time (it was a fail, so attempt 2)
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('[data-a=again]').count(),'Play again on a played scenario');
   await p.locator('.scs li',{hasText:'Exotic Material'}).locator('[data-a=again]').click();await p.waitForSelector('.dlg h2:text("Play again")');

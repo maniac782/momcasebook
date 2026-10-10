@@ -176,7 +176,7 @@ function scenariosHtml(){
     var x=st[s.id];
     if(sq&&((s.name||'')+' '+(s.author||'')+' '+(s.desc||'')+' '+((officialInfo(s)||{}).text||'')).toLowerCase().indexOf(sq)<0)return false;
     if(sf.src!=='all'&&s.from!==sf.src)return false;
-    if(f==='new'&&x||f==='unbeaten'&&x&&x.pass||f==='beaten'&&!(x&&x.pass))return false;
+    if(f==='new'&&x||f==='unbeaten'&&x&&x.pass||f==='failed'&&!(x&&!x.pass)||f==='beaten'&&!(x&&x.pass))return false;
     if(sf.diff!=='any'){var d=D[sf.diff];if(!s.difficulty||s.difficulty<d[0]||s.difficulty>=d[1])return false;}
     if(sf.len!=='any'){var l=L[sf.len],m=typicalMins(s);if(!m||m<l[0]||m>=l[1])return false;}
     if(sf.rate!=='any'&&!(s.rating&&s.plays>=10&&s.rating>=+sf.rate))return false;
@@ -193,7 +193,7 @@ function scenariosHtml(){
   var offIds=MOM.OFFICIAL.filter(function(s){return own.indexOf(s.product)>=0;}),beat=offIds.filter(function(s){return st[s.id]&&st[s.id].pass;}).length;
   var h='<div class="filters"><label class="field grow"><span class="lbl">Search</span><input class="f" id="sq" type="search" value="'+esc(ui.sq||'')+'" placeholder="Name, author or words in the description" autocomplete="off"></label>'+
     sel('sf-src','From',sf.src,[['all','Everything'],['official','Official'],['valkyrie','Valkyrie']])+
-    sel('sf-status','Your progress',f,[['all','Any'],['new','Not played'],['unbeaten','Not beaten yet'],['beaten','Beaten']])+
+    sel('sf-status','Your progress',f,[['all','Any'],['new','Not played'],['failed','Failed'],['unbeaten','Not played or failed'],['beaten','Beaten']])+
     sel('sf-diff','Difficulty',sf.diff,[['any','Any'],['easy','Easy'],['medium','Medium'],['hard','Hard'],['vhard','Very hard']])+
     sel('sf-len','Length',sf.len,[['any','Any'],['short','Under 2 hours'],['mid','2 to 3 hours'],['long','3 to 4 hours'],['xlong','Over 4 hours']])+
     sel('sf-rate','Rating',sf.rate,[['any','Any'],['7','7 or more'],['8','8 or more'],['8.5','8.5 or more']])+
@@ -209,7 +209,7 @@ function scenariosHtml(){
   if(!list.length)return h+'<p class="note">Nothing matches. Loosen a filter. (A brand-new Valkyrie scenario appears here after the Monday refresh.)</p>';
   var row=function(s){
     var star=starredMap()[s.id],plan=star&&star.plan;
-    var x=st[s.id],chip=!x?'<span class="chip muted">Not played</span>':x.pass?'<span class="chip ok">Beaten</span>':'<span class="chip bad">Not beaten yet</span>';
+    var x=st[s.id],chip=!x?'<span class="chip muted">Not played</span>':x.pass?'<span class="chip ok">Beaten</span>':'<span class="chip bad">Failed</span>';
     var src=s.from==='official'?esc(MOM.productName(s.product)||'Official'):'';  // the box already says Valkyrie
     var facts=[src,s.author?'by '+esc(s.author):'',s.difficulty?diffName(s.difficulty):'',
       s.avg&&s.plays>=10?'usually '+esc(lenText([s.avg,s.avg])):s.minutes?esc(lenText(s.minutes)):'',langText(s)].filter(Boolean).join(' \u00b7 ');
@@ -217,13 +217,13 @@ function scenariosHtml(){
       (s.win!=null?Math.round(s.win*100)+'% pass':'')+' \u00b7 '+s.plays.toLocaleString()+' plays on Valkyrie':'';
     var yours=x?'You: '+x.n+' play'+(x.n===1?'':'s')+', '+x.pass+' passed'+(x.last?', last '+esc(fmtDate(x.last)):''):'';
     var rv=reviewsOf(s);
-    return '<li class="sc"><div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(s.name)+'</a>':esc(s.name))+'</b>'+chip+'</span>'+
+    return '<li class="sc">'+starBtn(s.id,!!star)+'<div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(s.name)+'</a>':esc(s.name))+'</b>'+chip+'</span>'+
       '<span class="note">'+facts+'</span>'+(plan?'<span class="plan">'+ICON_CAL+'<span>'+esc(planText(plan))+'</span></span>':'')+(comm?'<span class="note community">'+comm+'</span>':'')+(yours?'<span class="note">'+yours+'</span>':'')+
       (s.link&&/^https:\/\//.test(s.link)?'<span class="note"><a href="'+esc(s.link)+'" target="_blank" rel="noopener">Details</a></span>':'')+
       (officialInfo(s)?'<details class="desc"><summary>Premise</summary><p>'+esc(officialInfo(s).text)+'</p><p class="note">Written for this site from <a href="'+esc(officialInfo(s).url)+'" target="_blank" rel="noopener">'+esc(officialInfo(s).source)+'</a>; no spoilers.</p></details>':'')+
       (s.desc?'<details class="desc"><summary>Description'+(s.descLang?' <span class="note">(in '+esc(s.descLang)+')</span>':'')+'</summary><p>'+esc(s.desc).replace(/\n/g,'<br>')+'</p><p class="note">By '+esc(s.author||'the author')+', from the Valkyrie scenario catalogue.</p></details>':'')+
       (rv.length?'<details class="reviews"><summary>'+rv.length+' review'+(rv.length===1?'':'s')+'</summary>'+rv.map(function(r){return '<p><span>'+esc(r.summary)+'</span> <a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.source)+'</a>'+(r.date?' <span class="note">('+esc(r.date)+')</span>':'')+'</p>';}).join('')+'</details>':'')+'</div>'+
-      '<div class="row tight acts">'+starBtn(s.id,!!star)+
+      '<div class="row tight acts">'+
       (star?'<button class="btn sm" data-a="plan" data-sc="'+esc(s.id)+'">'+(plan?'Edit plan':'Schedule')+'</button>':'')+
       (plan?'<span class="placewrap"><button class="btn sm" data-a="calmenu" data-sc="'+esc(s.id)+'" aria-haspopup="true">Add to calendar</button></span><button class="btn sm pri" data-a="logplan" data-sc="'+esc(s.id)+'">Log this game</button>':'')+
       (plan?'':x?'<button class="btn sm again" data-a="again" data-sc="'+esc(s.id)+'" title="Same players, investigators, rules and place as last time">'+ICON_AGAIN+'Play again</button>':'<button class="btn sm" data-a="log" data-sc="'+esc(s.id)+'">Log a play</button>')+
