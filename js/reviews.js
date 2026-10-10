@@ -19,6 +19,8 @@ globalThis.MOM_REVIEWS=(function(){
     'o-dark-reflections':r(RANK17,'A fun scenario with creepy mirror mechanics; usually placed mid-table.'),
     'v-arkham-crime-wave':[{source:'FFG forum: “How would you rank the scenarios?”',url:'https://ffg-forum-archive.entropicdreams.com/topic/304322-how-would-you-rank-the-scenarios',date:'2020',
       summary:'A murder mystery that splits opinion: some found the culprit easy to work out, while some experienced players found it nearly impossible to win.'}],
+    'v-stress-and-strain':[{source:'FFG forum: “How would you rank the scenarios?”',url:'https://ffg-forum-archive.entropicdreams.com/topic/304322-how-would-you-rank-the-scenarios',date:'2020',
+      summary:'Recommended as a solid, straightforward scenario in the spirit of Resident Evil.'}],
     'o-the-twilight-diadem':[{source:'Steam discussion (one player)',url:'https://steamcommunity.com/app/478980/discussions/0/2259060348513219099',date:'2020',
       summary:'One player’s critique: talking to characters rarely moved things forward, choices felt random and the puzzle was unclear.'}]
   };
