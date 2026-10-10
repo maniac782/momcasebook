@@ -126,12 +126,14 @@ function playsHtml(){
   // one collapsible box each for Official and Valkyrie scenarios (plus any still needing a scenario), like the Scenarios tab
   var prow=function(p){
     var t='';  // the box already says Official or Valkyrie
-    return '<li><button class="play" data-a="edit" data-id="'+esc(p.id)+'">'+
-      '<span class="pl-top"><span class="pl-date num">'+esc(fmtDate(p.date))+'</span>'+(p.location?'<span class="pl-loc">at '+esc(p.location)+'</span>':'')+resChip(p.result)+(p.attempts>1?'<span class="chip muted">'+p.attempts+' tries</span>':'')+t+'</span>'+
+    // the result sits at the right, centred on the card, so results line up down the list
+    return '<li><button class="play" data-a="edit" data-id="'+esc(p.id)+'"><span class="pl-main">'+
+      '<span class="pl-top"><span class="pl-date num">'+esc(fmtDate(p.date))+'</span>'+(p.location?'<span class="pl-loc">at '+esc(p.location)+'</span>':'')+t+'</span>'+
       '<span class="pl-name">'+esc(p.scenarioName)+'</span>'+
       (partyText(p)?'<span class="pl-party">'+partyText(p)+'</span>':'<span class="pl-party none">Players not recorded</span>')+
       (p.rules&&p.rules!=='Normal rules'?'<span class="pl-rules">'+esc(p.rules)+'</span>':'')+
-      (p.notes?'<span class="pl-notes">'+esc(p.notes)+'</span>':'')+'</button></li>';};
+      (p.notes?'<span class="pl-notes">'+esc(p.notes)+'</span>':'')+'</span>'+
+      '<span class="pl-res">'+resChip(p.result)+(p.attempts>1?'<span class="pl-tries">'+p.attempts+' tries</span>':'')+'</span></button></li>';};
   var bad={};sprobs.forEach(function(p){bad[p.id]=1;});
   var kind=function(p){return bad[p.id]?'fix':p.scenarioType==='valkyrie'?'valkyrie':'official';};
   [['fix','Needs a scenario'],['official','Official'],['valkyrie','Valkyrie']].forEach(function(b){
