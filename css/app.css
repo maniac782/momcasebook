@@ -70,6 +70,10 @@ textarea.f{resize:vertical;min-height:90px;height:auto}
 select.f{-webkit-appearance:none;appearance:none;padding-right:38px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;cursor:pointer;
   background-image:var(--chev);background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
 select.f:hover{border-color:var(--muted)}
+/* nothing chosen yet ("Choose a scenario…", "Investigator…"): shown like a placeholder, not a value */
+select.f:has(option:checked[value=""]){color:var(--muted)}
+select.f option{color:var(--ink)}
+.f::placeholder{color:var(--muted);opacity:.8}
 /* pick-or-type boxes (players when logging a play): the same chevron as a dropdown, and the same menu */
 input.f.combo{padding-right:38px;background-image:var(--chev);background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
 input.f.combo::-webkit-calendar-picker-indicator{display:none!important;opacity:0}

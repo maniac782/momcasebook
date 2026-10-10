@@ -623,9 +623,9 @@ async function cleanOwnScenarios(){
 // ---------- the play form ----------
 function playForm(p,preset){
   var editing=!!(p&&p.id);p=p||{};
-  var last=plays.slice().sort(function(a,b){return (b.created||0)-(a.created||0);})[0];
   var scId=p.scenarioId||preset||'';
-  var party=(p.party&&p.party.length?p.party:[{player:myName(),investigator:''}]);
+  // a fresh Log a play starts empty; Play again, a plan or an edit bring their own details
+  var party=(p.party&&p.party.length?p.party:[{player:'',investigator:''}]);
   var opts='<option value="">Choose a scenario…</option>';
   var own=owned(),st=scenStats();
   MOM.PRODUCTS.forEach(function(pr){var l=MOM.OFFICIAL.filter(function(s){return s.product===pr.id&&(own.indexOf(pr.id)>=0||s.id===scId);});
@@ -651,9 +651,9 @@ function playForm(p,preset){
     '<fieldset class="field"><legend class="lbl">Who played</legend>'+
     (groups.length?'<select class="f grp" name="grp" aria-label="Fill in from a group"><option value="">Fill in from a group\u2026</option>'+groups.slice().sort(byName).map(function(g){return '<option value="'+esc(g.id)+'">'+esc(g.name)+' ('+groupMembers(g).length+')</option>';}).join('')+'</select>':'')+
     '<div class="seats">'+party.map(seat).join('')+'</div><div class="row"><button class="btn sm" type="button" data-f="addseat">+ Add a player</button></div></fieldset>'+
-    '<label class="field"><span class="lbl">Where (optional)</span><input class="f" name="loc" list="dl-loc" maxlength="60" placeholder="e.g. Gerri\u2019s house" value="'+esc(editing||p.location!=null?p.location||'':(last&&last.location)||'')+'" autocomplete="off"></label>'+
+    '<label class="field"><span class="lbl">Where (optional)</span><input class="f" name="loc" list="dl-loc" maxlength="60" placeholder="e.g. Gerri\u2019s house" value="'+esc(p.location||'')+'" autocomplete="off"></label>'+
     '<datalist id="dl-loc">'+places().map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
-    '<label class="field"><span class="lbl">Rules</span><input class="f" name="rules" list="dl-rules" maxlength="80" value="'+esc(editing||p.rules!=null?p.rules||'':(last&&last.rules)||'Normal rules')+'"></label>'+
+    '<label class="field"><span class="lbl">Rules</span><input class="f" name="rules" list="dl-rules" maxlength="80" placeholder="Normal rules" value="'+esc(p.rules||'')+'"></label>'+
     '<label class="field"><span class="lbl">Notes</span><textarea class="f" name="notes" rows="4" maxlength="4000" placeholder="What happened? Anything to remember next time?">'+esc(p.notes||'')+'</textarea></label>'+
     '<datalist id="dl-pl">'+ppl.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
     '<datalist id="dl-rules">'+rulesUsed().map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
@@ -709,7 +709,7 @@ async function savePlay(f){
   var party=[];f.querySelectorAll('.seat').forEach(function(s){var a=s.querySelector('[name=pp]').value.trim(),b=s.querySelector('[name=pi]').value;if(b&&!MOM.isInvestigator(b))b='';if(a||b)party.push({player:a.slice(0,40),investigator:b});});
   var att=Math.max(1,Math.min(99,parseInt(f.att.value,10)||1));
   var doc={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,date:f.date.value||'',result:res,attempts:att,
-    party:party,solo:peopleAt({party:party}).count===1,rules:f.rules.value.trim().slice(0,80),location:f.loc.value.trim().replace(/\s+/g,' ').slice(0,60),notes:f.notes.value.trim().slice(0,4000),updated:Date.now()};
+    party:party,solo:peopleAt({party:party}).count===1,rules:(f.rules.value.trim()||'Normal rules').slice(0,80),location:f.loc.value.trim().replace(/\s+/g,' ').slice(0,60),notes:f.notes.value.trim().slice(0,4000),updated:Date.now()};
   if(f.dataset.id)await fb.db.doc('users/'+me.uid+'/plays/'+f.dataset.id).update(doc);
   else{doc.created=Date.now();await fb.db.collection('users/'+me.uid+'/plays').add(doc);}
 }

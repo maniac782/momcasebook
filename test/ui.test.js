@@ -242,10 +242,13 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.fill('#sq','a time and place');await p.waitForFunction(n=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent===n),'A Time and Place');
   const pick2='A Time and Place';assert.strictEqual(await p.locator('.scs li',{hasText:'A Time and Place'}).locator('[data-a=again]').count(),0,'unplayed shows Log a play');await p.locator('.scs li',{hasText:'A Time and Place'}).locator('[data-a=log]').click();await p.waitForSelector('form[data-form=play]');
   assert.strictEqual(await p.evaluate(()=>document.querySelector('select[name=sc]').selectedOptions[0].textContent.replace(' • new','')),pick2,'Log a play opens with that scenario');
-  // location: saved, shown, remembered next time, counted in stats
+  // location: saved, shown, suggested next time (not filled in), counted in stats
   await p.fill('input[name=loc]','Gerri\u2019s house');await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
   await p.waitForSelector('.pl-meta:has-text("at Gerri")');
-  await p.click('.bar [data-a=log]');assert.strictEqual(await p.inputValue('input[name=loc]'),'Gerri\u2019s house','last place remembered');await p.keyboard.press('Escape');
+  await p.click('.bar [data-a=log]');assert.strictEqual(await p.inputValue('input[name=loc]'),'','a fresh Log a play starts with no place');
+  assert.strictEqual(await p.inputValue('input[name=rules]'),'','no rules filled in (blank saves as Normal rules)');assert.strictEqual(await p.inputValue('input[name=date]'),'','no date');
+  assert.strictEqual(await p.locator('.seat [name=pp]').first().inputValue(),'','no player filled in');assert.strictEqual(await p.locator('.seat [name=pi]').first().inputValue(),'','no investigator');
+  assert.ok(await p.locator('#dl-loc option[value="Gerri\u2019s house"]').count(),'the place is still suggested');await p.keyboard.press('Escape');
   await p.click('[data-t=stats]');assert.ok(await p.locator('h2:text-is("Where you played")').count(),'location stats');
   // switching the list off in Settings keeps played ones only
   await p.click('[data-t=settings]');await p.uncheck('#s-valk');await p.waitForTimeout(150);
@@ -266,6 +269,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.locator('li',{has:p.locator('b:text("Thursday group")')}).locator('.chip').count(),4,'group has 4 members');
   await p.screenshot({path:out+'/5c-players.png',fullPage:true});
   await p.click('.bar [data-a=log]');await p.selectOption('select[name=sc]','o-rising-tide');
+  await p.locator('.seat [name=pp]').first().fill('Dan');if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');
   await p.locator('.seat [name=pi]').first().selectOption('Agatha Crane');  // Dan's seat keeps this investigator after picking the group
   const gid=await p.locator('select[name=grp] option').nth(1).getAttribute('value');await p.selectOption('select[name=grp]',gid);
   assert.strictEqual(await p.locator('.seat').count(),4,'seats filled from group');
