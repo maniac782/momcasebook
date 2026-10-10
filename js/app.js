@@ -43,8 +43,14 @@ function scenarioProblems(){var ok={};validScenarios().forEach(function(s){ok[s.
 function scenById(id){return allScenarios(true).filter(function(s){return s.id===id;})[0];}
 function owned(){return profile&&Array.isArray(profile.owned)?profile.owned:MOM.PRODUCTS.map(function(p){return p.id;});}
 function myName(){return (profile&&profile.name)||(me&&me.displayName)||'';}
+// The distinct people at a play. Someone playing two characters is one person, matched ignoring case and spaces;
+// seats with no player name each count as someone (we can't tell who). Returns {names (first spelling), unnamed}.
+function peopleAt(p){var seen={},names=[],unnamed=0;
+  (p.party||[]).forEach(function(s){var n=String(s.player||'').trim().replace(/\s+/g,' ');if(!n){unnamed++;return;}var k=n.toLowerCase();if(!seen[k]){seen[k]=1;names.push(n);}});
+  return {names:names,unnamed:unnamed,count:names.length+unnamed};}
 function names(field){
-  var c={};plays.forEach(function(p){(p.party||[]).forEach(function(s){var v=(s[field]||'').trim();if(v)c[v]=(c[v]||0)+1;});});
+  // how many plays each name appears in (once per play, however many seats)
+  var c={};plays.forEach(function(p){var once={};(p.party||[]).forEach(function(s){var v=(s[field]||'').trim();if(v&&!once[v.toLowerCase()]){once[v.toLowerCase()]=1;c[v]=(c[v]||0)+1;}});});
   return Object.keys(c).sort(function(a,b){return c[b]-c[a]||a.localeCompare(b);});
 }
 // Places used before, most used first.
@@ -338,8 +344,10 @@ function statsHtml(){
   var tally=function(keyFn){var c={};plays.forEach(function(p){keyFn(p).forEach(function(k){if(!k)return;var r=c[k]||(c[k]={k:k,n:0,pass:0});r.n++;if(p.result==='pass')r.pass++;});});
     return Object.keys(c).map(function(k){return c[k];}).sort(function(a,b){return b.n-a.n||b.pass-a.pass||a.k.localeCompare(b.k);});};
   var uniq=function(a){return a.filter(function(x,i){return x&&a.indexOf(x)===i;});};
-  var sizes=tally(function(p){var n2=(p.party||[]).length;return n2?[n2===1?'Solo':n2+' investigators']:[];});
-  h+=table('Who you played with',tally(function(p){return uniq((p.party||[]).map(function(s){return (s.player||'').trim();}));}),'Player');
+  var sizes=tally(function(p){var n2=peopleAt(p).count;return n2?[n2===1?'Solo':n2+' players']:[];});
+  // a person counts once per play even with two characters; the same name in any case is the same person
+  var spell={};plays.forEach(function(p){peopleAt(p).names.forEach(function(n){var k=n.toLowerCase();if(!spell[k])spell[k]=n;});});
+  h+=table('Who you played with',tally(function(p){return peopleAt(p).names.map(function(n){return spell[n.toLowerCase()];});}),'Player');
   h+=table('Investigators',tally(function(p){return uniq((p.party||[]).map(function(s){return (s.investigator||'').trim();}));}),'Investigator');
   h+=table('Scenarios',tally(function(p){return [p.scenarioName];}),'Scenario');
   h+=table('Party size',sizes,'Party');
@@ -388,8 +396,10 @@ function personByName(n){n=lc(n);return people.filter(function(p){return lc(p.na
 function groupMembers(g){return (g.members||[]).map(function(id){return people.filter(function(p){return p.id===id;})[0];}).filter(Boolean);}
 function personStats(name){
   var n=0,pass=0,last='',inv={},k=lc(name);
-  plays.forEach(function(p){var seat=(p.party||[]).filter(function(s){return lc(s.player)===k;})[0];if(!seat)return;
-    n++;if(p.result==='pass')pass++;if((p.date||'')>last)last=p.date;if(seat.investigator)inv[seat.investigator]=(inv[seat.investigator]||0)+1;});
+  plays.forEach(function(p){var seats=(p.party||[]).filter(function(s){return lc(s.player)===k;});if(!seats.length)return;
+    // one play however many characters they took; each of those characters counts once
+    n++;if(p.result==='pass')pass++;if((p.date||'')>last)last=p.date;
+    var once={};seats.forEach(function(s){if(s.investigator&&!once[s.investigator]){once[s.investigator]=1;inv[s.investigator]=(inv[s.investigator]||0)+1;}});});
   var fav=Object.keys(inv).sort(function(a,b){return inv[b]-inv[a];})[0];
   return {n:n,pass:pass,last:last,fav:fav,favN:fav?inv[fav]:0};
 }
@@ -667,7 +677,7 @@ async function savePlay(f){
   var party=[];f.querySelectorAll('.seat').forEach(function(s){var a=s.querySelector('[name=pp]').value.trim(),b=s.querySelector('[name=pi]').value;if(b&&!MOM.isInvestigator(b))b='';if(a||b)party.push({player:a.slice(0,40),investigator:b});});
   var att=Math.max(1,Math.min(99,parseInt(f.att.value,10)||1));
   var doc={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,date:f.date.value||'',result:res,attempts:att,
-    party:party,solo:party.length===1,rules:f.rules.value.trim().slice(0,80),location:f.loc.value.trim().replace(/\s+/g,' ').slice(0,60),notes:f.notes.value.trim().slice(0,4000),updated:Date.now()};
+    party:party,solo:peopleAt({party:party}).count===1,rules:f.rules.value.trim().slice(0,80),location:f.loc.value.trim().replace(/\s+/g,' ').slice(0,60),notes:f.notes.value.trim().slice(0,4000),updated:Date.now()};
   if(f.dataset.id)await fb.db.doc('users/'+me.uid+'/plays/'+f.dataset.id).update(doc);
   else{doc.created=Date.now();await fb.db.collection('users/'+me.uid+'/plays').add(doc);}
 }

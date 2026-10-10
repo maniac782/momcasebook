@@ -55,5 +55,8 @@ assert.ok(ty.unmatched['Mansion'].length>=2&&ty.unmatched['The Lighthouse Keeper
 assert.ok(ty.plays.every(p=>p.scenarioId===''||/^(o|v)-/.test(p.scenarioId)),'never a custom id');
 // every real name matches itself with certainty
 assert.ok(all.every(s=>MOM.sureMatch(MOM.matchScenarios(s.name,all))===s),'self-match');
+// solo means one person, even with two characters
+const two=I.buildPlays([['Scenario','Played','Players','Characters','Pass/Fail'],['Rising Tide','Y','Dan, dan','Agatha, Preston','Pass'],['Rising Tide','Y','Dan, Pat','Agatha, Preston','Pass']],MOM.OFFICIAL);
+assert.deepStrictEqual(two.plays.map(p=>p.solo),[true,false]);
 console.log('importer: all checks passed');
 r.plays.forEach(p=>console.log(p.result.padEnd(5),String(p.attempts),p.scenarioName.padEnd(34),p.party.map(x=>(x.player?x.player+':':'')+x.investigator).join(', ')));

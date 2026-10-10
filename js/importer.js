@@ -102,6 +102,8 @@ function normDate(s){
   var d=new Date(s);return isNaN(d)?'':d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
 }
 function splitList(s){return String(s||'').split(/\s*(?:[,;\/&+]|\band\b)\s*/i).map(function(x){return x.trim();}).filter(Boolean);}
+// One person, however many characters they played (unnamed seats each count as someone).
+function soloParty(party){var k={},n=0;party.forEach(function(s){var p=String(s.player||'').trim().toLowerCase();if(!p)n++;else if(!k[p]){k[p]=1;n++;}});return n===1;}
 function hash(s){var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return (h>>>0).toString(36);}
 
 // rows: arrays of text with the headings first. known: scenarios already in the catalog ({id,name,type}).
@@ -146,7 +148,7 @@ function buildPlays(rows,known){
     var attempts=parseAttempts(get(row,'attempts'))||parseAttempts(resText)||1;
     var result=parseResult(resText);
     var p={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,sheetName:sc.id?'':name,date:normDate(get(row,'date')),result:result,attempts:attempts,
-      party:party,solo:!!solo||party.length===1,rules:normRules(get(row,'rules')),location:get(row,'location').replace(/\s+/g,' ').slice(0,60),notes:get(row,'notes'),seq:n};
+      party:party,solo:!!solo||soloParty(party),rules:normRules(get(row,'rules')),location:get(row,'location').replace(/\s+/g,' ').slice(0,60),notes:get(row,'notes'),seq:n};
     if(resText&&!result)extra.push('Result in the sheet: '+resText);
     if(extra.length)p.notes=(p.notes?p.notes+'\n':'')+extra.join('\n');
     p.importKey=hash([MOM.key(name),p.date,result,attempts,party.map(function(x){return x.player+':'+x.investigator;}).join(';'),p.rules,get(row,'notes')].join('|'));

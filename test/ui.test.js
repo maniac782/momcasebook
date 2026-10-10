@@ -304,6 +304,35 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('.dlg [data-close]');
   await p.click('.acct-btn');await p.screenshot({path:out+'/6d-menu.png'});await p.keyboard.press('Escape');
   await p.click('[data-t=settings]');assert.strictEqual(await p.locator('h2:text-is("You")').count(),0,'no longer in Settings');
+  // one person playing two characters in a game counts once for that game
+  const rowVal=async(table,name)=>{await p.click('[data-t=stats]');return p.evaluate(([t,n])=>{const sec=[...document.querySelectorAll('section.sec')].find(s=>s.querySelector('h2')&&s.querySelector('h2').textContent===t);
+    if(!sec)return null;const tr=[...sec.querySelectorAll('tbody tr')].find(r=>r.cells[0].textContent===n);return tr?[+tr.cells[1].textContent,+tr.cells[2].textContent]:[0,0];},[table,name]);};
+  const danBefore=await rowVal('Who you played with','Dan'),twoBefore=await rowVal('Party size','2 players'),soloBefore=await rowVal('Party size','Solo');
+  await p.evaluate(async()=>{const db=firebase.app().firestore(),u=firebase.app().auth().currentUser.uid;
+    await db.collection('users/'+u+'/plays').add({scenarioId:'o-dark-reflections',scenarioName:'Dark Reflections',scenarioType:'official',date:'2026-10-01',result:'pass',attempts:1,
+      party:[{player:'Dan',investigator:'Carson Sinclair'},{player:' dan ',investigator:'Wendy Adams'},{player:'Pat',investigator:'Rita Young'}],solo:false,rules:'',notes:'two-handed',created:2,updated:2});
+    await db.collection('users/'+u+'/plays').add({scenarioId:'o-turn-of-a-page',scenarioName:'Turn of a Page',scenarioType:'official',date:'2026-10-02',result:'fail',attempts:1,
+      party:[{player:'Dan',investigator:'Carson Sinclair'},{player:'Dan',investigator:'Wendy Adams'}],solo:false,rules:'',notes:'two-handed solo',created:3,updated:3});});
+  const danAfter=await rowVal('Who you played with','Dan');
+  assert.deepStrictEqual([danAfter[0]-danBefore[0],danAfter[1]-danBefore[1]],[2,1],'Dan +2 plays (+1 passed), not +4');
+  assert.strictEqual(await p.evaluate(()=>[...document.querySelectorAll('tbody td:first-child')].filter(td=>td.textContent.trim().toLowerCase()==='dan').length),1,'"dan" is the same person as "Dan"');
+  assert.strictEqual((await rowVal('Party size','2 players'))[0]-(twoBefore||[0])[0],1,'Dan + Pat with three characters is a 2-player game');
+  assert.strictEqual((await rowVal('Party size','Solo'))[0]-(soloBefore||[0])[0],1,'Dan alone with two characters is solo');
+  await p.screenshot({path:out+'/6e-stats-two-handed.png',fullPage:true});
+  // the Players tab counts the game once and knows both characters
+  await p.click('[data-t=players]');
+  await p.waitForSelector('.scs li');
+  const danLine=await p.$$eval('.scs li',ls=>{const l=ls.find(x=>{const b=x.querySelector('.grow > b');return b&&b.textContent.trim()==='Dan';});return l?l.querySelector('.note').textContent:'';});
+  assert.ok(new RegExp('^'+danAfter[0]+' plays').test(danLine),'Players tab agrees with Stats ('+danAfter[0]+'): '+danLine);
+  assert.ok(/usually (Carson Sinclair|Agatha Crane)/.test(danLine),'usual investigator: '+danLine);
+  // the form saves solo by people: one person, two characters
+  await p.click('.bar [data-a=log]');await p.selectOption('select[name=sc]','o-rising-tide');
+  await p.locator('.seat [name=pp]').first().fill('Dan');await p.locator('.seat [name=pi]').first().selectOption('Agatha Crane');
+  await p.click('[data-f=addseat]');await p.locator('.seat').nth(1).locator('[name=pp]').fill('Dan');await p.locator('.seat').nth(1).locator('[name=pi]').selectOption('Preston Fairmont');
+  await p.check('.seg.big .fail input',{force:true});await p.fill('textarea[name=notes]','solo check');await p.click('form[data-form=play] button[type=submit]');await p.waitForTimeout(200);
+  assert.strictEqual(await p.evaluate(()=>Object.values(__fake.store).find(v=>v&&v.notes==='solo check').solo),true,'saved as solo');
+  // remove these so later counts hold
+  await p.evaluate(async()=>{const db=firebase.app().firestore();for(const [k,v] of Object.entries(__fake.store))if(k.includes('/plays/')&&v&&/two-handed|solo check/.test(v.notes||''))await db.doc(k).delete();});
   // CSV export round trip
   await p.click('[data-t=settings]');
   const [dl]=await Promise.all([p.waitForEvent('download'),p.click('[data-a=csv]')]);
