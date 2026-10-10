@@ -164,13 +164,12 @@ window.accountMenu=function(user,opts){
 /* ---------- Dropdowns ----------
    Every <select class="f"> stays a real select (forms, values, change events and layout all work as before), but clicking,
    tapping or pressing Enter/Space/arrow keys on it opens our own menu instead of the browser's plain one: a tick on the
-   current choice, hover and keyboard highlighting, group headings, and a search box on long lists. On narrow screens it
-   opens as a sheet from the bottom. */
+   current choice, hover and keyboard highlighting, group headings, and a search box on long lists. That's for mouse and
+   keyboard only: a tap on a phone or tablet gets the device's own picker, which people there are used to. */
 (function(){
-  var cur=null;   // {sel, wrap, panel, list, input, items, active, sheet}
+  var cur=null;   // {sel, wrap, panel, list, input, empty, items, active}
   var norm=function(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[“”"]/g,'');};
   var isSep=function(o){return o.disabled&&/^[─\-\s]+$/.test(o.textContent);};
-  var phone=function(){try{return matchMedia('(max-width:560px)').matches;}catch(e){return false;}};
   function labelFor(sel){
     var f=sel.closest('.field'),l=f&&f.querySelector('.lbl');
     return (l&&l.textContent)||sel.getAttribute('aria-label')||'Choose';
@@ -213,21 +212,20 @@ window.accountMenu=function(user,opts){
     if(!q){var s=cur.items.filter(function(x){return x.o.selected;})[0];if(s)setActive(cur.items.indexOf(s));}
   }
   function place(){
-    if(!cur||cur.sheet)return;var r=cur.sel.getBoundingClientRect(),vw=innerWidth,vh=innerHeight,p=cur.panel;
+    if(!cur)return;var r=cur.sel.getBoundingClientRect(),vw=innerWidth,vh=innerHeight,p=cur.panel;
     var w=Math.min(Math.max(r.width,240),vw-16),left=Math.min(Math.max(8,r.left),vw-w-8);
     var below=vh-r.bottom-12,above=r.top-12,up=below<240&&above>below,room=Math.min(380,up?above:below);
     p.style.width=w+'px';p.style.left=left+'px';p.style.maxHeight=Math.max(160,room)+'px';
     if(up){p.style.top='';p.style.bottom=(vh-r.top+6)+'px';p.classList.add('up');}else{p.style.bottom='';p.style.top=(r.bottom+6)+'px';p.classList.remove('up');}
   }
-  function onResize(){if(cur&&!cur.sheet)close(false);}
-  function onScroll(e){if(cur&&!cur.sheet&&!(e.target.nodeType===1&&cur.panel.contains(e.target)))close(false);}
+  function onResize(){if(cur)close(false);}
+  function onScroll(e){if(cur&&!(e.target.nodeType===1&&cur.panel.contains(e.target)))close(false);}
   function open(sel){
     if(cur){var same=cur.sel===sel;close(false);if(same)return;}
     if(sel.disabled)return;
-    var sheet=phone(),opts=Array.prototype.slice.call(sel.options),searchable=opts.length>12,id='dd'+Date.now().toString(36);
-    var wrap=document.createElement('div');wrap.className='dd-wrap'+(sheet?' sheet':'');
-    wrap.innerHTML=(sheet?'<div class="dd-bg"></div>':'')+'<div class="dd" role="presentation">'+
-      (sheet?'<div class="dd-head"><span class="dd-grab" aria-hidden="true"></span><b>'+esc(labelFor(sel))+'</b><button type="button" class="x" data-dd-close aria-label="Close">×</button></div>':'')+
+    var opts=Array.prototype.slice.call(sel.options),searchable=opts.length>12,id='dd'+Date.now().toString(36);
+    var wrap=document.createElement('div');wrap.className='dd-wrap';
+    wrap.innerHTML='<div class="dd" role="presentation">'+
       (searchable?'<div class="dd-search"><input type="text" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-controls="'+id+'" placeholder="Search…" autocomplete="off" spellcheck="false"></div>':'')+
       '<div class="dd-list" role="listbox" id="'+id+'" tabindex="-1" aria-label="'+esc(labelFor(sel))+'"></div><p class="dd-empty" hidden>No matches</p></div>';
     var list=wrap.querySelector('.dd-list'),items=[],lastGrp=null;
@@ -244,15 +242,14 @@ window.accountMenu=function(user,opts){
       list.appendChild(el);items.push({o:o,el:el,grp:g&&g._el});
     });
     document.body.appendChild(wrap);
-    cur={sel:sel,wrap:wrap,panel:wrap.querySelector('.dd'),list:list,input:wrap.querySelector('.dd-search input'),empty:wrap.querySelector('.dd-empty'),items:items,active:-1,sheet:sheet};
+    cur={sel:sel,wrap:wrap,panel:wrap.querySelector('.dd'),list:list,input:wrap.querySelector('.dd-search input'),empty:wrap.querySelector('.dd-empty'),items:items,active:-1};
     sel.classList.add('dd-open');sel.setAttribute('aria-expanded','true');
     place();
-    var s=items.filter(function(x){return x.o.selected&&!x.o.disabled;})[0]||(sheet?null:items.filter(function(x){return !x.o.disabled;})[0]);
+    var s=items.filter(function(x){return x.o.selected&&!x.o.disabled;})[0]||items.filter(function(x){return !x.o.disabled;})[0];
     if(s){setActive(items.indexOf(s),false);s.el.scrollIntoView({block:'center'});}
-    // keep keyboard focus inside the menu (no on-screen keyboard popping up for a phone sheet unless they tap search)
-    if(cur.input&&!sheet)cur.input.focus({preventScroll:true});else list.focus({preventScroll:true});
+    // keep keyboard focus inside the menu
+    if(cur.input)cur.input.focus({preventScroll:true});else list.focus({preventScroll:true});
     wrap.addEventListener('click',function(e){
-      if(e.target.closest('[data-dd-close]')||e.target.classList.contains('dd-bg')){close(true);return;}
       var el=e.target.closest('.dd-opt');if(!el)return;var x=items.filter(function(y){return y.el===el;})[0];if(x)choose(x.o);
     });
     wrap.addEventListener('mousemove',function(e){var el=e.target.closest('.dd-opt');if(!el||!cur)return;var i=-1;cur.items.some(function(y,k){if(y.el===el){i=k;return true;}});if(i>=0&&i!==cur.active&&!cur.items[i].o.disabled)setActive(i,false);});
@@ -280,14 +277,12 @@ window.accountMenu=function(user,opts){
   }
   var isDD=function(t){return t&&t.tagName==='SELECT'&&t.classList.contains('f')&&!t.multiple;};
   document.addEventListener('mousedown',function(e){
-    if(!isDD(e.target)||e.button!==0)return;e.preventDefault();
+    if(!isDD(e.target)||e.button!==0||Date.now()-touchedAt<1000||(e.sourceCapabilities&&e.sourceCapabilities.firesTouchEvents))return;e.preventDefault();
     try{e.target.focus({preventScroll:true});}catch(x){}open(e.target);
   },true);
-  // touch: open on a tap (not a scroll), and stop the phone's own picker
-  var tx=0,ty=0,tmoved=false;
-  document.addEventListener('touchstart',function(e){if(!isDD(e.target))return;var t=e.touches[0];tx=t.clientX;ty=t.clientY;tmoved=false;},{capture:true,passive:true});
-  document.addEventListener('touchmove',function(e){if(!isDD(e.target))return;var t=e.touches[0];if(Math.abs(t.clientX-tx)>8||Math.abs(t.clientY-ty)>8)tmoved=true;},{capture:true,passive:true});
-  document.addEventListener('touchend',function(e){if(!isDD(e.target))return;e.preventDefault();if(!tmoved)open(e.target);},{capture:true,passive:false});
+  // a tap (phone, tablet, touch screen) is left to the device's own picker; phones also send a made-up mousedown after a tap
+  var touchedAt=0;
+  document.addEventListener('touchstart',function(){touchedAt=Date.now();},{capture:true,passive:true});
   document.addEventListener('keydown',function(e){
     if(!isDD(e.target))return;var k=e.key;
     if(k==='Enter'||k===' '||k==='ArrowDown'||k==='ArrowUp'||(k==='F4')){e.preventDefault();open(e.target);}

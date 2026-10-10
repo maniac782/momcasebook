@@ -395,10 +395,9 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   const sw=await q.evaluate(()=>document.documentElement.scrollWidth);assert.ok(sw<=390,'no sideways scroll on a phone ('+sw+')');
   await q.screenshot({path:out+'/9-phone-plays-dark.png'});
   await q.click('.bar [data-a=log]');await q.waitForSelector('.dlg');await q.screenshot({path:out+'/10-phone-form-dark.png'});
-  await q.tap('.dlg select[name=sc]');await q.waitForSelector('.dd-wrap.sheet .dd-opt');assert.strictEqual(await q.locator('.dd-opt:has-text("Choose a scenario")').count(),0,'placeholder not listed');await q.waitForTimeout(300);await q.screenshot({path:out+'/10b-phone-dropdown-dark.png'});
-  await q.tap('.dd-opt:has-text("Escape from Innsmouth")');await q.waitForSelector('.dd-wrap',{state:'detached'});
-  assert.strictEqual(await q.inputValue('.dlg select[name=sc]'),'o-escape-from-innsmouth','phone sheet picks a scenario');
-  await q.keyboard.press('Escape');await q.click('[data-t=stats]');await q.screenshot({path:out+'/11-phone-stats-dark.png',fullPage:true});
+  await q.tap('.dlg select[name=sc]');await q.waitForTimeout(300);
+  assert.strictEqual(await q.locator('.dd-wrap').count(),0,'a tap on a phone gets the phone\'s own picker, not ours');
+  await q.keyboard.press('Escape');await q.waitForTimeout(100);if(await q.locator('.dlg').count())await q.keyboard.press('Escape');await q.click('[data-t=stats]');await q.screenshot({path:out+'/11-phone-stats-dark.png',fullPage:true});
   await browser.close();
   if(errors.length){console.error(errors.join('\n'));process.exit(1);}
   console.log('ui: all checks passed; screenshots in '+out);

@@ -354,20 +354,4 @@ select.f.dd-open{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in sr
 .dd-txt{min-width:0;overflow-wrap:anywhere;flex:1}
 .dd-tag{flex:none;font-size:11.5px;font-weight:700;letter-spacing:.04em;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
 .dd-empty{margin:0;padding:14px 16px;color:var(--muted);font-size:14px}
-/* phones: a sheet from the bottom of the screen */
-.dd-wrap.sheet{pointer-events:auto}
-.dd-bg{position:absolute;inset:0;background:rgba(6,9,12,.45);animation:dd-fade .18s}
-.dd-out .dd-bg{opacity:0;transition:opacity .12s}
-@keyframes dd-fade{from{opacity:0}}
-.sheet .dd{left:0;right:0;bottom:0;top:auto;max-height:72vh;border-radius:16px 16px 0 0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom,0px);
-  animation:dd-up .22s cubic-bezier(.2,.8,.3,1);font-size:17px}
-@keyframes dd-up{from{transform:translateY(100%)}to{transform:none}}
-.sheet.dd-out .dd{transform:translateY(100%);opacity:1;transition:transform .14s ease-in}
-.dd-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 8px 6px 18px;position:relative;flex:none}
-.dd-head b{font-family:var(--display);font-weight:400;font-size:20px}
-.dd-grab{position:absolute;top:6px;left:50%;width:36px;height:4px;margin-left:-18px;border-radius:2px;background:var(--line)}
-.sheet .dd-search input{height:42px;font-size:16px}
-.sheet .dd-list{padding:4px 8px 12px}
-.sheet .dd-opt{min-height:48px;padding:10px 12px 10px 10px}
-.sheet .dd-tick{width:18px}
-@media (prefers-reduced-motion:reduce){.dd,.dd-bg{animation:none}.dd-out .dd,.sheet.dd-out .dd{transition:none}}
+@media (prefers-reduced-motion:reduce){.dd{animation:none}.dd-out .dd{transition:none}}
