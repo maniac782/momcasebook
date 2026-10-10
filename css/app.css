@@ -4,15 +4,16 @@
   --bg:#eceef0; --surface:#fafbfb; --surface2:#e1e5e8; --ink:#1a1f26; --muted:#555d68; --line:#bcc3ca;
   --accent:#1d5c63; --accent-ink:#ffffff; --accent-soft:#d5e7e8;
   --ok:#2c6a46; --ok-soft:#d7ebde; --bad:#a3322a; --bad-soft:#f4dcd8; --slate:#5b6472; --slate-soft:#e3e6ea; --focus:#2d5bd1;
+  --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5' fill='none' stroke='%23555d68' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --display:'IM Fell English',Georgia,'Times New Roman',serif; --body:'Source Sans 3','Segoe UI',Helvetica,Arial,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   color-scheme:dark; --bg:#0f1317; --surface:#171c22; --surface2:#222932; --ink:#e4e7ea; --muted:#a3aab3; --line:#354049;
-  --accent:#6fb3bb; --accent-ink:#0b1114; --accent-soft:#1c3337; --ok:#6cc08a; --ok-soft:#1d3527; --bad:#ef7c70; --bad-soft:#41211e; --slate:#9aa3ae; --slate-soft:#262d35; --focus:#8fb0ff;}}
+  --accent:#6fb3bb; --accent-ink:#0b1114; --accent-soft:#1c3337; --ok:#6cc08a; --ok-soft:#1d3527; --bad:#ef7c70; --bad-soft:#41211e; --slate:#9aa3ae; --slate-soft:#262d35; --focus:#8fb0ff; --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5' fill='none' stroke='%23a3aab3' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");}}
 :root[data-theme="dark"]{
   color-scheme:dark; --bg:#0f1317; --surface:#171c22; --surface2:#222932; --ink:#e4e7ea; --muted:#a3aab3; --line:#354049;
-  --accent:#6fb3bb; --accent-ink:#0b1114; --accent-soft:#1c3337; --ok:#6cc08a; --ok-soft:#1d3527; --bad:#ef7c70; --bad-soft:#41211e; --slate:#9aa3ae; --slate-soft:#262d35; --focus:#8fb0ff;}
+  --accent:#6fb3bb; --accent-ink:#0b1114; --accent-soft:#1c3337; --ok:#6cc08a; --ok-soft:#1d3527; --bad:#ef7c70; --bad-soft:#41211e; --slate:#9aa3ae; --slate-soft:#262d35; --focus:#8fb0ff; --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5' fill='none' stroke='%23a3aab3' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
@@ -58,9 +59,15 @@ main{flex:1;width:100%;max-width:980px;margin:0 auto;padding:16px 16px 56px;disp
 .lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0;margin:0;border:0;padding:0}
 .field legend{padding:0;margin-bottom:6px}
-.f{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
-textarea.f{resize:vertical;min-height:90px}
-select.f{appearance:auto}
+.f{width:100%;min-height:42px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background-color:var(--surface);color:var(--ink);line-height:1.3}
+input.f,select.f{height:42px;margin:0}
+input.f[type="search"]{-webkit-appearance:none;appearance:none}
+textarea.f{resize:vertical;min-height:90px;height:auto}
+/* our own chevron (a small drawn SVG, per theme in --chev) with room for it on the right */
+select.f{-webkit-appearance:none;appearance:none;padding-right:38px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;cursor:pointer;
+  background-image:var(--chev);background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
+select.f:hover{border-color:var(--muted)}
+select.f::-ms-expand{display:none}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:8px 14px;border:1px solid var(--line);border-radius:6px;
   background:var(--surface);color:var(--ink);font-weight:600;font-size:15px;cursor:pointer;text-decoration:none;white-space:nowrap}
 .btn:hover{background:var(--surface2)}
@@ -226,7 +233,9 @@ select.grp{margin-bottom:8px}
 .reviews,.desc{margin-top:4px;font-size:14px}
 .reviews summary,.desc summary{cursor:pointer;color:var(--accent);font-weight:600;width:max-content}
 .reviews p{margin:6px 0 0;padding-left:10px;border-left:2px solid var(--line)}
-.filters .field{min-width:130px}
+.filters .field{min-width:130px;flex:1 1 130px}
+.filters .field.grow{flex:3 1 260px}
+.filters .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* collapsible Official / Valkyrie / Your own boxes */
 details.box{padding:0;gap:0}
