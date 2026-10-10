@@ -645,7 +645,7 @@ function playForm(p,preset){
   return '<form class="stack" data-form="play"'+(editing?' data-id="'+esc(p.id)+'"':'')+'>'+
     '<div class="dlg-head"><h2>'+(editing?'Edit play':p._again?'Play again':'Log a play')+'</h2><button class="x" type="button" data-close aria-label="Close">×</button></div>'+
     '<label class="field"><span class="lbl">Scenario</span><select class="f" name="sc" required>'+opts+'</select></label>'+
-    '<div class="grid2"><label class="field"><span class="lbl">Date</span><input class="f" type="date" name="date" value="'+esc(p.date||'')+'" max="'+today()+'"></label>'+
+    '<div class="grid2"><label class="field"><span class="lbl">Date (optional)</span><input class="f" type="date" name="date" value="'+esc(p.date||'')+'" max="'+today()+'"></label>'+
     '<label class="field"><span class="lbl">Attempt</span><input class="f num" type="number" name="att" min="1" max="99" value="'+(p.attempts||1)+'" aria-describedby="att-h"><small class="note" id="att-h">Which try this was</small></label></div>'+
     '<fieldset class="field"><legend class="lbl">Result</legend><div class="seg big" role="radiogroup">'+[['pass','Passed'],['fail','Failed'],['abandoned','Abandoned']].map(function(r){return '<label class="'+r[0]+'"><input type="radio" name="res" value="'+r[0]+'"'+(res===r[0]?' checked':'')+' required><span>'+r[1]+'</span></label>';}).join('')+'</div></fieldset>'+
     '<fieldset class="field"><legend class="lbl">Who played</legend>'+
