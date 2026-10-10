@@ -92,4 +92,4 @@ Valkyrie scenario names, details, statistics and descriptions come from the [Val
 
 ## Art
 
-The icons are an original drawing made in code by `scripts/make-icons.py` and dedicated to the public domain (CC0). Only public-domain art is used on this site. Fonts: IM Fell English (a revival of the 17th-century Fell types), Source Sans 3 and IBM Plex Mono, from Google Fonts.
+The icons are an original drawing made in code by `scripts/make-icons.py` and dedicated to the public domain (CC0). Only public-domain art is used on this site. Fonts: IM Fell English (a revival of the 17th-century Fell types), Source Sans 3, Libre Franklin (the account menu, matching the Arkham site) and IBM Plex Mono, from Google Fonts.

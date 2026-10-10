@@ -289,8 +289,9 @@ details[data-box=starred]>summary h2::before{content:"\2605  ";color:var(--accen
 /* Account button and menu: copied from the Arkham Horror RPG Ledger (css/app.css there) so both sites match exactly. */
 .acctwrap{position:relative;display:inline-flex}
 .acctbtn{display:inline-flex;align-items:center;gap:7px;background:none;border:1px solid transparent;border-radius:999px;padding:3px 8px 3px 3px;font:inherit;color:var(--ink);cursor:pointer}
-/* Arkham's button sits in a 12px <small>; set the same size here */
-.acctwrap{font-size:12px;color:var(--muted)}
+/* On the Arkham pages the button sits in a <span class="nav"> (13px) inside a muted <small>, in the Libre Franklin
+   typeface; the same here so the corner matches exactly */
+.acctwrap{font-size:13px;color:var(--muted);font-family:'Libre Franklin','Helvetica Neue',Arial,sans-serif}
 .acctbtn:hover,.acctbtn[aria-expanded="true"]{background:var(--surface2);border-color:var(--line)}
 .av{object-fit:cover;width:22px;height:22px;border-radius:50%;background:#56606f;color:#fff;display:inline-grid;place-items:center;font-size:12px;font-weight:700;line-height:1}
 .acctbtn .av{width:28px;height:28px;font-size:13px}
