@@ -471,7 +471,18 @@ I18N.add('fr',[
 [`The cellar was a bad idea.`,`La cave, c’était une mauvaise idée.`],
 [`Our first game together.`,`Notre première partie ensemble.`],
 [`Solved four of the five.`,`Quatre sur cinq résolus.`],
-[`Mirrors everywhere. Loved it.`,`Des miroirs partout. On a adoré.`]
+[`Mirrors everywhere. Loved it.`,`Des miroirs partout. On a adoré.`],
+[`Cross table`,`Tableau croisé`],
+[`Pick what goes in the rows and the columns. An empty cell is a combination you haven’t played yet.`,`Choisissez ce qui va en lignes et en colonnes. Une case vide est une combinaison que vous n’avez pas encore jouée.`],
+[`Rows`,`Lignes`],
+[`Swap rows and columns`,`Inverser lignes et colonnes`],
+[`Columns`,`Colonnes`],
+[`Show`,`Afficher`],
+[`Include ones not played yet`,`Inclure ce qui n’a pas encore été joué`],
+[`Nothing to show yet for these two.`,`Rien à afficher pour l’instant pour ces deux-là.`],
+[`Total`,`Total`],
+[`A play counts once in each cell it belongs to, so a game with four investigators adds to four columns; totals count each play once.`,`Une partie compte une fois dans chaque case où elle figure : une partie à quatre investigateurs compte dans quatre colonnes ; les totaux comptent chaque partie une seule fois.`],
+[`{n} plays · {won} won`,{one:`{n} partie · victoires : {won}`,other:`{n} parties · victoires : {won}`}]
 ],{
 // Official scenario names from the app's App Store release notes and in-app purchases, and a French players' list; "Secrets enfouis" (What Lies Within) is from that list only.
 scenarios:{

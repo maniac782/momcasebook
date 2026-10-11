@@ -433,12 +433,82 @@ function lenText(m){
   var unit=function(x,n){return mins(x)?t('{n} min',{n:n}):t('{n} h',{n:n});};
   if(m[0]&&m[0]!==m[1])return mins(m[0])===mins(m[1])?unit(m[1],num(m[0])+'–'+num(m[1])):unit(m[0],num(m[0]))+'–'+unit(m[1],num(m[1]));
   return unit(m[1],num(m[1]));}
+// ---------- cross table (Stats tab): any two things against each other ----------
+// Rows and columns are picked from the dimensions below; each cell counts the plays that have both. "Include ones not
+// played yet" adds every official scenario and investigator from the boxes you own (and your saved players), so the
+// empty cells show combinations still to try. The choice is remembered on this device.
+var xt={r:'scenario',c:'investigator',v:'plays',all:true};
+try{var xt0=JSON.parse(localStorage.getItem('mom-xtab')||'null');if(xt0)for(var kx in xt0)xt[kx]=xt0[kx];}catch(e){}
+function saveXt(){try{localStorage.setItem('mom-xtab',JSON.stringify(xt));}catch(e){}}
+var XDIMS=['scenario','investigator','player','expansion','party','where','rules','result','type'];
+function xdimName(d){return {scenario:t('Scenario'),investigator:t('Investigator'),player:t('Player'),expansion:t('Expansion'),party:t('Party size'),where:t('Where'),rules:t('Rules'),result:t('Result'),type:t('Scenario type')}[d];}
+// the values a play has for a dimension (several for investigators and players), as [key, label]
+function xvals(d,p){
+  var sc=scenById(p.scenarioId);
+  if(d==='scenario')return [[p.scenarioId,scName(p.scenarioId,p.scenarioName)]];
+  if(d==='investigator'){var seen={};return (p.party||[]).map(function(s){return (s.investigator||'').trim();}).filter(function(v){if(!v||seen[v])return false;seen[v]=1;return true;}).map(function(v){return [v,v];});}
+  if(d==='player')return peopleAt(p).names.map(function(n){return [n.toLowerCase(),n];});
+  if(d==='expansion'){if(p.scenarioType==='valkyrie')return [['valkyrie',t('Valkyrie')]];var pr=sc&&sc.product;return pr?[[pr,MOM.productName(pr)]]:[];}
+  if(d==='party'){var n=peopleAt(p).count;return n?[[String(n),n===1?t('Solo'):tn('{n} player','{n} players',n)]]:[];}
+  if(d==='where')return [[p.location||'',p.location||t('Not recorded')]];
+  if(d==='rules')return [[p.rules||'',p.rules?rulesName(p.rules):t('Not recorded')]];
+  if(d==='result')return RES[p.result]?[[p.result,t(RES[p.result][0])]]:[];
+  if(d==='type')return [[p.scenarioType||'official',typeName(p.scenarioType||'official')]];
+  return [];
+}
+// everything a dimension could have, in a sensible order, for "Include ones not played yet"
+function xallVals(d){
+  var own=owned();
+  if(d==='scenario'){var out=[];MOM.PRODUCTS.forEach(function(pr){if(own.indexOf(pr.id)<0)return;MOM.OFFICIAL.filter(function(s){return s.product===pr.id;}).forEach(function(s){out.push([s.id,scName(s.id,s.name)]);});});return out;}
+  if(d==='investigator'){var o2=[];MOM.INVESTIGATOR_GROUPS.forEach(function(g){if(own.indexOf(g.product)>=0)g.list.forEach(function(n){o2.push([n,n]);});});return o2;}
+  if(d==='player')return people.slice().sort(byName).map(function(x){return [x.name.toLowerCase(),x.name];});
+  if(d==='expansion')return MOM.PRODUCTS.filter(function(pr){return own.indexOf(pr.id)>=0;}).map(function(pr){return [pr.id,pr.name];}).concat(showValk()?[['valkyrie',t('Valkyrie')]]:[]);
+  if(d==='result')return Object.keys(RES).map(function(k){return [k,t(RES[k][0])];});
+  return [];
+}
+function xtabHtml(){
+  if(xt.r===xt.c)xt.c=xt.r==='investigator'?'scenario':'investigator';
+  var rows={},cols={},rOrder=[],cOrder=[],cell={},rTot={},cTot={};
+  var addKey=function(map,order,kv){if(!map[kv[0]]){map[kv[0]]=kv[1];order.push(kv[0]);}};
+  if(xt.all){xallVals(xt.r).forEach(function(kv){addKey(rows,rOrder,kv);});xallVals(xt.c).forEach(function(kv){addKey(cols,cOrder,kv);});}
+  var bump=function(o,k,won){var x=o[k]||(o[k]={n:0,w:0});x.n++;if(won)x.w++;};
+  plays.forEach(function(p){var won=p.result==='pass',R=xvals(xt.r,p),C=xvals(xt.c,p);
+    R.forEach(function(r){addKey(rows,rOrder,r);bump(rTot,r[0],won);});C.forEach(function(c){addKey(cols,cOrder,c);bump(cTot,c[0],won);});
+    R.forEach(function(r){C.forEach(function(c){bump(cell,r[0]+'\u0001'+c[0],won);});});});
+  // without "not played yet", most played first; with it, the catalogue's own order (then anything else, most played first)
+  var byCount=function(tot){return function(a,b){return ((tot[b]||{}).n||0)-((tot[a]||{}).n||0);};};
+  if(!xt.all){rOrder.sort(byCount(rTot));cOrder.sort(byCount(cTot));}
+  var sel=function(id,val,opts){return '<select class="f" id="'+id+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';};
+  var dims=XDIMS.map(function(d){return [d,xdimName(d)];});
+  var h='<section class="sec xtab"><div class="sec-head"><h2>'+t('Cross table')+'</h2></div>'+
+    '<p class="note">'+t('Pick what goes in the rows and the columns. An empty cell is a combination you haven’t played yet.')+'</p>'+
+    '<div class="filters xt-pick"><label class="field"><span class="lbl">'+t('Rows')+'</span>'+sel('xt-r',xt.r,dims)+'</label>'+
+    '<button class="btn sm xt-swap" type="button" data-a="xtswap" title="'+t('Swap rows and columns')+'" aria-label="'+t('Swap rows and columns')+'">⇄</button>'+
+    '<label class="field"><span class="lbl">'+t('Columns')+'</span>'+sel('xt-c',xt.c,dims.filter(function(d){return d[0]!==xt.r;}))+'</label>'+
+    '<label class="field"><span class="lbl">'+t('Show')+'</span>'+sel('xt-v',xt.v,[['plays',t('Plays')],['won',t('Won|total')],['rate',t('Win rate')]])+'</label>'+
+    '<label class="check xt-all"><input type="checkbox" id="xt-all"'+(xt.all?' checked':'')+'><span>'+t('Include ones not played yet')+'</span></label></div>';
+  if(!rOrder.length||!cOrder.length)return h+'<p class="note">'+t('Nothing to show yet for these two.')+'</p></section>';
+  var max=0;Object.keys(cell).forEach(function(k){if(cell[k].n>max)max=cell[k].n;});
+  var shade=function(x){if(!x)return '';var a=xt.v==='rate'?Math.round(15+60*x.w/x.n):Math.round(12+58*(xt.v==='won'?x.w:x.n)/Math.max(1,max));
+    return ' style="background:color-mix(in srgb,var('+(xt.v==='rate'?'--ok':'--accent')+') '+a+'%,transparent)"';};
+  var val=function(x){if(!x)return '<span class="xt-none" aria-label="'+t('Not played')+'">·</span>';return xt.v==='rate'?pct(x.w,x.n):xt.v==='won'?x.w:x.n;};
+  var tip=function(rk,ck,x){return esc(rows[rk]+' · '+cols[ck]+': '+(x?tn('{n} play · {won} won','{n} plays · {won} won',x.n,{won:x.w}):t('Not played')));};
+  var vertical=cOrder.length>6;
+  h+='<div class="xt-wrap"><table class="xt'+(vertical?' xt-v':'')+'"><thead><tr><th class="xt-corner"><span>'+esc(xdimName(xt.r))+' \\ '+esc(xdimName(xt.c))+'</span></th>'+
+    cOrder.map(function(ck){return '<th scope="col" title="'+esc(cols[ck])+'"><span>'+esc(cols[ck])+'</span></th>';}).join('')+'<th scope="col" class="xt-tot"><span>'+t('Total')+'</span></th></tr></thead><tbody>'+
+    rOrder.map(function(rk){return '<tr><th scope="row">'+esc(rows[rk])+'</th>'+cOrder.map(function(ck){var x=cell[rk+'\u0001'+ck];return '<td class="num"'+shade(x)+' title="'+tip(rk,ck,x)+'">'+val(x)+'</td>';}).join('')+
+      '<td class="num xt-tot">'+val(rTot[rk])+'</td></tr>';}).join('')+
+    '</tbody><tfoot><tr><th scope="row">'+t('Total')+'</th>'+cOrder.map(function(ck){return '<td class="num xt-tot">'+val(cTot[ck])+'</td>';}).join('')+'<td class="num xt-tot">'+(xt.v==='rate'?pct(plays.filter(function(p){return p.result==='pass';}).length,plays.length):xt.v==='won'?plays.filter(function(p){return p.result==='pass';}).length:plays.length)+'</td></tr></tfoot></table></div>'+
+    '<p class="note fine">'+t('A play counts once in each cell it belongs to, so a game with four investigators adds to four columns; totals count each play once.')+'</p></section>';
+  return h;
+}
 function statsHtml(){
   if(!plays.length)return '<section class="sec empty"><h2>'+t('No stats yet')+'</h2><p class="note">'+t('They fill in as you log plays.')+'</p></section>';
   var n=plays.length,pass=plays.filter(function(p){return p.result==='pass';}).length,fail=plays.filter(function(p){return p.result==='fail';}).length;
   var st=scenStats(),beaten=Object.keys(st).filter(function(k){return st[k].pass;}).length;
   var tile=function(k,v,s){return '<div class="stat"><span class="lbl">'+k+'</span><b class="num">'+v+'</b>'+(s?'<small>'+s+'</small>':'')+'</div>';};
   var h='<div class="stats">'+tile(t('Plays'),n)+tile(t('Won|total'),pass,pct(pass,n))+tile(t('Lost|total'),fail,pct(fail,n))+tile(t('Scenarios played'),Object.keys(st).length,tn('{n} won','{n} won',beaten))+'</div>';
+  h+=xtabHtml();
   var table=function(title,rows,col){
     if(!rows.length)return '';var max=Math.max.apply(null,rows.map(function(r){return r.n;}));
     return '<section class="sec"><h2>'+esc(title)+'</h2><table class="tbl"><thead><tr><th>'+esc(col)+'</th><th class="r">'+t('Plays')+'</th><th class="r">'+t('Won|total')+'</th><th class="w">'+t('Win rate')+'</th></tr></thead><tbody>'+
@@ -859,6 +929,7 @@ app.addEventListener('click',function(e){
   else if(k==='fixinv')fixInvestigators();
   else if(k==='fixsc')fixScenarios();
   else if(k==='sfclear'){sf.src=sf.diff=sf.len=sf.rate=sf.lang=sf.own='any';sf.src='all';ui.sfilter='all';ui.sq='';try{sessionStorage.setItem('mom-sf',JSON.stringify(sf));}catch(x){}render();}
+  else if(k==='xtswap'){var xr=xt.r;xt.r=xt.c;xt.c=xr;saveXt();render();}
   else if(k==='newperson')personDialog();
   else if(k==='newgroup')groupDialog();
   else if(k==='editperson'){var ps=people.filter(function(x){return x.id===a.dataset.id;})[0];if(ps)personDialog(ps);}
@@ -896,6 +967,7 @@ app.addEventListener('change',function(e){
   if(el.id==='fres'){ui.result=el.value;render();}else if(el.id==='fpl'){ui.player=el.value;render();}else if(el.id==='fsc'){ui.scen=el.value;render();}
   else if(el.id==='sf-status'){ui.sfilter=el.value;render();}
   else if(/^sf-/.test(el.id)&&el.id!=='sf-status'){sf[el.id.slice(3)]=el.value;try{sessionStorage.setItem('mom-sf',JSON.stringify(sf));}catch(x){}render();}
+  else if(/^xt-/.test(el.id)){var xk=el.id.slice(3);xt[xk==='all'?'all':xk]=xk==='all'?el.checked:el.value;saveXt();render();}
   else if(el.id==='s-lang')I18N.set(el.value);
   else if(el.id==='s-valk')fb.db.doc('users/'+me.uid).set({hideValkyrie:!el.checked},{merge:true}).catch(function(err){toast(friendly(err));});
   else if(el.dataset.own){var o=owned().slice(),i=o.indexOf(el.dataset.own);if(el.checked&&i<0)o.push(el.dataset.own);if(!el.checked&&i>=0)o.splice(i,1);

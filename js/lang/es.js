@@ -471,7 +471,18 @@ I18N.add('es',[
 [`The cellar was a bad idea.`,`Lo del sótano fue mala idea.`],
 [`Our first game together.`,`Nuestra primera partida juntos.`],
 [`Solved four of the five.`,`Resolvimos cuatro de los cinco.`],
-[`Mirrors everywhere. Loved it.`,`Espejos por todas partes. Nos encantó.`]
+[`Mirrors everywhere. Loved it.`,`Espejos por todas partes. Nos encantó.`],
+[`Cross table`,`Tabla cruzada`],
+[`Pick what goes in the rows and the columns. An empty cell is a combination you haven’t played yet.`,`Elige qué va en las filas y en las columnas. Una celda vacía es una combinación que aún no has jugado.`],
+[`Rows`,`Filas`],
+[`Swap rows and columns`,`Intercambiar filas y columnas`],
+[`Columns`,`Columnas`],
+[`Show`,`Mostrar`],
+[`Include ones not played yet`,`Incluir lo que aún no has jugado`],
+[`Nothing to show yet for these two.`,`Todavía no hay nada que mostrar para estos dos.`],
+[`Total`,`Total`],
+[`A play counts once in each cell it belongs to, so a game with four investigators adds to four columns; totals count each play once.`,`Una partida cuenta una vez en cada celda a la que pertenece, así que una partida con cuatro investigadores suma en cuatro columnas; los totales cuentan cada partida una sola vez.`],
+[`{n} plays · {won} won`,{one:`{n} partida · victorias: {won}`,other:`{n} partidas · victorias: {won}`}]
 ],{
 // Official scenario names as the companion app and Edge's boxes give them (sources: Leyenda.net's entries for each box, the app's App Store release notes and in-app purchases, Spanish shop listings and forum posts).
 scenarios:{

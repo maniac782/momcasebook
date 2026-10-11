@@ -471,3 +471,20 @@ select.f.dd-open{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in sr
 .set.s-pots{background:#7a4a2a}.set.s-fan{background:transparent;color:var(--muted);border:1px solid var(--line)}
 /* an official scenario's English name under its translated one (Scenarios tab) */
 .scs .orig{font-size:12.5px;font-style:italic;margin-top:-2px}
+/* cross table (Stats tab): scrolls inside its box; the row names and column heads stay put while it does */
+.xt-pick{align-items:flex-end}
+.xt-pick .xt-swap{min-height:42px;font-size:18px;padding:4px 12px}
+.xt-pick .xt-all{align-self:center;margin-left:4px}
+.xt-wrap{overflow:auto;max-height:70vh;border:1px solid var(--line);border-radius:8px;background:var(--surface);overscroll-behavior:contain}
+.xt{border-collapse:separate;border-spacing:0;font-size:14px;min-width:100%}
+.xt th,.xt td{padding:6px 8px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent);border-right:1px solid color-mix(in srgb,var(--line) 40%,transparent);white-space:nowrap}
+.xt thead th{position:sticky;top:0;z-index:2;background:var(--surface2);font-size:12px;font-weight:700;color:var(--muted);text-align:center;vertical-align:bottom}
+.xt tbody th,.xt tfoot th{position:sticky;left:0;z-index:1;background:var(--surface);text-align:left;font-weight:600;max-width:42vw;overflow:hidden;text-overflow:ellipsis}
+.xt thead th.xt-corner{left:0;z-index:3;text-align:left;font-weight:600;white-space:normal;min-width:120px}
+.xt td{text-align:center;min-width:34px}
+.xt .xt-none{color:var(--muted);opacity:.5}
+.xt .xt-tot{font-weight:700;background:var(--surface2)}
+.xt tfoot th,.xt tfoot td{border-bottom:0}
+/* many columns: their names run upwards so the table stays narrow */
+.xt.xt-v thead th:not(.xt-corner) span{writing-mode:vertical-rl;transform:rotate(180deg);display:inline-block;max-height:170px;overflow:hidden;text-overflow:ellipsis;text-align:left}
+@media (max-width:520px){.xt{font-size:13px}.xt th,.xt td{padding:5px 6px}.xt-pick .xt-all{flex-basis:100%;margin-left:0}}

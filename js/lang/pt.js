@@ -471,7 +471,18 @@ I18N.add('pt',[
 [`The cellar was a bad idea.`,`O porão foi uma péssima ideia.`],
 [`Our first game together.`,`Nossa primeira partida juntos.`],
 [`Solved four of the five.`,`Resolvemos quatro dos cinco.`],
-[`Mirrors everywhere. Loved it.`,`Espelhos por todo lado. Adoramos.`]
+[`Mirrors everywhere. Loved it.`,`Espelhos por todo lado. Adoramos.`],
+[`Cross table`,`Tabela cruzada`],
+[`Pick what goes in the rows and the columns. An empty cell is a combination you haven’t played yet.`,`Escolha o que vai nas linhas e nas colunas. Uma célula vazia é uma combinação que você ainda não jogou.`],
+[`Rows`,`Linhas`],
+[`Swap rows and columns`,`Trocar linhas e colunas`],
+[`Columns`,`Colunas`],
+[`Show`,`Mostrar`],
+[`Include ones not played yet`,`Incluir o que ainda não foi jogado`],
+[`Nothing to show yet for these two.`,`Ainda não há nada para mostrar com esses dois.`],
+[`Total`,`Total`],
+[`A play counts once in each cell it belongs to, so a game with four investigators adds to four columns; totals count each play once.`,`Uma partida conta uma vez em cada célula a que pertence, então uma partida com quatro investigadores soma em quatro colunas; os totais contam cada partida uma só vez.`],
+[`{n} plays · {won} won`,{one:`{n} partida · vitórias: {won}`,other:`{n} partidas · vitórias: {won}`}]
 ],{
 // Official scenario names from Ludopedia's entries for each box, the app's App Store release notes and in-app purchases. Not yet confirmed (translated for this site, please correct): o-the-twilight-diadem, o-murder-on-the-stargazer-majestic, o-10-50-to-arkham, o-hidden-depths, o-the-jungle-awakens, o-into-the-dark, o-lost-temple-of-yig.
 scenarios:{

@@ -385,7 +385,15 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(await p.isHidden('.acctmenu'),'click outside closes it');
   await p.click('.acctbtn');await p.keyboard.press('Escape');assert.ok(await p.isHidden('.acctmenu'),'Escape closes it');
   await p.click('[data-t=settings]');assert.strictEqual(await p.locator('h2:text-is("You")').count(),0,'no longer in Settings');
-  // one person playing two characters in a game counts once for that game
+  // cross table: scenarios by investigators by default, every official one listed; swap, pick, show win rate, remembered
+  await p.click('[data-t=stats]');await p.waitForSelector('.xt');
+  assert.ok(await p.locator('.xt tbody tr').count()>=24,'every official scenario in the rows');
+  assert.ok(await p.locator('.xt thead th').count()>=41,'every official investigator in the columns');
+  assert.ok(await p.locator('.xt td .xt-none').count()>0,'combinations not played yet show as empty');
+  await p.click('[data-a=xtswap]');assert.strictEqual(await p.inputValue('#xt-r'),'investigator','swapped');
+  await p.selectOption('#xt-c','result');await p.selectOption('#xt-v','won');
+  assert.strictEqual(await p.evaluate(()=>JSON.parse(localStorage.getItem('mom-xtab')).c),'result','choice remembered');
+  await p.selectOption('#xt-r','scenario');await p.selectOption('#xt-c','investigator');await p.selectOption('#xt-v','plays');
   const rowVal=async(table,name)=>{await p.click('[data-t=stats]');return p.evaluate(([t,n])=>{const sec=[...document.querySelectorAll('section.sec')].find(s=>s.querySelector('h2')&&s.querySelector('h2').textContent===t);
     if(!sec)return null;const tr=[...sec.querySelectorAll('tbody tr')].find(r=>r.cells[0].textContent.replace(/\u00a0/g,' ')===n);return tr?[+tr.cells[1].textContent,+tr.cells[2].textContent]:[0,0];},[table,name]);};
   const danBefore=await rowVal('Who you played with','Dan'),twoBefore=await rowVal('Party size','2 players'),soloBefore=await rowVal('Party size','Solo');

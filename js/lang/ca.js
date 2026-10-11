@@ -471,7 +471,18 @@ I18N.add('ca',[
 [`The cellar was a bad idea.`,`Allò del soterrani va ser mala idea.`],
 [`Our first game together.`,`La nostra primera partida junts.`],
 [`Solved four of the five.`,`Vam resoldre'n quatre de cinc.`],
-[`Mirrors everywhere. Loved it.`,`Miralls per tot arreu. Ens va encantar.`]
+[`Mirrors everywhere. Loved it.`,`Miralls per tot arreu. Ens va encantar.`],
+[`Cross table`,`Taula creuada`],
+[`Pick what goes in the rows and the columns. An empty cell is a combination you haven’t played yet.`,`Tria què va a les files i a les columnes. Una cel·la buida és una combinació que encara no has jugat.`],
+[`Rows`,`Files`],
+[`Swap rows and columns`,`Intercanvia files i columnes`],
+[`Columns`,`Columnes`],
+[`Show`,`Mostra`],
+[`Include ones not played yet`,`Inclou el que encara no has jugat`],
+[`Nothing to show yet for these two.`,`Encara no hi ha res a mostrar per a aquests dos.`],
+[`Total`,`Total`],
+[`A play counts once in each cell it belongs to, so a game with four investigators adds to four columns; totals count each play once.`,`Una partida compta una vegada a cada cel·la on pertany, així que una partida amb quatre investigadors suma a quatre columnes; els totals compten cada partida una sola vegada.`],
+[`{n} plays · {won} won`,{one:`{n} partida · victòries: {won}`,other:`{n} partides · victòries: {won}`}]
 ],{
 // There's no Catalan edition of the game or app, so official scenario names are the Spanish ones players see in the app.
 scenarios:{
