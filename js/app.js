@@ -434,11 +434,13 @@ function lenText(m){
   if(m[0]&&m[0]!==m[1])return mins(m[0])===mins(m[1])?unit(m[1],num(m[0])+'–'+num(m[1])):unit(m[0],num(m[0]))+'–'+unit(m[1],num(m[1]));
   return unit(m[1],num(m[1]));}
 // ---------- Combinations (Stats tab): any two things against each other, a cross table ----------
-// Rows and columns are picked from the dimensions below; each cell counts the plays that have both. "Include ones not
-// played yet" adds every official scenario and investigator from the boxes you own (and your saved players), so the
-// empty cells show combinations still to try. The choice is remembered on this device.
-var xt={r:'scenario',c:'investigator',v:'plays',all:true};
+// Rows and columns are picked from the dimensions below; each cell counts the plays that have both. "Also list" adds
+// things not played yet, so the empty cells show combinations still to try: the official scenarios and investigators
+// from the boxes you own (and your saved players and boxes), optionally your starred Valkyrie scenarios, or every
+// Valkyrie scenario. The choice is remembered on this device.
+var xt={r:'scenario',c:'investigator',v:'plays',inc:'official'};
 try{var xt0=JSON.parse(localStorage.getItem('mom-xtab')||'null');if(xt0)for(var kx in xt0)xt[kx]=xt0[kx];}catch(e){}
+if(xt.all!=null){if(!xt.inc)xt.inc=xt.all?'official':'played';delete xt.all;}   // from the first version's checkbox
 function saveXt(){try{localStorage.setItem('mom-xtab',JSON.stringify(xt));}catch(e){}}
 var XDIMS=['scenario','investigator','player','expansion','party','where','rules','result','type'];
 function xdimName(d){return {scenario:t('Scenario'),investigator:t('Investigator'),player:t('Player'),expansion:t('Expansion'),party:t('Party size'),where:t('Where'),rules:t('Rules'),result:t('Result'),type:t('Scenario type')}[d];}
@@ -459,7 +461,11 @@ function xvals(d,p){
 // everything a dimension could have, in a sensible order, for "Include ones not played yet"
 function xallVals(d){
   var own=owned();
-  if(d==='scenario'){var out=[];MOM.PRODUCTS.forEach(function(pr){if(own.indexOf(pr.id)<0)return;MOM.OFFICIAL.filter(function(s){return s.product===pr.id;}).forEach(function(s){out.push([s.id,scName(s.id,s.name)]);});});return out;}
+  if(d==='scenario'){var out=[];MOM.PRODUCTS.forEach(function(pr){if(own.indexOf(pr.id)<0)return;MOM.OFFICIAL.filter(function(s){return s.product===pr.id;}).forEach(function(s){out.push([s.id,scName(s.id,s.name)]);});});
+    // then Valkyrie ones, A to Z: the starred ones, or all of them (as in the Scenarios tab: none if switched off, retired ones only once played)
+    var stars=starredMap(),valk=xt.inc==='all'&&showValk()?MOM.VALKYRIE.filter(function(s){return !s.retired;}):xt.inc==='starred'?MOM.VALKYRIE.filter(function(s){return stars[s.id];}):[];
+    valk.slice().sort(byName).forEach(function(s){out.push([s.id,s.name]);});
+    return out;}
   if(d==='investigator'){var o2=[];MOM.INVESTIGATOR_GROUPS.forEach(function(g){if(own.indexOf(g.product)>=0)g.list.forEach(function(n){o2.push([n,n]);});});return o2;}
   if(d==='player')return people.slice().sort(byName).map(function(x){return [x.name.toLowerCase(),x.name];});
   if(d==='expansion')return MOM.PRODUCTS.filter(function(pr){return own.indexOf(pr.id)>=0;}).map(function(pr){return [pr.id,pr.name];}).concat(showValk()?[['valkyrie',t('Valkyrie')]]:[]);
@@ -470,14 +476,14 @@ function xtabHtml(){
   if(xt.r===xt.c)xt.c=xt.r==='investigator'?'scenario':'investigator';
   var rows={},cols={},rOrder=[],cOrder=[],cell={},rTot={},cTot={};
   var addKey=function(map,order,kv){if(!map[kv[0]]){map[kv[0]]=kv[1];order.push(kv[0]);}};
-  if(xt.all){xallVals(xt.r).forEach(function(kv){addKey(rows,rOrder,kv);});xallVals(xt.c).forEach(function(kv){addKey(cols,cOrder,kv);});}
+  if(xt.inc!=='played'){xallVals(xt.r).forEach(function(kv){addKey(rows,rOrder,kv);});xallVals(xt.c).forEach(function(kv){addKey(cols,cOrder,kv);});}
   var bump=function(o,k,won){var x=o[k]||(o[k]={n:0,w:0});x.n++;if(won)x.w++;};
   plays.forEach(function(p){var won=p.result==='pass',R=xvals(xt.r,p),C=xvals(xt.c,p);
     R.forEach(function(r){addKey(rows,rOrder,r);bump(rTot,r[0],won);});C.forEach(function(c){addKey(cols,cOrder,c);bump(cTot,c[0],won);});
     R.forEach(function(r){C.forEach(function(c){bump(cell,r[0]+'\u0001'+c[0],won);});});});
   // without "not played yet", most played first; with it, the catalogue's own order (then anything else, most played first)
   var byCount=function(tot){return function(a,b){return ((tot[b]||{}).n||0)-((tot[a]||{}).n||0);};};
-  if(!xt.all){rOrder.sort(byCount(rTot));cOrder.sort(byCount(cTot));}
+  if(xt.inc==='played'){rOrder.sort(byCount(rTot));cOrder.sort(byCount(cTot));}
   var sel=function(id,val,opts){return '<select class="f" id="'+id+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';};
   var dims=XDIMS.map(function(d){return [d,xdimName(d)];});
   var h='<section class="sec xtab"><div class="sec-head"><h2>'+t('Combinations')+'</h2></div>'+
@@ -486,7 +492,7 @@ function xtabHtml(){
     '<button class="btn sm xt-swap" type="button" data-a="xtswap" title="'+t('Swap rows and columns')+'" aria-label="'+t('Swap rows and columns')+'">⇄</button>'+
     '<label class="field"><span class="lbl">'+t('Columns')+'</span>'+sel('xt-c',xt.c,dims.filter(function(d){return d[0]!==xt.r;}))+'</label>'+
     '<label class="field"><span class="lbl">'+t('Show')+'</span>'+sel('xt-v',xt.v,[['plays',t('Plays')],['won',t('Won|total')],['rate',t('Win rate')]])+'</label>'+
-    '<label class="check xt-all"><input type="checkbox" id="xt-all"'+(xt.all?' checked':'')+'><span>'+t('Include ones not played yet')+'</span></label></div>';
+    '<label class="field"><span class="lbl">'+t('Also list')+'</span>'+sel('xt-inc',xt.inc,[['played',t('Only what you’ve played')],['official',t('Official ones not played yet')],['starred',t('Official and starred Valkyrie')],['all',t('Everything, all Valkyrie too')]])+'</label></div>';
   if(!rOrder.length||!cOrder.length)return h+'<p class="note">'+t('Nothing to show yet for these two.')+'</p></section>';
   var max=0;Object.keys(cell).forEach(function(k){if(cell[k].n>max)max=cell[k].n;});
   var shade=function(x){if(!x)return '';var a=xt.v==='rate'?Math.round(15+60*x.w/x.n):Math.round(12+58*(xt.v==='won'?x.w:x.n)/Math.max(1,max));
@@ -967,7 +973,7 @@ app.addEventListener('change',function(e){
   if(el.id==='fres'){ui.result=el.value;render();}else if(el.id==='fpl'){ui.player=el.value;render();}else if(el.id==='fsc'){ui.scen=el.value;render();}
   else if(el.id==='sf-status'){ui.sfilter=el.value;render();}
   else if(/^sf-/.test(el.id)&&el.id!=='sf-status'){sf[el.id.slice(3)]=el.value;try{sessionStorage.setItem('mom-sf',JSON.stringify(sf));}catch(x){}render();}
-  else if(/^xt-/.test(el.id)){var xk=el.id.slice(3);xt[xk==='all'?'all':xk]=xk==='all'?el.checked:el.value;saveXt();render();}
+  else if(/^xt-/.test(el.id)){xt[el.id.slice(3)]=el.value;saveXt();render();}
   else if(el.id==='s-lang')I18N.set(el.value);
   else if(el.id==='s-valk')fb.db.doc('users/'+me.uid).set({hideValkyrie:!el.checked},{merge:true}).catch(function(err){toast(friendly(err));});
   else if(el.dataset.own){var o=owned().slice(),i=o.indexOf(el.dataset.own);if(el.checked&&i<0)o.push(el.dataset.own);if(!el.checked&&i>=0)o.splice(i,1);

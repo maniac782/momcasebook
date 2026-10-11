@@ -390,6 +390,9 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(await p.locator('.xt tbody tr').count()>=24,'every official scenario in the rows');
   assert.ok(await p.locator('.xt thead th').count()>=41,'every official investigator in the columns');
   assert.ok(await p.locator('.xt td .xt-none').count()>0,'combinations not played yet show as empty');
+  await p.selectOption('#xt-inc','all');assert.ok(await p.locator('.xt tbody tr').count()>150,'every Valkyrie scenario too');
+  await p.selectOption('#xt-inc','played');const playedRows=await p.locator('.xt tbody tr').count();assert.ok(playedRows<24,'only what was played: '+playedRows);
+  await p.selectOption('#xt-inc','official');
   await p.click('[data-a=xtswap]');assert.strictEqual(await p.inputValue('#xt-r'),'investigator','swapped');
   await p.selectOption('#xt-c','result');await p.selectOption('#xt-v','won');
   assert.strictEqual(await p.evaluate(()=>JSON.parse(localStorage.getItem('mom-xtab')).c),'result','choice remembered');

@@ -479,11 +479,15 @@ I18N.add('pl',[
 [`Swap rows and columns`,`Zamień wiersze z kolumnami`],
 [`Columns`,`Kolumny`],
 [`Show`,`Pokaż`],
-[`Include ones not played yet`,`Uwzględnij jeszcze nierozegrane`],
 [`Nothing to show yet for these two.`,`Na razie nie ma tu nic do pokazania.`],
 [`Total`,`Razem`],
 [`A play counts once in each cell it belongs to, so a game with four investigators adds to four columns; totals count each play once.`,`Rozgrywka liczy się raz w każdej komórce, do której należy, więc gra z czterema badaczami dolicza się do czterech kolumn; sumy liczą każdą rozgrywkę raz.`],
-[`{n} plays · {won} won`,{one:`{n} rozgrywka · wygrane: {won}`,few:`{n} rozgrywki · wygrane: {won}`,many:`{n} rozgrywek · wygrane: {won}`,other:`{n} rozgrywki · wygrane: {won}`}]
+[`{n} plays · {won} won`,{one:`{n} rozgrywka · wygrane: {won}`,few:`{n} rozgrywki · wygrane: {won}`,many:`{n} rozgrywek · wygrane: {won}`,other:`{n} rozgrywki · wygrane: {won}`}],
+[`Also list`,`Pokaż też`],
+[`Only what you’ve played`,`Tylko to, w co grano`],
+[`Official ones not played yet`,`Oficjalne jeszcze nierozegrane`],
+[`Official and starred Valkyrie`,`Oficjalne i ulubione z Valkyrie`],
+[`Everything, all Valkyrie too`,`Wszystko, także całe Valkyrie`]
 ],{
 // Official scenario names confirmed from Polish reviews and shops: o-cycle-of-eternity, o-escape-from-innsmouth, o-astral-alchemy, o-gangs-of-arkham, o-ill-fated-exhibit, o-gates-of-silverwood-manor, o-10-50-to-arkham. The rest are translated for this site and not yet confirmed against Galakta's app text; please correct.
 scenarios:{

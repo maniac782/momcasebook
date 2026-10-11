@@ -478,11 +478,15 @@ I18N.add('es',[
 [`Swap rows and columns`,`Intercambiar filas y columnas`],
 [`Columns`,`Columnas`],
 [`Show`,`Mostrar`],
-[`Include ones not played yet`,`Incluir lo que aún no has jugado`],
 [`Nothing to show yet for these two.`,`Todavía no hay nada que mostrar para estos dos.`],
 [`Total`,`Total`],
 [`A play counts once in each cell it belongs to, so a game with four investigators adds to four columns; totals count each play once.`,`Una partida cuenta una vez en cada celda a la que pertenece, así que una partida con cuatro investigadores suma en cuatro columnas; los totales cuentan cada partida una sola vez.`],
-[`{n} plays · {won} won`,{one:`{n} partida · victorias: {won}`,other:`{n} partidas · victorias: {won}`}]
+[`{n} plays · {won} won`,{one:`{n} partida · victorias: {won}`,other:`{n} partidas · victorias: {won}`}],
+[`Also list`,`También listar`],
+[`Only what you’ve played`,`Solo lo que has jugado`],
+[`Official ones not played yet`,`Oficiales aún sin jugar`],
+[`Official and starred Valkyrie`,`Oficiales y Valkyrie con estrella`],
+[`Everything, all Valkyrie too`,`Todo, también todo Valkyrie`]
 ],{
 // Official scenario names as the companion app and Edge's boxes give them (sources: Leyenda.net's entries for each box, the app's App Store release notes and in-app purchases, Spanish shop listings and forum posts).
 scenarios:{
