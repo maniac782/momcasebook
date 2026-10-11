@@ -45,7 +45,10 @@ h2{font-size:24px}
 
 main{flex:1;width:100%;max-width:980px;margin:0 auto;padding:16px 16px 56px;display:flex;flex-direction:column;gap:16px}
 .foot{max-width:980px;width:100%;margin:0 auto;padding:16px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
-.foot #ver{margin-left:auto}
+.foot .langpick{margin-left:auto}
+/* the footer's language picker: quiet, like the rest of the footer */
+.langpick select{font:inherit;font-size:13px;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:6px;padding:2px 6px;cursor:pointer}
+.langpick select:hover{color:var(--ink)}
 
 /* building blocks */
 .sec{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px}
@@ -114,6 +117,9 @@ select.f::-ms-expand{display:none}
 /* the tabs are spread evenly across the bar, each underline only as wide as its word (left of Log a play on a computer, the full width on a phone) */
 .bar .tabs{flex:1;min-width:0;justify-content:space-around}
 .bar .tab{flex:none}
+/* longer words (other languages): see fitTabs in js/app.js */
+.bar .tabs.snug .tab{padding-left:5px;padding-right:5px}
+.bar .tabs.snugger .tab{padding-left:3px;padding-right:3px;font-size:13px;letter-spacing:-.01em}
 .tab:hover{color:var(--ink)}
 .bar .btn{margin-bottom:8px}
 @media (max-width:560px){.bar .tab{padding:10px 6px;font-size:14.5px}.bar>.btn.pri{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:6;min-height:52px;padding:10px 18px;border-radius:26px;box-shadow:0 6px 18px rgba(0,0,0,.28);margin:0}}
@@ -323,9 +329,12 @@ select.grp{margin-bottom:8px}
 
 /* collapsible Official / Valkyrie / Your own boxes */
 details.box{padding:0;gap:0}
-details.box>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:14px 16px}
+details.box>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 16px}
+/* a long summary (other languages, phones) wraps inside itself, so the arrow stays on the heading's line */
+details.box>summary .note{flex:0 1 auto;min-width:0;text-align:right}
+details.box>summary .chev{flex:none}
 details.box>summary::-webkit-details-marker{display:none}
-details.box>summary h2{margin-right:auto}
+details.box>summary h2{margin-right:auto;flex:none}
 details.box>summary .chev{width:10px;height:10px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);align-self:center;transition:transform .15s}
 details.box:not([open])>summary .chev{transform:rotate(-45deg)}
 details.box[open]>summary{border-bottom:1px solid var(--line)}

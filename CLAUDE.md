@@ -11,3 +11,4 @@ Also:
 - Keep this a separate site and Firebase project from the Arkham Horror RPG Ledger (`maniac782/arkhamrpg`); share patterns, not data or projects.
 - Run `node test/importer.test.js` and `node test/house-rules.test.js` before pushing. `test/ui.test.js` is a headless end-to-end check (needs Playwright).
 - Keep the README in step with features.
+- The site is translated (English, Spanish, Catalan, French, Polish, Portuguese). Any new interface text goes through `t('…')`, or `tn('one','other',n)` for counts, and gets an entry in every `js/lang/*.js`; `node test/i18n.test.js` (run in CI) fails until each language has it.

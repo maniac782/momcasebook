@@ -20,6 +20,8 @@ jobs:
           node-version: 22
       - name: Importer tests
         run: node test/importer.test.js
+      - name: Translations complete
+        run: node test/i18n.test.js
       - name: House rules (version bumped, no yellow)
         run: node test/house-rules.test.js
         env:

@@ -7,6 +7,8 @@
 (function(root){
 'use strict';
 var MOM=root.MOM;
+// messages in the reader's language (js/i18n.js); plain English where that isn't loaded (the Node tests)
+var tr=function(s){return typeof root.t==='function'?root.t(s):s;};
 
 // ---------- reading ----------
 function parseCSV(text){
@@ -35,17 +37,17 @@ function sheetGid(link){var m=String(link||'').match(/[#&?]gid=(\d+)/);return m?
 // across sites where a normal request would be blocked.
 function fetchSheet(link){
   return new Promise(function(resolve,reject){
-    var id=sheetId(link);if(!id){reject(new Error('That doesn’t look like a Google Sheets link.'));return;}
+    var id=sheetId(link);if(!id){reject(new Error(tr('That doesn’t look like a Google Sheets link.')));return;}
     var cb='__momSheet'+Date.now(),s=document.createElement('script'),done=false;
     var finish=function(err,val){if(done)return;done=true;try{delete window[cb];}catch(e){window[cb]=undefined;}s.remove();clearTimeout(t);err?reject(err):resolve(val);};
     window[cb]=function(res){
-      if(!res||res.status==='error'){finish(new Error('Google wouldn’t share that sheet. In Google Sheets choose Share › General access › Anyone with the link, then try again.'));return;}
+      if(!res||res.status==='error'){finish(new Error(tr('Google wouldn’t share that sheet. In Google Sheets choose Share › General access › Anyone with the link, then try again.')));return;}
       finish(null,gvizRows(res.table||{}));
     };
     var gid=sheetGid(link);
     s.src='https://docs.google.com/spreadsheets/d/'+id+'/gviz/tq?headers=1&tqx=out:json;responseHandler:'+cb+(gid?'&gid='+gid:'');
-    s.onerror=function(){finish(new Error('Couldn’t reach that sheet. Check it’s shared as “Anyone with the link”.'));};
-    var t=setTimeout(function(){finish(new Error('The sheet took too long to load. Try again, or download it as CSV and choose the file.'));},20000);
+    s.onerror=function(){finish(new Error(tr('Couldn’t reach that sheet. Check it’s shared as “Anyone with the link”.')));};
+    var t=setTimeout(function(){finish(new Error(tr('The sheet took too long to load. Try again, or download it as CSV and choose the file.')));},20000);
     document.head.appendChild(s);
   });
 }
@@ -111,12 +113,12 @@ function hash(s){var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(
 // Plays with an unmatched name have scenarioId '' and sheetName set until the person picks.
 function buildPlays(rows,known){
   var out={plays:[],unmatched:{},skipped:0,notes:[],cols:{}};
-  if(!rows||rows.length<2){out.notes.push('The sheet has no rows under its headings.');return out;}
+  if(!rows||rows.length<2){out.notes.push(tr('The sheet has no rows under its headings.'));return out;}
   var hi=0;
   // headings may sit below a title row: take the first row that names a Scenario column
   for(var r=0;r<Math.min(rows.length,5);r++){if(findCols(rows[r]).scenario!=null){hi=r;break;}}
   var at=findCols(rows[hi]);out.cols=at;
-  if(at.scenario==null){out.notes.push('Couldn’t find a “Scenario” column. The first row needs headings such as Scenario, Played, Characters, Pass/Fail, Notes.');return out;}
+  if(at.scenario==null){out.notes.push(tr('Couldn’t find a “Scenario” column. The first row needs headings such as Scenario, Played, Characters, Pass/Fail, Notes.'));return out;}
   var byKey={};(known||[]).forEach(function(s){byKey[MOM.key(s.name)]=s;});
   var get=function(row,k){return at[k]==null?'':String(row[at[k]]==null?'':row[at[k]]).trim();};
   rows.slice(hi+1).forEach(function(row,n){
@@ -141,20 +143,20 @@ function buildPlays(rows,known){
       if(solo&&!ppl.length)ppl=[solo[1].trim()];
       var n2=Math.max(inv.length,ppl.length);
       for(var i=0;i<n2;i++)party.push({player:ppl[i]||'',investigator:inv[i]||''});
-      if(/\?/.test(get(row,'investigators')))extra.push('Imported with an investigator left as “?”.');
+      if(/\?/.test(get(row,'investigators')))extra.push(tr('Imported with an investigator left as “?”.'));
     }
-    if(matchedFrom)extra.push('Scenario in the sheet: \u201c'+matchedFrom+'\u201d.');
-    if(unknown.length)extra.push('Not an official investigator, left as unknown: '+unknown.join(', ')+'.');
+    if(matchedFrom)extra.push(tr('Scenario in the sheet: “{name}”.').replace('{name}',matchedFrom));
+    if(unknown.length)extra.push(tr('Not an official investigator, left as unknown: {names}.').replace('{names}',unknown.join(', ')));
     var attempts=parseAttempts(get(row,'attempts'))||parseAttempts(resText)||1;
     var result=parseResult(resText);
     var p={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,sheetName:sc.id?'':name,date:normDate(get(row,'date')),result:result,attempts:attempts,
       party:party,solo:!!solo||soloParty(party),rules:normRules(get(row,'rules')),location:get(row,'location').replace(/\s+/g,' ').slice(0,60),notes:get(row,'notes'),seq:n};
-    if(resText&&!result)extra.push('Result in the sheet: '+resText);
+    if(resText&&!result)extra.push(tr('Result in the sheet: {result}').replace('{result}',resText));
     if(extra.length)p.notes=(p.notes?p.notes+'\n':'')+extra.join('\n');
     p.importKey=hash([MOM.key(name),p.date,result,attempts,party.map(function(x){return x.player+':'+x.investigator;}).join(';'),p.rules,get(row,'notes')].join('|'));
     out.plays.push(p);
   });
-  if(!out.plays.length)out.notes.push('No played rows found (rows marked N in “Played” are skipped).');
+  if(!out.plays.length)out.notes.push(tr('No played rows found (rows marked N in “Played” are skipped).'));
   return out;
 }
 

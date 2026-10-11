@@ -28,6 +28,7 @@ This repo is the code behind the live site. It isn't packaged for running your o
 - **Profile pictures.** In the account menu (your picture and name, top right; built to look and behave exactly like the Arkham Horror RPG Ledger's, down to the same class names and styles), **Your account** lets you choose a picture, position and zoom it in a circle, and change your name. Without a picture, your initial shows on a color you pick there (the colors hide while a picture is showing). It shows on your account button and in the admin page's account list.
 - **Export.** CSV (opens in any spreadsheet, and imports back) and a JSON backup. Delete all plays, or the whole account, from Settings.
 - **Dropdown menus.** Every dropdown opens the site's own menu rather than the browser's plain list: a tick on the current choice, group headings, hover and keyboard highlighting (arrows, Enter, Escape, type a letter to jump), and a search box on long lists such as scenarios and investigators. On phones and tablets a tap opens the device's own picker instead. The underlying fields are still ordinary selects, so forms and filters work as before (`js/shared.js`, *Dropdowns*).
+- **Languages.** English, Spanish, Catalan, French, Polish and Portuguese (Brazilian), picked in Settings or from the footer on any page (so before signing in too). The choice is kept on the device and in the account, so it follows you; with nothing picked, the browser's own language is used when the site has it. Everything the site writes is translated, including the official scenario premises and the review summaries, with each language's plurals, dates and times. What stays as it is: your own names, notes and places; scenario, product, investigator and tile names (as in the companion app and on the tiles); the Valkyrie authors' own descriptions; and the column headings an imported sheet needs. The translations haven't been checked by native speakers yet, so corrections are welcome through Send feedback.
 - **Installable and offline.** Install app is in the account menu. Plays logged offline sync when you're back online.
 
 <table>
@@ -113,6 +114,7 @@ Plain HTML, CSS and JavaScript, no build step. Firebase compat SDK 10 (Authentic
 | `js/shared.js` | Account menu, Install app, Send feedback, dialogs, toasts, the dropdown menus and the pick-or-type player boxes |
 | `js/localfb.js`, `js/demo.js` | A casebook kept in the browser with no account, and the sample casebook on the welcome page (a small in-browser stand-in for the Firebase calls the app makes) |
 | `js/packlists.js`, `scripts/fetch-packlists.py`, `scripts/tiles_index.py`, `scripts/tiles-index-from-pdf.py` | Packing lists for the Valkyrie scenarios, generated weekly from each scenario file. Tile numbers come from the Tiles Index v5.2 PDF (read by `tiles-index-from-pdf.py`, which matches each row's set symbol to the PDF's legend; the PDF itself isn't stored here); names, sets and boxes from Valkyrie's game content |
+| `js/i18n.js`, `js/lang/*.js`, `scripts/i18n-keys.js` | Other languages: `t()` and `tn()` (counts) look up the site's English in the chosen language's table, falling back to English; `i18n-keys.js` lists every string the tables need |
 | `js/version.js` | **The version number**, bumped on every change |
 | `sw.js` | Offline copy of the site; cache named after the version |
 | `css/app.css` | All styles, light and dark themes |
@@ -120,7 +122,7 @@ Plain HTML, CSS and JavaScript, no build step. Firebase compat SDK 10 (Authentic
 | `.github/workflows/deploy.yml` | Tests, then deploys Hosting and the rules on every push to `main` |
 | `.github/workflows/valkyrie-refresh.yml` | Every Monday: refreshes `js/valkyrie.js` from the Valkyrie catalogue and rebuilds the packing lists of new or updated scenarios (`js/packlists.js`), bumps the version, commits and deploys |
 | `docs/screenshots/`, `scripts/screenshots.js` | The README pictures, taken from the sample casebook in dark mode. They aren't published on the site. Retake: `PW=<playwright> CHROME=<chromium> FONTS=<google/fonts clone> node scripts/screenshots.js` |
-| `test/` | `importer.test.js`, `house-rules.test.js` (version bump, no yellow, investigator list, reviews and premises), `ui.test.js` (headless end-to-end with a fake Firebase: logging, filters, dropdowns, players, scheduling, packing lists, the welcome page and the no-account casebook, on a computer and a phone) |
+| `test/` | `importer.test.js`, `house-rules.test.js` (version bump, no yellow, investigator list, reviews and premises), `i18n.test.js` (every language has every string, with the same placeholders, HTML and plural forms), `ui.test.js` (headless end-to-end with a fake Firebase: logging, filters, dropdowns, players, scheduling, packing lists, the welcome page and the no-account casebook, on a computer and a phone) |
 
 ### Data
 

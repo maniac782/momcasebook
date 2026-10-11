@@ -4,9 +4,11 @@
    Investigators are a fixed official list: plays can only name these. */
 (function(root){
 'use strict';
+// the two descriptive names are shown in the reader's language (js/i18n.js); the rest are the products' own names
+var T=function(s){return typeof root.t==='function'?root.t(s):s;};
 var PRODUCTS=[
-  {id:'core',name:'Core game',scenarios:['Escape from Innsmouth','Shattered Bonds','Cycle of Eternity','Rising Tide']},
-  {id:'dlc',name:'Digital (app purchase)',scenarios:['What Lies Within','Dark Reflections','Altered Fates','Turn of a Page','Mirror of a Man']},
+  {id:'core',name:T('Core game'),scenarios:['Escape from Innsmouth','Shattered Bonds','Cycle of Eternity','Rising Tide']},
+  {id:'dlc',name:T('Digital (app purchase)'),scenarios:['What Lies Within','Dark Reflections','Altered Fates','Turn of a Page','Mirror of a Man']},
   {id:'rn',name:'Recurring Nightmares',scenarios:['Dearly Departed']},
   {id:'sm',name:'Suppressed Memories',scenarios:['Cult of Sentinel Hill']},
   {id:'btt',name:'Beyond the Threshold',scenarios:['Gates of Silverwood Manor','Vengeful Impulses']},
@@ -20,7 +22,7 @@ var PRODUCTS=[
 // (github.com/NPBruce/valkyrie, content/MoM/*/investigators.ini) for the core game and expansions; the publisher's
 // product lists for the two figure collections.
 var INVESTIGATOR_GROUPS=[
-  {product:'core',name:'Core game',list:['Agatha Crane','Carson Sinclair','Father Mateo','Minh Thi Phan','Preston Fairmont','Rita Young','Wendy Adams','William Yorick']},
+  {product:'core',name:T('Core game'),list:['Agatha Crane','Carson Sinclair','Father Mateo','Minh Thi Phan','Preston Fairmont','Rita Young','Wendy Adams','William Yorick']},
   {product:'rn',name:'Recurring Nightmares',list:['"Ashcan" Pete','Gloria Goldberg','Harvey Walters','Jenny Barnes','Joe Diamond','Kate Winthrop','Michael McGlen','Sister Mary']},
   {product:'sm',name:'Suppressed Memories',list:['Amanda Sharpe','Bob Jenkins','Carolyn Fern','Darrell Simmons','Dexter Drake','Mandy Thompson','Monterey Jack','Vincent Lee']},
   {product:'btt',name:'Beyond the Threshold',list:['Akachi Onyele','Wilson Richards']},
@@ -40,7 +42,7 @@ var OFFICIAL=[];
 PRODUCTS.forEach(function(p){p.scenarios.forEach(function(n){OFFICIAL.push({id:'o-'+slug(n),name:n,type:'official',product:p.id});});});
 
 // Compare names ignoring case, quotes and punctuation ("Ashcan Pete" = '"Ashcan" Pete').
-function invKey(s){return String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();}
+function invKey(s){return String(s||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();}
 function isInvestigator(s){return INVESTIGATORS.indexOf(s)>=0;}
 // The official investigator a typed name means, or '' if it isn't one (or is ambiguous).
 // "Tommy" -> Tommy Muldoon, "Pete"/"Ashcan Pete" -> "Ashcan" Pete, "Mateo" -> Father Mateo, "?" -> ''.

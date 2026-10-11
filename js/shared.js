@@ -32,34 +32,34 @@ window.isInstalledApp=function(){try{return matchMedia('(display-mode: standalon
 window.openInstall=function(){
   if(deferred){var d=deferred;deferred=null;d.prompt();return;}
   var ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1),android=/Android/.test(ua);
-  var steps=ios?['Tap the <b>Share</b> button (the square with an arrow) in Safari’s toolbar.','Scroll down and tap <b>Add to Home Screen</b>.','Tap <b>Add</b>. The casebook appears on your home screen and opens full-screen.']:
-    android?['Tap the browser’s <b>⋮</b> menu (top right in Chrome).','Tap <b>Install app</b> or <b>Add to Home screen</b>.','Open Mansions of Madness Casebook from your home screen.']:
-    ['In Chrome or Edge, click the <b>install</b> icon at the right end of the address bar, or open the browser menu and choose <b>Install Mansions of Madness Casebook</b>.','Open it from your Start menu, Dock or desktop like any other app. (Safari on a Mac: <b>File › Add to Dock</b>.)'];
-  openDialog('<div class="dlg-head"><h2>Install the app</h2><button class="x" type="button" data-close aria-label="Close">×</button></div>'+
-    '<p class="note">It opens full-screen with its own icon, and works offline: plays you log without a connection sync when you’re back online.</p>'+
+  var steps=ios?[t('Tap the <b>Share</b> button (the square with an arrow) in Safari’s toolbar.'),t('Scroll down and tap <b>Add to Home Screen</b>.'),t('Tap <b>Add</b>. The casebook appears on your home screen and opens full-screen.')]:
+    android?[t('Tap the browser’s <b>⋮</b> menu (top right in Chrome).'),t('Tap <b>Install app</b> or <b>Add to Home screen</b>.'),t('Open Mansions of Madness Casebook from your home screen.')]:
+    [t('In Chrome or Edge, click the <b>install</b> icon at the right end of the address bar, or open the browser menu and choose <b>Install Mansions of Madness Casebook</b>.'),t('Open it from your Start menu, Dock or desktop like any other app. (Safari on a Mac: <b>File › Add to Dock</b>.)')];
+  openDialog('<div class="dlg-head"><h2>'+t('Install the app')+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
+    '<p class="note">'+t('It opens full-screen with its own icon, and works offline: plays you log without a connection sync when you’re back online.')+'</p>'+
     '<ol class="steps">'+steps.map(function(s){return '<li>'+s+'</li>';}).join('')+'</ol>'+
-    (ios?'<p class="note">You’ll sign in once more inside the app; after that it remembers you.</p>':'')+
-    '<div class="row end"><button class="btn pri" type="button" data-close>Got it</button></div>','Install the app');
+    (ios?'<p class="note">'+t('You’ll sign in once more inside the app; after that it remembers you.')+'</p>':'')+
+    '<div class="row end"><button class="btn pri" type="button" data-close>'+t('Got it')+'</button></div>',t('Install the app'));
 };
 
 /* ---------- Send feedback (read on the admin page) ---------- */
 window.openFeedback=function(){
   var u=window.firebase&&firebase.apps.length&&firebase.app().auth().currentUser;if(!u)return;
-  var kinds=[['bug','Bug','What happened? What were you trying to do?'],['idea','Idea','What would make the site better for your group?'],['other','Other','What’s on your mind?']];
-  var d=openDialog('<form class="stack fbform" data-fb><div class="fbhead"><div><h2>Send feedback</h2><p class="note">Bugs, ideas, anything. It goes straight to the person who runs the site.</p></div><button class="x" type="button" data-close aria-label="Close">×</button></div>'+
-    '<div class="fbkinds" role="radiogroup" aria-label="What kind of feedback">'+kinds.map(function(k,i){return '<label class="fbkind"><input type="radio" name="fbk" value="'+k[0]+'"'+(i===0?' checked':'')+'><span>'+k[1]+'</span></label>';}).join('')+'</div>'+
-    '<div class="fbbox"><textarea name="msg" rows="6" maxlength="2000" aria-label="Message" placeholder="'+kinds[0][2]+'"></textarea><span class="fbcount">0 / 2000</span></div>'+
+  var kinds=[['bug',t('Bug'),t('What happened? What were you trying to do?')],['idea',t('Idea'),t('What would make the site better for your group?')],['other',t('Other'),t('What’s on your mind?')]];
+  var d=openDialog('<form class="stack fbform" data-fb><div class="fbhead"><div><h2>'+t('Send feedback')+'</h2><p class="note">'+t('Bugs, ideas, anything. It goes straight to the person who runs the site.')+'</p></div><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
+    '<div class="fbkinds" role="radiogroup" aria-label="'+t('What kind of feedback')+'">'+kinds.map(function(k,i){return '<label class="fbkind"><input type="radio" name="fbk" value="'+k[0]+'"'+(i===0?' checked':'')+'><span>'+k[1]+'</span></label>';}).join('')+'</div>'+
+    '<div class="fbbox"><textarea name="msg" rows="6" maxlength="2000" aria-label="'+t('Message')+'" placeholder="'+kinds[0][2]+'"></textarea><span class="fbcount">0 / 2000</span></div>'+
     '<p class="err" data-fberr hidden></p>'+
-    '<div class="fbfoot"><span class="note">Includes the page you’re on, your browser and the site version.</span><div class="row end"><button class="btn" type="button" data-close>Cancel</button><button class="btn pri" type="submit">Send</button></div></div></form>','Send feedback');
+    '<div class="fbfoot"><span class="note">'+t('Includes the page you’re on, your browser and the site version.')+'</span><div class="row end"><button class="btn" type="button" data-close>'+t('Cancel')+'</button><button class="btn pri" type="submit">'+t('Send')+'</button></div></div></form>',t('Send feedback'));
   var form=d.querySelector('form'),ta=form.msg,er=form.querySelector('[data-fberr]'),cnt=form.querySelector('.fbcount');
   ta.addEventListener('input',function(){er.hidden=true;cnt.textContent=ta.value.length+' / 2000';});
   form.addEventListener('change',function(e){if(e.target.name==='fbk'){var k=kinds.filter(function(x){return x[0]===e.target.value;})[0];if(k)ta.placeholder=k[2];}});
   d.querySelector('form').addEventListener('submit',function(e){
-    e.preventDefault();var f=e.target,b=f.querySelector('[type=submit]');if(!f.msg.value.trim()){er.textContent='Write a message first.';er.hidden=false;ta.focus();return;}b.disabled=true;
+    e.preventDefault();var f=e.target,b=f.querySelector('[type=submit]');if(!f.msg.value.trim()){er.textContent=t('Write a message first.');er.hidden=false;ta.focus();return;}b.disabled=true;
     firebase.app().firestore().collection('feedback').add({kind:(f.querySelector('input[name=fbk]:checked')||{}).value||'other',
       msg:f.msg.value.trim().slice(0,2000),page:location.pathname,ua:String(navigator.userAgent).slice(0,300),
       v:String(self.APP_VERSION||''),t:Date.now(),uid:u.uid,name:(u.displayName||'').slice(0,60),done:false})
-    .then(function(){d.close();toast('Thanks! Feedback sent.');}).catch(function(){b.disabled=false;toast('Couldn’t send that. Try again.');});
+    .then(function(){d.close();toast(t('Thanks! Feedback sent.'));}).catch(function(){b.disabled=false;toast(t('Couldn’t send that. Try again.'));});
   });
 };
 
@@ -86,10 +86,10 @@ window.choosePicture=function(){
     var settled=false,done=function(v){if(settled)return;settled=true;inp.remove();resolve(v);};
     inp.addEventListener('change',function(){
       var f=inp.files&&inp.files[0];if(!f){done(null);return;}
-      if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|gif|webp|heic|heif)$/i.test(f.name)){toast('That isn\u2019t a picture file.');done(null);return;}
+      if(!/^image\//.test(f.type)&&!/\.(jpe?g|png|gif|webp|heic|heif)$/i.test(f.name)){toast(t('That isn’t a picture file.'));done(null);return;}
       var url=URL.createObjectURL(f),img=new Image();
       img.onload=function(){cropDialog(img).then(function(v){URL.revokeObjectURL(url);done(v);});};
-      img.onerror=function(){URL.revokeObjectURL(url);toast('Couldn\u2019t open that picture. Try a JPEG or PNG.');done(null);};
+      img.onerror=function(){URL.revokeObjectURL(url);toast(t('Couldn’t open that picture. Try a JPEG or PNG.'));done(null);};
       img.src=url;
     });
     inp.addEventListener('cancel',function(){done(null);});
@@ -100,11 +100,11 @@ window.choosePicture=function(){
 function cropDialog(img){
   return new Promise(function(resolve){
     var V=260,OUT=256,w=img.naturalWidth,h=img.naturalHeight,base=V/Math.min(w,h),z=1,x=0,y=0,result=null;
-    var d=openDialog('<div class="dlg-head"><h2>Profile picture</h2><button class="x" type="button" data-close aria-label="Close">\u00d7</button></div>'+
-      '<p class="note">Drag to position it in the circle. Use the slider to zoom.</p>'+
-      '<div class="crop"><canvas width="'+V*2+'" height="'+V*2+'" style="width:'+V+'px;height:'+V+'px" aria-label="Picture preview"></canvas></div>'+
-      '<label class="field"><span class="lbl">Zoom</span><input type="range" min="1" max="4" step="0.01" value="1" class="zoom"></label>'+
-      '<div class="row end"><button class="btn" type="button" data-close>Cancel</button><button class="btn pri" type="button" data-use>Use picture</button></div>','Profile picture');
+    var d=openDialog('<div class="dlg-head"><h2>'+t('Profile picture')+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
+      '<p class="note">'+t('Drag to position it in the circle. Use the slider to zoom.')+'</p>'+
+      '<div class="crop"><canvas width="'+V*2+'" height="'+V*2+'" style="width:'+V+'px;height:'+V+'px" aria-label="'+t('Picture preview')+'"></canvas></div>'+
+      '<label class="field"><span class="lbl">'+t('Zoom')+'</span><input type="range" min="1" max="4" step="0.01" value="1" class="zoom"></label>'+
+      '<div class="row end"><button class="btn" type="button" data-close>'+t('Cancel')+'</button><button class="btn pri" type="button" data-use>'+t('Use picture')+'</button></div>',t('Profile picture'));
     var cv=d.querySelector('canvas'),ctx=cv.getContext('2d'),zoom=d.querySelector('.zoom');
     var clamp=function(){var s=base*z,mx=Math.max(0,(w*s-V)/2),my=Math.max(0,(h*s-V)/2);x=Math.max(-mx,Math.min(mx,x));y=Math.max(-my,Math.min(my,y));};
     var draw=function(c,size){var k=size/V,s=base*z*k;c.fillStyle='#0f1317';c.fillRect(0,0,size,size);c.drawImage(img,size/2+x*k-w*s/2,size/2+y*k-h*s/2,w*s,h*s);};
@@ -122,7 +122,7 @@ function cropDialog(img){
       var out=document.createElement('canvas');out.width=out.height=OUT;draw(out.getContext('2d'),OUT);
       var q=0.86,data=out.toDataURL('image/jpeg',q);
       while(data.length>PIC_MAX&&q>0.4){q-=0.08;data=out.toDataURL('image/jpeg',q);}
-      result=picOk(data)?data:null;if(!result)toast('That picture is too detailed to save. Try another.');
+      result=picOk(data)?data:null;if(!result)toast(t('That picture is too detailed to save. Try another.'));
       d.close();
     });
     // resolve when the dialog goes away, however it was closed
@@ -142,16 +142,16 @@ window.acctIcon=function(name,photo,color){
 };
 window.accountMenu=function(user,opts){
   opts=opts||{};var open=!!window.__acctOpen;
-  var name=opts.name||user.displayName||(user.email||'').split('@')[0]||'You',ic=acctIcon(name,opts.photo,opts.color);
-  return '<span class="acctwrap"><button class="acctbtn" type="button" data-acct="toggle" aria-haspopup="menu" aria-expanded="'+open+'" title="Your account">'+ic+'<b class="acctname">'+esc(name)+'</b><span class="caret" aria-hidden="true">\u25be</span></button>'+
+  var name=opts.name||user.displayName||(user.email||'').split('@')[0]||t('You'),ic=acctIcon(name,opts.photo,opts.color);
+  return '<span class="acctwrap"><button class="acctbtn" type="button" data-acct="toggle" aria-haspopup="menu" aria-expanded="'+open+'" title="'+t('Your account')+'">'+ic+'<b class="acctname">'+esc(name)+'</b><span class="caret" aria-hidden="true">▾</span></button>'+
     '<div class="acctmenu" role="menu"'+(open?'':' hidden')+'><div class="acctmenu-head">'+ic+'<span><b>'+esc(name)+'</b>'+(user.email?'<span class="note">'+esc(user.email)+'</span>':'')+'</span></div>'+
-    (opts.home?'<a role="menuitem" href="./?account=1">Your account</a>':'<button role="menuitem" type="button" data-acct="account">Your account</button>')+
-    (opts.admin?'<a role="menuitem" href="admin.html">Admin</a>':'')+(opts.home?'<a role="menuitem" href="./">Back to my plays</a>':'')+
-    (isInstalledApp()?'':'<button role="menuitem" type="button" data-acct="install">Install app</button>')+
+    (opts.home?'<a role="menuitem" href="./?account=1">'+t('Your account')+'</a>':'<button role="menuitem" type="button" data-acct="account">'+t('Your account')+'</button>')+
+    (opts.admin?'<a role="menuitem" href="admin.html">'+t('Admin')+'</a>':'')+(opts.home?'<a role="menuitem" href="./">'+t('Back to my plays')+'</a>':'')+
+    (isInstalledApp()?'':'<button role="menuitem" type="button" data-acct="install">'+t('Install app')+'</button>')+
     // a casebook kept in this browser (js/localfb.js) has no sign-in yet: offer to save it to an account instead
-    (opts.local?'<a role="menuitem" href="./?save=1">Save to an account</a>':
-    '<button role="menuitem" type="button" data-acct="feedback">Send feedback</button>'+
-    '<button role="menuitem" type="button" data-acct="signout">Sign out</button>')+
+    (opts.local?'<a role="menuitem" href="./?save=1">'+t('Save to an account')+'</a>':
+    '<button role="menuitem" type="button" data-acct="feedback">'+t('Send feedback')+'</button>'+
+    '<button role="menuitem" type="button" data-acct="signout">'+t('Sign out')+'</button>')+
     '<span class="acctver">Mansions of Madness Casebook '+esc(self.APP_VERSION||'')+'</span></div></span>';
 };
 (function(){
@@ -181,7 +181,7 @@ window.accountMenu=function(user,opts){
   var isSep=function(o){return o.disabled&&/^[─\-\s]+$/.test(o.textContent);};
   function labelFor(sel){
     var f=sel.closest('.field'),l=f&&f.querySelector('.lbl');
-    return (l&&l.textContent)||sel.getAttribute('aria-label')||'Choose';
+    return (l&&l.textContent)||sel.getAttribute('aria-label')||t('Choose');
   }
   function close(refocus){
     if(!cur)return;var c=cur;cur=null;
@@ -235,8 +235,8 @@ window.accountMenu=function(user,opts){
     var opts=Array.prototype.slice.call(sel.options),searchable=opts.length>12,id='dd'+Date.now().toString(36);
     var wrap=document.createElement('div');wrap.className='dd-wrap';
     wrap.innerHTML='<div class="dd" role="presentation">'+
-      (searchable?'<div class="dd-search"><input type="text" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-controls="'+id+'" placeholder="Search…" autocomplete="off" spellcheck="false"></div>':'')+
-      '<div class="dd-list" role="listbox" id="'+id+'" tabindex="-1" aria-label="'+esc(labelFor(sel))+'"></div><p class="dd-empty" hidden>No matches</p></div>';
+      (searchable?'<div class="dd-search"><input type="text" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-controls="'+id+'" placeholder="'+t('Search…')+'" autocomplete="off" spellcheck="false"></div>':'')+
+      '<div class="dd-list" role="listbox" id="'+id+'" tabindex="-1" aria-label="'+esc(labelFor(sel))+'"></div><p class="dd-empty" hidden>'+t('No matches')+'</p></div>';
     var list=wrap.querySelector('.dd-list'),items=[],lastGrp=null;
     opts.forEach(function(o,i){
       var g=o.parentNode.tagName==='OPTGROUP'?o.parentNode:null;
@@ -245,7 +245,7 @@ window.accountMenu=function(user,opts){
       if(o.hidden||(o.value===''&&(o.disabled||sel.required)))return;   // a "Choose…" placeholder isn't a choice
       var el=document.createElement('div');el.className='dd-opt'+(o.selected?' sel':'')+(o.disabled?' dis':'');el.id=id+'-'+i;
       el.setAttribute('role','option');el.setAttribute('aria-selected',String(o.selected));if(o.disabled)el.setAttribute('aria-disabled','true');
-      var t=o.textContent,m=/^(.*?) \u2022 ([^\u2022]{1,16})$/.exec(t);   // "Name • new" shows the end as a small tag
+      var t=o.textContent,m=/^(.*?) • ([^•]{1,16})$/.exec(t);   // "Name • new" shows the end as a small tag
       el.innerHTML='<span class="dd-tick" aria-hidden="true"></span><span class="dd-txt"></span>'+(m?'<span class="dd-tag"></span>':'');
       el.querySelector('.dd-txt').textContent=m?m[1]:t;if(m)el.querySelector('.dd-tag').textContent=m[2];
       list.appendChild(el);items.push({o:o,el:el,grp:g&&g._el});
@@ -332,7 +332,7 @@ window.accountMenu=function(user,opts){
     var exact=all.some(function(n){return norm(n)===q;})||hits.some(function(n){return norm(n)===q;});
     list.innerHTML='';cur.items=[];
     var add=function(v,i,isNew){var el=document.createElement('div');el.className='dd-opt'+(isNew?' dd-new':'');el.id=id+'-'+i;el.setAttribute('role','option');
-      el.innerHTML='<span class="dd-tick" aria-hidden="true"></span><span class="dd-txt"></span>'+(isNew?'<span class="dd-tag">new player</span>':'');el.querySelector('.dd-txt').textContent=v;
+      el.innerHTML='<span class="dd-tick" aria-hidden="true"></span><span class="dd-txt"></span>'+(isNew?'<span class="dd-tag">'+t('new player')+'</span>':'');el.querySelector('.dd-txt').textContent=v;
       list.appendChild(el);cur.items.push({el:el,v:v});};
     hits.slice(0,60).forEach(function(n,i){add(n,i);});
     if(q&&!exact){if(hits.length){var sep=document.createElement('div');sep.className='dd-sep';list.appendChild(sep);}add(cur.inp.value.trim(),'new',true);}
@@ -347,7 +347,7 @@ window.accountMenu=function(user,opts){
     if(cur&&cur.inp===inp){fill();return;}close();
     if(!names(inp).length&&!inp.value.trim())return;
     var wrap=document.createElement('div'),id='cb'+Date.now().toString(36);wrap.className='dd-wrap combo';
-    wrap.innerHTML='<div class="dd" role="presentation"><div class="dd-list" role="listbox" id="'+id+'" aria-label="Known players"></div></div>';
+    wrap.innerHTML='<div class="dd" role="presentation"><div class="dd-list" role="listbox" id="'+id+'" aria-label="'+t('Known players')+'"></div></div>';
     document.body.appendChild(wrap);
     cur={inp:inp,wrap:wrap,panel:wrap.querySelector('.dd'),list:wrap.querySelector('.dd-list'),items:[],active:-1,id:id};
     inp.setAttribute('aria-expanded','true');inp.setAttribute('aria-controls',id);
@@ -381,10 +381,10 @@ window.accountMenu=function(user,opts){
   function pickerOptions(sel){
     var inp=sel.parentNode.querySelector('input[data-suggest]');if(!inp)return;var v=inp.value.trim(),list=names(inp),k=norm(v),h='';
     var o=function(val,txt,on,dis){return '<option value="'+esc(val)+'"'+(on?' selected':'')+(dis?' disabled':'')+'>'+esc(txt)+'</option>';};
-    h+=v?'':o('','Choose a player',true,true);
+    h+=v?'':o('',t('Choose a player'),true,true);
     if(v&&!list.some(function(n){return norm(n)===k;}))h+=o(v,v,true);
     list.forEach(function(n){h+=o(n,n,norm(n)===k);});
-    h+=o(NEW,'Someone new…');sel.innerHTML=h;
+    h+=o(NEW,t('Someone new…'));sel.innerHTML=h;
   }
   document.addEventListener('touchstart',function(e){var t=e.target;if(t&&t.classList&&t.classList.contains('pp-pick'))pickerOptions(t);},{capture:true,passive:true});
   document.addEventListener('focusin',function(e){var t=e.target;if(t&&t.classList&&t.classList.contains('pp-pick'))pickerOptions(t);});
@@ -392,8 +392,8 @@ window.accountMenu=function(user,opts){
     var sel=e.target;if(!sel.classList||!sel.classList.contains('pp-pick'))return;e.stopPropagation();
     var wrap=sel.parentNode,inp=wrap.querySelector('input[data-suggest]');if(!inp)return;
     if(sel.value===NEW){wrap.classList.add('typing');if(names(inp).some(function(n){return norm(n)===norm(inp.value);}))inp.value='';
-      inp.placeholder='Type a name';try{inp.focus({preventScroll:true});}catch(x){inp.focus();}return;}
-    wrap.classList.remove('typing');inp.placeholder='Player';inp.value=sel.value;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
+      inp.placeholder=t('Type a name');try{inp.focus({preventScroll:true});}catch(x){inp.focus();}return;}
+    wrap.classList.remove('typing');inp.placeholder=t('Player');inp.value=sel.value;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
   },true);
   // a new name typed in: cover the box with the picker again (which then lists it)
   document.addEventListener('focusout',function(e){var t=e.target,w=t&&t.parentNode;if(t.tagName==='INPUT'&&w&&w.classList&&w.classList.contains('pp-wrap')&&t.value.trim())w.classList.remove('typing');});

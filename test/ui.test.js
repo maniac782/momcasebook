@@ -27,6 +27,10 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
     return c;
   }
   const c=await ctx({viewport:{width:1100,height:900}});const p=await c.newPage();
+  // counts keep their word on the same line with a no-break space (js/i18n.js); read it as a plain space here
+  {const nb=v=>typeof v==='string'?v.replace(/\u00a0/g,' '):Array.isArray(v)?v.map(nb):v;
+   for(const proto of [Object.getPrototypeOf(p),Object.getPrototypeOf(p.locator('body'))])for(const m of ['textContent','innerText','allTextContents','allInnerTexts','evaluate','$$eval','$eval'])
+     if(proto[m]&&!proto[m].__nb){const f=proto[m];proto[m]=async function(){return nb(await f.apply(this,arguments));};proto[m].__nb=1;}}
   p.on('pageerror',e=>errors.push('pageerror: '+e.message));p.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
   await p.goto('https://momcasebook.test/');
   await p.waitForSelector('text=Continue with Google');
@@ -383,7 +387,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('[data-t=settings]');assert.strictEqual(await p.locator('h2:text-is("You")').count(),0,'no longer in Settings');
   // one person playing two characters in a game counts once for that game
   const rowVal=async(table,name)=>{await p.click('[data-t=stats]');return p.evaluate(([t,n])=>{const sec=[...document.querySelectorAll('section.sec')].find(s=>s.querySelector('h2')&&s.querySelector('h2').textContent===t);
-    if(!sec)return null;const tr=[...sec.querySelectorAll('tbody tr')].find(r=>r.cells[0].textContent===n);return tr?[+tr.cells[1].textContent,+tr.cells[2].textContent]:[0,0];},[table,name]);};
+    if(!sec)return null;const tr=[...sec.querySelectorAll('tbody tr')].find(r=>r.cells[0].textContent.replace(/\u00a0/g,' ')===n);return tr?[+tr.cells[1].textContent,+tr.cells[2].textContent]:[0,0];},[table,name]);};
   const danBefore=await rowVal('Who you played with','Dan'),twoBefore=await rowVal('Party size','2 players'),soloBefore=await rowVal('Party size','Solo');
   await p.evaluate(async()=>{const db=firebase.app().firestore(),u=firebase.app().auth().currentUser.uid;
     await db.collection('users/'+u+'/plays').add({scenarioId:'o-dark-reflections',scenarioName:'Dark Reflections',scenarioType:'official',date:'2026-10-01',result:'pass',attempts:1,
@@ -483,6 +487,50 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
    assert.strictEqual(await w.locator('.localban').count(),0,'no browser-only banner once saved');
    assert.ok(!(await w.evaluate(()=>location.search)).includes('save'),'back to the normal address');
    await c3.close();}
+  // other languages (js/i18n.js): the footer's picker, Settings, the account remembering it, plurals and dates
+  {const c4=await ctx({viewport:{width:390,height:844},isMobile:true,hasTouch:true,locale:'en-US'});const w=await c4.newPage();
+   w.on('pageerror',e=>errors.push('pageerror(lang): '+e.message));
+   await w.goto('https://momcasebook.test/');await w.waitForSelector('#langpick');
+   assert.strictEqual(await w.evaluate(()=>document.documentElement.lang),'en','English by default for an English browser');
+   await Promise.all([w.waitForNavigation(),w.selectOption('#langpick','es')]);
+   await w.waitForSelector('text=Cada noche en la mansión, por escrito.');
+   assert.strictEqual(await w.evaluate(()=>document.documentElement.lang),'es');
+   assert.strictEqual(await w.textContent('.foot a[href="privacy.html"]'),'Privacidad','footer translated');
+   assert.strictEqual(await w.evaluate(()=>localStorage.getItem('mom-lang')),'es','choice kept on this device');
+   // a casebook in this browser, in Spanish: tabs fit, plurals, dates, and the result buttons
+   await w.click('[data-a=trylocal]');await w.waitForSelector('.localban');
+   assert.strictEqual(await w.textContent('.tab[data-t=plays]'),'Partidas');
+   assert.ok(await w.evaluate(()=>(b=>b.scrollWidth<=b.clientWidth+1)(document.querySelector('.bar .tabs'))),'Spanish tabs fit a phone');
+   await w.click('.bar [data-a=log]');await w.selectOption('select[name=sc]','o-rising-tide');
+   assert.deepStrictEqual(await w.$$eval('.seg.big span',x=>x.map(e=>e.textContent)),['Victoria','Derrota','Abandonada']);
+   await w.fill('[name=date]','2026-03-05');await w.click('.seg.big .pass');await w.click('form[data-form=play] button[type=submit]');
+   await w.waitForSelector('.plays > li');
+   assert.ok(/^1 de 1 partida/.test(await w.textContent('.count')),'singular count: '+await w.textContent('.count'));
+   assert.ok(/5 mar/.test(await w.textContent('.pl-meta')),'date the Spanish way: '+await w.textContent('.pl-meta'));
+   // Settings switches language too; Polish has three plural forms
+   await w.click('[data-t=settings]');await w.waitForSelector('#s-lang');
+   await Promise.all([w.waitForNavigation(),w.selectOption('#s-lang','pl')]);await w.waitForSelector('.tab[data-t=plays]');
+   assert.strictEqual(await w.textContent('.tab[data-t=plays]'),'Rozgrywki');
+   assert.strictEqual(await w.evaluate(()=>[1,2,5,22].map(n=>tn('{n} play','{n} plays',n)).join('|')),'1 rozgrywka|2 rozgrywki|5 rozgrywek|22 rozgrywki');
+   await w.click('[data-t=scenarios]');await w.waitForSelector('.scs li');
+   assert.ok(await w.locator('.chip:text-is("Wygrana")').count(),'scenario chip in Polish');
+   await w.screenshot({path:out+'/11-polish-phone.png'});
+   // signed in, the choice is saved to the account, and a language saved there follows you to another device
+   await w.evaluate(()=>{localStorage.removeItem('mom-local');localStorage.removeItem('mom-local-db');});
+   await w.goto('https://momcasebook.test/');await w.waitForSelector('#au-em');
+   await w.fill('#au-em','lang@example.com');await w.fill('#au-pw','secret1');await w.click('form[data-form=auth] button[type=submit]');
+   await w.waitForSelector('.acctbtn');await w.waitForTimeout(300);
+   assert.strictEqual(await w.evaluate(()=>(__fake.store['users/u-langexamplecom']||{}).lang),'pl','device choice saved to the account');
+   await w.evaluate(()=>localStorage.removeItem('mom-lang'));
+   await w.goto('https://momcasebook.test/');await w.waitForSelector('#au-em');
+   await w.evaluate(()=>{__fake.store['users/u-langexamplecom']={name:'L',email:'lang@example.com',lang:'fr'};});
+   await Promise.all([w.waitForNavigation(),w.evaluate(()=>firebase.app().auth().signInWithEmailAndPassword('lang@example.com'))]);
+   await w.waitForFunction(()=>document.documentElement.lang==='fr');
+   assert.strictEqual(await w.evaluate(()=>localStorage.getItem('mom-lang')),'fr','a language saved in the account is used here');
+   // back to English
+   await Promise.all([w.waitForNavigation(),w.selectOption('#langpick','en')]);await w.waitForSelector('#langpick');
+   assert.strictEqual(await w.evaluate(()=>document.documentElement.lang),'en');
+   await c4.close();}
   const c2=await ctx({viewport:{width:390,height:844},deviceScaleFactor:2,colorScheme:'dark',isMobile:true,hasTouch:true});const q=await c2.newPage();
   q.on('pageerror',e=>errors.push('pageerror(phone): '+e.message));
   await q.goto('https://momcasebook.test/');await q.waitForSelector('text=Continue with Google');

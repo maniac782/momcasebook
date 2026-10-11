@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Privacy · Mansions of Madness Casebook</title>
+<title data-t>Privacy · Mansions of Madness Casebook</title>
 <meta name="description" content="Log your Mansions of Madness plays: official and Valkyrie scenarios, who played, which investigators, won or lost, and notes.">
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -20,26 +20,27 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="css/app.css">
 <script src="js/version.js"></script>
+<script src="js/i18n.js"></script>
 <script>document.addEventListener('DOMContentLoaded',function(){document.getElementById('ver').textContent=self.APP_VERSION;});</script>
 </head>
 <body>
-<header class="top"><div class="top-in"><a class="brand" href="./"><img src="icon-192.png" alt="" width="34" height="34"><span><b>Mansions of Madness</b> Casebook <i class="beta">Beta</i></span></a></div></header>
-<main><section class="sec prose"><h2>Privacy</h2>
-<p>Mansions of Madness Casebook is a free, personal hobby site for logging board game plays. No ads, no tracking, no analytics.</p>
-<h3>What is stored</h3>
-<ul><li>Your sign-in (Google or email and password), handled by Google Firebase Authentication.</li>
-<li>Your name and email address, when you joined and last visited, how many plays you've logged, and your profile picture if you choose one (shrunk to a small square in your browser before it's saved).</li>
-<li>What you log: scenarios, dates, results, the names you type for players and investigators, rules and notes. Only you can see your plays.</li>
-<li>Feedback you send, and technical details of errors the site hits while you're signed in (message, page, browser), so they can be fixed.</li></ul>
-<p>Everything is kept in Google Firebase (Cloud Firestore). The site's admin can see the account list (names, emails, play counts), feedback and errors, but not your plays. A copy of your plays is also kept in your browser so the app works offline.</p>
-<h3>Without an account</h3>
-<p>If you start a casebook without an account, it's kept only in this browser (its local storage) and isn't sent anywhere. Clearing the browser's site data removes it. When you choose <b>Save to an account</b> and sign in, it's copied to your account and cleared from the browser. The sample casebook on the front page is invented and nothing in it is saved.</p>
-<h3>Your choices</h3>
-<p>Settings has <b>Download CSV</b> and <b>Download backup</b> for a copy of your plays, <b>Delete all plays</b>, and <b>Delete my account</b>, which removes your plays, your scenarios, your profile and your sign-in.</p>
-<h3>Other people's names</h3>
-<p>If you write down who you played with, use names they're happy with; they're only visible to you.</p>
+<header class="top"><div class="top-in"><a class="brand" href="./"><img src="icon-192.png" alt="" width="34" height="34"><span><b>Mansions of Madness</b> Casebook <i class="beta" data-t>Beta</i></span></a></div></header>
+<main><section class="sec prose"><h2 data-t>Privacy</h2>
+<p data-t>Mansions of Madness Casebook is a free, personal hobby site for logging board game plays. No ads, no tracking, no analytics.</p>
+<h3 data-t>What is stored</h3>
+<ul><li data-t>Your sign-in (Google or email and password), handled by Google Firebase Authentication.</li>
+<li data-t>Your name and email address, when you joined and last visited, how many plays you've logged, and your profile picture if you choose one (shrunk to a small square in your browser before it's saved).</li>
+<li data-t>What you log: scenarios, dates, results, the names you type for players and investigators, rules and notes. Only you can see your plays.</li>
+<li data-t>Feedback you send, and technical details of errors the site hits while you're signed in (message, page, browser), so they can be fixed.</li></ul>
+<p data-t>Everything is kept in Google Firebase (Cloud Firestore). The site's admin can see the account list (names, emails, play counts), feedback and errors, but not your plays. A copy of your plays is also kept in your browser so the app works offline.</p>
+<h3 data-t>Without an account</h3>
+<p data-t>If you start a casebook without an account, it's kept only in this browser (its local storage) and isn't sent anywhere. Clearing the browser's site data removes it. When you choose <b>Save to an account</b> and sign in, it's copied to your account and cleared from the browser. The sample casebook on the front page is invented and nothing in it is saved.</p>
+<h3 data-t>Your choices</h3>
+<p data-t>Settings has <b>Download CSV</b> and <b>Download backup</b> for a copy of your plays, <b>Delete all plays</b>, and <b>Delete my account</b>, which removes your plays, your scenarios, your profile and your sign-in.</p>
+<h3 data-t>Other people's names</h3>
+<p data-t>If you write down who you played with, use names they're happy with; they're only visible to you.</p>
 </section></main>
-<footer class="foot"><span>Mansions of Madness Casebook</span><span>Unofficial fan project, not affiliated with Fantasy Flight Games</span><a href="privacy.html">Privacy</a><span id="ver" class="num"></span></footer>
+<footer class="foot"><span>Mansions of Madness Casebook</span><span data-t>Unofficial fan project, not affiliated with Fantasy Flight Games</span><a href="privacy.html" data-t>Privacy</a><span id="ver" class="num"></span></footer>
 <div class="toast" id="toast" role="status" hidden></div>
 </body>
 </html>
