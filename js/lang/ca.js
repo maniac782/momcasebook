@@ -482,11 +482,11 @@ I18N.add('ca',[
 [`Total`,`Total`],
 [`A play counts once in each cell it belongs to, so a game with four investigators adds to four columns; totals count each play once.`,`Una partida compta una vegada a cada cel·la on pertany, així que una partida amb quatre investigadors suma a quatre columnes; els totals compten cada partida una sola vegada.`],
 [`{n} plays · {won} won`,{one:`{n} partida · victòries: {won}`,other:`{n} partides · victòries: {won}`}],
-[`Also list`,`També llista`],
-[`Only what you’ve played`,`Només el que has jugat`],
-[`Official ones not played yet`,`Oficials encara sense jugar`],
-[`Official and starred Valkyrie`,`Oficials i Valkyrie preferits`],
-[`Everything, all Valkyrie too`,`Tot, també tot Valkyrie`]
+[`Include`,`Incloure`],
+[`Played only`,`Només el jugat`],
+[`Your boxes`,`Les teves caixes`],
+[`Boxes + starred`,`Caixes + preferits`],
+[`Everything|xt`,`Tot`]
 ],{
 // There's no Catalan edition of the game or app, so official scenario names are the Spanish ones players see in the app.
 scenarios:{

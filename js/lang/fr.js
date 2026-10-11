@@ -482,11 +482,11 @@ I18N.add('fr',[
 [`Total`,`Total`],
 [`A play counts once in each cell it belongs to, so a game with four investigators adds to four columns; totals count each play once.`,`Une partie compte une fois dans chaque case où elle figure : une partie à quatre investigateurs compte dans quatre colonnes ; les totaux comptent chaque partie une seule fois.`],
 [`{n} plays · {won} won`,{one:`{n} partie · victoires : {won}`,other:`{n} parties · victoires : {won}`}],
-[`Also list`,`Lister aussi`],
-[`Only what you’ve played`,`Seulement ce que vous avez joué`],
-[`Official ones not played yet`,`Officiels pas encore joués`],
-[`Official and starred Valkyrie`,`Officiels et Valkyrie en favori`],
-[`Everything, all Valkyrie too`,`Tout, y compris tout Valkyrie`]
+[`Include`,`Inclure`],
+[`Played only`,`Joué seulement`],
+[`Your boxes`,`Vos boîtes`],
+[`Boxes + starred`,`Boîtes + favoris`],
+[`Everything|xt`,`Tout`]
 ],{
 // Official scenario names from the app's App Store release notes and in-app purchases, and a French players' list; "Secrets enfouis" (What Lies Within) is from that list only.
 scenarios:{

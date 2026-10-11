@@ -434,7 +434,7 @@ function lenText(m){
   if(m[0]&&m[0]!==m[1])return mins(m[0])===mins(m[1])?unit(m[1],num(m[0])+'–'+num(m[1])):unit(m[0],num(m[0]))+'–'+unit(m[1],num(m[1]));
   return unit(m[1],num(m[1]));}
 // ---------- Combinations (Stats tab): any two things against each other, a cross table ----------
-// Rows and columns are picked from the dimensions below; each cell counts the plays that have both. "Also list" adds
+// Rows and columns are picked from the dimensions below; each cell counts the plays that have both. "Include" adds
 // things not played yet, so the empty cells show combinations still to try: the official scenarios and investigators
 // from the boxes you own (and your saved players and boxes), optionally your starred Valkyrie scenarios, or every
 // Valkyrie scenario. The choice is remembered on this device.
@@ -492,7 +492,7 @@ function xtabHtml(){
     '<button class="btn sm xt-swap" type="button" data-a="xtswap" title="'+t('Swap rows and columns')+'" aria-label="'+t('Swap rows and columns')+'">⇄</button>'+
     '<label class="field"><span class="lbl">'+t('Columns')+'</span>'+sel('xt-c',xt.c,dims.filter(function(d){return d[0]!==xt.r;}))+'</label>'+
     '<label class="field"><span class="lbl">'+t('Show')+'</span>'+sel('xt-v',xt.v,[['plays',t('Plays')],['won',t('Won|total')],['rate',t('Win rate')]])+'</label>'+
-    '<label class="field"><span class="lbl">'+t('Also list')+'</span>'+sel('xt-inc',xt.inc,[['played',t('Only what you’ve played')],['official',t('Official ones not played yet')],['starred',t('Official and starred Valkyrie')],['all',t('Everything, all Valkyrie too')]])+'</label></div>';
+    '<label class="field"><span class="lbl">'+t('Include')+'</span>'+sel('xt-inc',xt.inc,[['played',t('Played only')],['official',t('Your boxes')],['starred',t('Boxes + starred')],['all',t('Everything|xt')]])+'</label></div>';
   if(!rOrder.length||!cOrder.length)return h+'<p class="note">'+t('Nothing to show yet for these two.')+'</p></section>';
   var max=0;Object.keys(cell).forEach(function(k){if(cell[k].n>max)max=cell[k].n;});
   var shade=function(x){if(!x)return '';var a=xt.v==='rate'?Math.round(15+60*x.w/x.n):Math.round(12+58*(xt.v==='won'?x.w:x.n)/Math.max(1,max));

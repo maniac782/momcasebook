@@ -482,11 +482,11 @@ I18N.add('pt',[
 [`Total`,`Total`],
 [`A play counts once in each cell it belongs to, so a game with four investigators adds to four columns; totals count each play once.`,`Uma partida conta uma vez em cada célula a que pertence, então uma partida com quatro investigadores soma em quatro colunas; os totais contam cada partida uma só vez.`],
 [`{n} plays · {won} won`,{one:`{n} partida · vitórias: {won}`,other:`{n} partidas · vitórias: {won}`}],
-[`Also list`,`Listar também`],
-[`Only what you’ve played`,`Só o que você jogou`],
-[`Official ones not played yet`,`Oficiais ainda não jogados`],
-[`Official and starred Valkyrie`,`Oficiais e Valkyrie favoritos`],
-[`Everything, all Valkyrie too`,`Tudo, inclusive todo o Valkyrie`]
+[`Include`,`Incluir`],
+[`Played only`,`Só o jogado`],
+[`Your boxes`,`Suas caixas`],
+[`Boxes + starred`,`Caixas + favoritos`],
+[`Everything|xt`,`Tudo`]
 ],{
 // Official scenario names from Ludopedia's entries for each box, the app's App Store release notes and in-app purchases. Not yet confirmed (translated for this site, please correct): o-the-twilight-diadem, o-murder-on-the-stargazer-majestic, o-10-50-to-arkham, o-hidden-depths, o-the-jungle-awakens, o-into-the-dark, o-lost-temple-of-yig.
 scenarios:{
