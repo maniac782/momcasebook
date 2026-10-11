@@ -46,7 +46,7 @@ function usersHtml(){
   var q=ui.q.trim().toLowerCase();
   var list=users.filter(function(u){return !q||((u.name||'')+' '+(u.email||'')).toLowerCase().indexOf(q)>=0;}).sort(function(a,b){return (b.lastSeen||0)-(a.lastSeen||0);});
   return '<label class="field"><span class="lbl">Search</span><input class="f" id="q" value="'+esc(ui.q)+'" placeholder="Name or email" autocomplete="off"></label>'+
-    (list.length?'<ul class="adm">'+list.map(function(u){return '<li>'+avatarHtml(u.name||u.email,u.photo,'')+'<div class="grow"><span class="row tight"><b>'+esc(u.name||'(no name)')+'</b>'+(u.id===me.uid?'<span class="chip ok">You</span>':'')+'</span>'+
+    (list.length?'<ul class="adm">'+list.map(function(u){return '<li>'+avatarHtml(u.name||u.email,u.photo,u.color)+'<div class="grow"><span class="row tight"><b>'+esc(u.name||'(no name)')+'</b>'+(u.id===me.uid?'<span class="chip ok">You</span>':'')+'</span>'+
       '<span class="note">'+esc(u.email||'')+' · '+(u.playCount||0)+' play'+(u.playCount===1?'':'s')+' · joined '+esc(ago(u.created))+' · last seen '+esc(ago(u.lastSeen))+'</span></div></li>';}).join('')+'</ul>':'<p class="note">No accounts match.</p>')+
     '<p class="note">To remove an account, delete it in Firebase › Authentication and its document under <code>users</code> in Firestore. People can also delete their own from Settings.</p>';
 }

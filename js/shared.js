@@ -60,15 +60,18 @@ window.openFeedback=function(){
 
 /* ---------- Profile pictures ----------
    A picture is a small square JPEG (256x256) kept as text in the person's users/{uid} document as `photo`
-   (Firebase's file storage would need the paid plan). Google sign-ins show their Google photo until they choose one. */
+   (Firebase's file storage would need the paid plan). Without one, the icon is the first letter of the name on a color
+   the person picks (`color`, one of AVATAR_COLORS), as on the Arkham Horror RPG Ledger. Google photos aren't used: an
+   account without one gets Google's generated letter picture, which would hide the color choice. */
 var PIC_MAX=60000; // characters; firestore.rules allows up to this
 window.picOk=function(p){return typeof p==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p)&&p.length<=PIC_MAX;};
-window.googlePic=function(u){return u&&u.photoURL&&/^https:\/\/lh\d\.googleusercontent\.com\//.test(u.photoURL)?u.photoURL:'';};
-// An avatar circle: the chosen picture, else the Google photo, else the first letter of the name.
-window.avatarHtml=function(name,photo,gphoto,cls){
-  var src=picOk(photo)?photo:gphoto||'';
-  var ini=esc(((String(name||'').trim()[0])||'?').toUpperCase());
-  return '<span class="avatar'+(cls?' '+cls:'')+'" aria-hidden="true">'+(src?'<img src="'+esc(src)+'" alt="" referrerpolicy="no-referrer">':ini)+'</span>';
+// The colors for the first-letter icon (the Arkham site's set, without its brass: no yellow here). firestore.rules lists the same keys.
+window.AVATAR_COLORS={slate:'#56606f',crimson:'#a3322a',rust:'#b0582c',forest:'#2f6b4f',teal:'#1f6f78',navy:'#2d4a8a',violet:'#6a3d8f',rose:'#9b3b63'};
+var avColor=function(c){return AVATAR_COLORS[c]||'';};
+// An avatar circle: the chosen picture, else the first letter of the name (on the chosen color, when there is one).
+window.avatarHtml=function(name,photo,color,cls){
+  var ini=esc(((String(name||'').trim()[0])||'?').toUpperCase()),c=avColor(color);
+  return '<span class="avatar'+(cls?' '+cls:'')+'" aria-hidden="true"'+(!picOk(photo)&&c?' style="background:'+c+';color:#fff"':'')+'>'+(picOk(photo)?'<img src="'+esc(photo)+'" alt="">':ini)+'</span>';
 };
 /* Choose a picture: opens the file picker, then a crop dialog (drag to move, slider to zoom).
    Resolves with the JPEG data URL, or null if cancelled. */
@@ -125,17 +128,16 @@ function cropDialog(img){
 /* ---------- Account button and menu ----------
    The same as the Arkham Horror RPG Ledger's top-right corner (same markup, class names and styles, so the two sites
    look and behave alike): your picture or initial, your name and a caret; on phones just the picture. The menu has
-   Your account, Admin (for admins), Install app, Send feedback, Sign out and the version. opts: {name, photo, admin, home, local}.
+   Your account, Admin (for admins), Install app, Send feedback, Sign out and the version. opts: {name, photo, color, admin, home, local}.
    The open state lives in window.__acctOpen, so the menu stays open when the page redraws behind it. */
-// The round icon: your chosen picture, else your Google photo, else your initial in white on slate.
-window.acctIcon=function(name,photo,gphoto){
-  var src=picOk(photo)?photo:gphoto||'';
-  if(src)return '<img class="av" src="'+esc(src)+'" alt="" referrerpolicy="no-referrer">';
-  return '<span class="av" aria-hidden="true" style="background:#56606f">'+esc((String(name||'?').trim().charAt(0)||'?').toUpperCase())+'</span>';
+// The round icon: your chosen picture, else your initial in white on your chosen color (slate until you pick one).
+window.acctIcon=function(name,photo,color){
+  if(picOk(photo))return '<img class="av" src="'+esc(photo)+'" alt="">';
+  return '<span class="av" aria-hidden="true" style="background:'+(avColor(color)||AVATAR_COLORS.slate)+'">'+esc((String(name||'?').trim().charAt(0)||'?').toUpperCase())+'</span>';
 };
 window.accountMenu=function(user,opts){
   opts=opts||{};var open=!!window.__acctOpen;
-  var name=opts.name||user.displayName||(user.email||'').split('@')[0]||'You',ic=acctIcon(name,opts.photo,googlePic(user));
+  var name=opts.name||user.displayName||(user.email||'').split('@')[0]||'You',ic=acctIcon(name,opts.photo,opts.color);
   return '<span class="acctwrap"><button class="acctbtn" type="button" data-acct="toggle" aria-haspopup="menu" aria-expanded="'+open+'" title="Your account">'+ic+'<b class="acctname">'+esc(name)+'</b><span class="caret" aria-hidden="true">\u25be</span></button>'+
     '<div class="acctmenu" role="menu"'+(open?'':' hidden')+'><div class="acctmenu-head">'+ic+'<span><b>'+esc(name)+'</b>'+(user.email?'<span class="note">'+esc(user.email)+'</span>':'')+'</span></div>'+
     (opts.home?'<a role="menuitem" href="./?account=1">Your account</a>':'<button role="menuitem" type="button" data-acct="account">Your account</button>')+

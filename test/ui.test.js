@@ -347,6 +347,12 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('.acctbtn');assert.ok(await p.isVisible('.acctbtn .acctname'),'name on the account button');
   await p.screenshot({path:out+'/6a-menu.png'});
   await p.click('[data-acct=account]');await p.waitForSelector('.dlg h2:text("Your account")');
+  // no picture yet: pick a color for the initial
+  assert.ok(await p.locator('.dlg .swatch').count()>=8,'color choices without a picture');
+  await p.click('.dlg .swatch[data-v=violet]');await p.waitForTimeout(150);
+  assert.strictEqual(await p.evaluate(()=>__fake.store['users/u-danexamplecom'].color),'violet','color saved');
+  assert.ok(/106, 61, 143/.test(await p.$eval('.acctbtn span.av',e=>getComputedStyle(e).backgroundColor)),'account icon uses the color');
+  await p.screenshot({path:out+'/6c-colors.png'});
   const [chooser]=await Promise.all([p.waitForEvent('filechooser'),p.click('[data-ac=pic]')]);
   await chooser.setFiles({name:'me.png',mimeType:'image/png',buffer:png});
   await p.waitForSelector('.crop canvas');
@@ -359,10 +365,12 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   const photo=await p.evaluate(()=>__fake.store['users/u-danexamplecom'].photo);
   assert.ok(/^data:image\/jpeg;base64,/.test(photo)&&photo.length<=60000,'photo saved as small jpeg ('+photo.length+')');
   await p.waitForSelector('.dlg .picrow .avatar img');
+  assert.strictEqual(await p.locator('.dlg .swatch').count(),0,'colors hidden while a picture is showing');
   await p.fill('.dlg [name=aname]','Dan M');await p.click('.dlg [data-ac-form] button');await p.waitForTimeout(150);
   assert.strictEqual(await p.evaluate(()=>__fake.store['users/u-danexamplecom'].name),'Dan M','name saved from Your account');
   await p.screenshot({path:out+'/6c-account.png'});
   await p.click('[data-ac=picrm]');await p.waitForSelector('.acctbtn span.av');
+  assert.ok(await p.locator('.dlg .swatch[data-v=violet].on').count(),'colors back after removing the picture, with the one picked before');
   await Promise.all([p.waitForEvent('filechooser').then(c=>c.setFiles({name:'me.png',mimeType:'image/png',buffer:png})),p.click('[data-ac=pic]')]);
   await p.waitForSelector('.crop canvas');await p.click('[data-use]');await p.waitForSelector('.acctbtn img.av');
   await p.click('.dlg [data-close]');

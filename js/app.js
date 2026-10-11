@@ -70,7 +70,7 @@ function render(){
   if(!authKnown){app.innerHTML='<p class="note pad">Loading…</p>';return;}
   if(!me){acctEl.innerHTML='';welcomeView();return;}
   var LM=window.LocalMoM||{};
-  acctEl.innerHTML=LM.embed?'':accountMenu(me,{admin:isAdmin,photo:profile&&profile.photo,name:myName()||(LM.mode?'You':''),local:!!LM.mode});
+  acctEl.innerHTML=LM.embed?'':accountMenu(me,{admin:isAdmin,photo:profile&&profile.photo,color:profile&&profile.color,name:myName()||(LM.mode?'You':''),local:!!LM.mode});
   var keep=document.activeElement&&/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)&&document.activeElement.id;
   var tabs=[['plays','Plays'],['scenarios','Scenarios'],['players','Players'],['stats','Stats'],['settings','Settings']];
   var h='<div class="bar"><div class="tabs" role="tablist">'+tabs.map(function(t){return '<button class="tab" role="tab" aria-selected="'+(ui.tab===t[0])+'" data-a="tab" data-t="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div>'+
@@ -562,13 +562,15 @@ function groupDialog(g){
 
 // ---------- Your account (from the account menu, like the Arkham site) ----------
 function accountBody(){
-  var hasPic=profile&&picOk(profile.photo),g=googlePic(me);
+  var hasPic=profile&&picOk(profile.photo),cur=(profile&&AVATAR_COLORS[profile.color])?profile.color:'slate';
   return '<div class="dlg-head"><h2>Your account</h2><button class="x" type="button" data-close aria-label="Close">\u00d7</button></div>'+
-    '<div class="row picrow">'+avatarHtml(myName()||me.email,profile&&profile.photo,g,'xl')+'<div class="stack tight"><span class="lbl">Profile picture</span><div class="row">'+
-    '<button class="btn" type="button" data-ac="pic">'+(hasPic||g?'Change picture':'Choose a picture')+'</button>'+(hasPic?'<button class="btn ghost" type="button" data-ac="picrm">Remove</button>':'')+'</div>'+
-    '<span class="note">'+(hasPic?'Shown on your account button.':g?'Using your Google photo until you choose one.':'Until you choose one, your initial is shown.')+'</span></div></div>'+
+    '<div class="row picrow">'+avatarHtml(myName()||me.email,profile&&profile.photo,cur,'xl')+'<div class="stack tight"><span class="lbl">Profile picture</span><div class="row">'+
+    '<button class="btn" type="button" data-ac="pic">'+(hasPic?'Change picture':'Choose a picture')+'</button>'+(hasPic?'<button class="btn ghost" type="button" data-ac="picrm">Remove</button>':'')+'</div>'+
+    '<span class="note">'+(hasPic?'Your picture is showing. Remove it to show your initial on a color instead.':'Or show your initial on the color you pick below.')+'</span></div></div>'+
+    // the color is only for the initial, so it's hidden while a picture is showing
+    (hasPic?'':'<div class="field"><span class="lbl">Color</span><div class="swatches">'+Object.keys(AVATAR_COLORS).map(function(k){return '<button class="swatch'+(k===cur?' on':'')+'" type="button" data-ac="color" data-v="'+k+'" style="background:'+AVATAR_COLORS[k]+'" aria-label="'+k+'" aria-pressed="'+(k===cur)+'"></button>';}).join('')+'</div></div>')+
     '<form class="row bottom" data-ac-form><label class="field grow"><span class="lbl">Your name</span><input class="f" name="aname" maxlength="40" value="'+esc(myName())+'"></label><button class="btn" type="submit">Save</button></form>'+
-    '<p class="note">Your name is filled in as the first player when you log a play. Signed in as '+esc(me.email||me.displayName||'')+'.</p>'+
+    '<p class="note">Your name is how you appear on this site and in the account menu. Signed in as '+esc(me.email||me.displayName||'')+'.</p>'+
     '<div class="row end"><button class="btn" type="button" data-close>Done</button></div>';
 }
 function openAccount(){
@@ -578,6 +580,8 @@ function openAccount(){
   box.addEventListener('click',function(e){
     var b=e.target.closest('[data-ac]');if(!b)return;
     if(b.dataset.ac==='pic')choosePicture().then(function(data){if(!data)return;return fb.db.doc('users/'+me.uid).set({photo:data},{merge:true}).then(function(){profile.photo=data;redraw();toast('Picture saved.');});}).catch(function(err){toast(friendly(err));});
+    else if(b.dataset.ac==='color'){var v=b.dataset.v;if(!AVATAR_COLORS[v])return;profile=profile||{};profile.color=v;redraw();render();
+      fb.db.doc('users/'+me.uid).set({color:v},{merge:true}).catch(function(err){toast(friendly(err));});}
     else if(b.dataset.ac==='picrm')fb.db.doc('users/'+me.uid).set({photo:''},{merge:true}).then(function(){profile.photo='';redraw();toast('Picture removed.');}).catch(function(err){toast(friendly(err));});
   });
   box.addEventListener('submit',function(e){
@@ -906,6 +910,7 @@ async function moveLocal(user){
     if(Object.keys(st).length)prof.starred=st;
     if(!cur.name&&lp.name)prof.name=String(lp.name).slice(0,40);
     if(!cur.photo&&lp.photo)prof.photo=lp.photo;
+    if(!cur.color&&lp.color)prof.color=lp.color;
     if(cur.owned==null&&Array.isArray(lp.owned))prof.owned=lp.owned;
     if(cur.hideValkyrie==null&&typeof lp.hideValkyrie==='boolean')prof.hideValkyrie=lp.hideValkyrie;
     for(var i=0;i<ops.length;i+=400){var b=fb.db.batch();ops.slice(i,i+400).forEach(function(o){b.set(fb.db.doc(o[0]),o[1]);});await b.commit();}
