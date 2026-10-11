@@ -414,6 +414,20 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('[data-t=settings]');
   const [dl]=await Promise.all([p.waitForEvent('download'),p.click('[data-a=csv]')]);
   const csv=fs.readFileSync(await dl.path(),'utf8');assert.ok(csv.split('\n').length>=12&&/The Sea Devils/.test(csv),'csv export');
+  // Send feedback at phone width: three equal choices, the hint follows the choice, an empty message is caught
+  {const vp=p.viewportSize();await p.setViewportSize({width:390,height:844});
+   await p.evaluate(()=>openFeedback());await p.waitForSelector('.fbkinds');
+   const ws=await p.$$eval('.fbkind',xs=>xs.map(x=>Math.round(x.getBoundingClientRect().width)));
+   assert.ok(ws.length===3&&Math.max(...ws)-Math.min(...ws)<=1,'feedback choices share the row evenly: '+ws);
+   assert.ok(await p.evaluate(()=>{const f=document.querySelector('.fbform');return f.scrollWidth<=f.clientWidth+1;}),'feedback fits the phone');
+   await p.click('.fbkind:has-text("Idea")');
+   assert.ok(/better/.test(await p.getAttribute('.fbbox textarea','placeholder')),'hint follows the choice');
+   await p.click('.fbform [type=submit]');assert.ok(await p.isVisible('[data-fberr]'),'empty feedback is caught');
+   await p.fill('.fbbox textarea','Dropdown looks odd');assert.strictEqual(await p.textContent('.fbcount'),'18 / 2000');
+   await p.screenshot({path:out+'/6e-feedback-phone.png'});
+   await p.click('.fbform [type=submit]');await p.waitForSelector('.fbform',{state:'detached'});
+   assert.ok(Object.keys(await p.evaluate(()=>__fake.store)).some(k=>k.startsWith('feedback/')),'feedback saved');
+   await p.setViewportSize(vp);}
   // admin page
   const uid=await p.evaluate(()=>firebase.app().auth().currentUser.uid);
   await p.evaluate(u=>__fake.makeAdmin(u),uid);
@@ -427,6 +441,18 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(await p.locator('.adm .avatar img').count(),'admin list shows the picture');
   await p.click('[data-t=scs]');await p.fill('#sc-name','Night of the Hunter');await p.click('form[data-form=addsc] button');await p.waitForSelector('.adm >> text=Night of the Hunter');
   await p.screenshot({path:out+'/7-admin.png',fullPage:true});
+  // search covers every tab; on a phone the tabs get their own row and search and Refresh share the next
+  await p.fill('#q','zzz');await p.waitForSelector('text=No shared scenarios match');
+  await p.fill('#q','hunter');await p.waitForSelector('.adm >> text=Night of the Hunter');
+  await p.fill('#q','');await p.click('[data-t=users]');
+  await p.setViewportSize({width:390,height:844});await p.waitForTimeout(100);
+  {const r=await p.evaluate(()=>{const b=s=>document.querySelector(s).getBoundingClientRect();const t=b('.admbar .tabs'),q=b('.admbar .admq'),f=b('.admbar [data-a=reload]');
+    return {qBelow:q.top>=t.bottom-1,sameRow:Math.abs(q.bottom-f.bottom)<2,fits:f.right<=window.innerWidth,tabs:(e=>e.scrollWidth<=e.clientWidth)(document.querySelector('.admbar .tabs')),page:document.documentElement.scrollWidth<=window.innerWidth};});
+   assert.deepStrictEqual(r,{qBelow:true,sameRow:true,fits:true,tabs:true,page:true},'admin bar on a phone');}
+  // with counts on Feedback and Errors the tabs still fit
+  await p.evaluate(()=>{const t=document.querySelectorAll('.admbar .tab');t[2].insertAdjacentHTML('beforeend','<span class="tabn">3</span>');t[3].insertAdjacentHTML('beforeend','<span class="tabn">12</span>');});
+  assert.ok(await p.evaluate(()=>(e=>e.scrollWidth<=e.clientWidth)(document.querySelector('.admbar .tabs'))),'tabs fit with counts');
+  await p.screenshot({path:out+'/7b-admin-phone.png'});
   await c.close();
   // phone, dark
   // signed out: the welcome page with the sample casebook, and a casebook kept in this browser without an account

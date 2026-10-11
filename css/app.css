@@ -129,6 +129,41 @@ select.f::-ms-expand{display:none}
 .seg.big .pass input:checked+span{background:var(--ok);color:var(--surface)}
 .seg.big .fail input:checked+span{background:var(--bad);color:var(--surface)}
 .seg.big .abandoned input:checked+span{background:var(--slate);color:var(--surface)}
+/* Send feedback, laid out like the Arkham Horror RPG Ledger's: a sliding three-way choice, a roomy box with a count */
+.fbform{gap:14px}
+.fbhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.fbhead h2{margin:0 0 4px}
+.fbhead .note{margin:0}
+.fbhead .x{margin-top:-6px}
+.fbkinds{display:flex;gap:6px;padding:4px;background:var(--surface2);border:1px solid var(--line);border-radius:10px}
+.fbkind{flex:1 1 0;min-width:0;display:block;position:relative;cursor:pointer}
+.fbkind input{position:absolute;opacity:0;pointer-events:none}
+.fbkind span{display:block;text-align:center;white-space:nowrap;padding:8px 6px;border-radius:7px;font-size:14px;font-weight:600;color:var(--muted);transition:background .15s,color .15s}
+.fbkind:hover span{color:var(--ink)}
+.fbkind input:checked+span{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.25),0 0 0 1px var(--line)}
+.fbkind input:focus-visible+span{outline:2px solid var(--focus);outline-offset:1px}
+.fbbox{position:relative}
+.fbbox textarea{display:block;width:100%;box-sizing:border-box;min-height:140px;resize:vertical;padding:12px 12px 26px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--ink);font:inherit;font-size:16px;line-height:1.5}
+.fbbox textarea:focus{outline:none;border-color:var(--focus)}
+.fbbox textarea::placeholder{color:var(--muted)}
+.fbcount{position:absolute;right:12px;bottom:8px;font-size:11px;color:var(--muted);pointer-events:none}
+.fbfoot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.fbfoot .note{margin:0;flex:1 1 200px}
+.fbfoot .row{margin-left:auto}
+/* Admin: tabs, then search and Refresh; on a phone the tabs get their own row (scrolling sideways if need be) and
+   search and Refresh share the next, as on the Arkham Horror RPG Ledger */
+.admbar{border-bottom:0;row-gap:10px}
+.admbar .tabs{justify-content:flex-start;border-bottom:1px solid var(--line)}
+.admbar .admq{min-width:200px;margin-bottom:8px}
+.admbar .btn{min-height:42px}
+.tabn{display:inline-block;min-width:18px;margin-left:5px;padding:0 5px;border-radius:9px;background:var(--accent-soft);color:var(--ink);font-size:11.5px;line-height:18px;text-align:center;vertical-align:1px}
+@media (max-width:700px){
+  .admbar{align-items:flex-end}
+  .admbar .tabs{flex:1 1 100%}
+  .admbar .tab{flex:1 0 auto;padding:10px 6px}
+  .admbar .admq{flex:1;min-width:0;margin-bottom:0}
+  .admbar .btn{margin-bottom:0}
+}
 
 /* filters */
 .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}

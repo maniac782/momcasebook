@@ -93,8 +93,9 @@ Everything here is done in your browser; no secrets go into the code or into cha
 
 `admin.html`, for accounts with an `admins/{uid}` document (the rules enforce it):
 - **Accounts:** name, email, plays logged, joined, last seen. (Admins can't see anyone's plays.)
-- **Shared scenarios:** add Valkyrie (or missing official) scenarios that everyone can pick when logging.
-- **Feedback** sent from the account menu, and **Errors** recorded automatically while people are signed in.
+- **Scenarios:** add shared Valkyrie (or missing official) scenarios that everyone can pick when logging.
+- **Feedback** sent from the account menu (Bug, Idea or Other, laid out like the Arkham Horror RPG Ledger's), and **Errors** recorded automatically while people are signed in; both tabs show how many are waiting.
+- One search box filters whichever tab is open. On a phone the tabs get their own row, with search and Refresh beneath, as on the Arkham site.
 
 ## How it's built
 

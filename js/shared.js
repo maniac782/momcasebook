@@ -45,14 +45,19 @@ window.openInstall=function(){
 /* ---------- Send feedback (read on the admin page) ---------- */
 window.openFeedback=function(){
   var u=window.firebase&&firebase.apps.length&&firebase.app().auth().currentUser;if(!u)return;
-  var d=openDialog('<form class="stack" data-fb><div class="dlg-head"><h2>Send feedback</h2><button class="x" type="button" data-close aria-label="Close">×</button></div>'+
-    '<div class="seg" role="radiogroup" aria-label="Kind">'+[['bug','Something’s wrong'],['idea','An idea'],['other','Other']].map(function(k,i){return '<label><input type="radio" name="fbk" value="'+k[0]+'"'+(i===0?' checked':'')+'><span>'+k[1]+'</span></label>';}).join('')+'</div>'+
-    '<label class="field"><span class="lbl">Message</span><textarea class="f" name="msg" rows="5" maxlength="3000" required></textarea></label>'+
-    '<div class="row end"><button class="btn" type="button" data-close>Cancel</button><button class="btn pri" type="submit">Send</button></div></form>','Send feedback');
+  var kinds=[['bug','Bug','What happened? What were you trying to do?'],['idea','Idea','What would make the site better for your group?'],['other','Other','What’s on your mind?']];
+  var d=openDialog('<form class="stack fbform" data-fb><div class="fbhead"><div><h2>Send feedback</h2><p class="note">Bugs, ideas, anything. It goes straight to the person who runs the site.</p></div><button class="x" type="button" data-close aria-label="Close">×</button></div>'+
+    '<div class="fbkinds" role="radiogroup" aria-label="What kind of feedback">'+kinds.map(function(k,i){return '<label class="fbkind"><input type="radio" name="fbk" value="'+k[0]+'"'+(i===0?' checked':'')+'><span>'+k[1]+'</span></label>';}).join('')+'</div>'+
+    '<div class="fbbox"><textarea name="msg" rows="6" maxlength="2000" aria-label="Message" placeholder="'+kinds[0][2]+'"></textarea><span class="fbcount">0 / 2000</span></div>'+
+    '<p class="err" data-fberr hidden></p>'+
+    '<div class="fbfoot"><span class="note">Includes the page you’re on, your browser and the site version.</span><div class="row end"><button class="btn" type="button" data-close>Cancel</button><button class="btn pri" type="submit">Send</button></div></div></form>','Send feedback');
+  var form=d.querySelector('form'),ta=form.msg,er=form.querySelector('[data-fberr]'),cnt=form.querySelector('.fbcount');
+  ta.addEventListener('input',function(){er.hidden=true;cnt.textContent=ta.value.length+' / 2000';});
+  form.addEventListener('change',function(e){if(e.target.name==='fbk'){var k=kinds.filter(function(x){return x[0]===e.target.value;})[0];if(k)ta.placeholder=k[2];}});
   d.querySelector('form').addEventListener('submit',function(e){
-    e.preventDefault();var f=e.target,b=f.querySelector('[type=submit]');b.disabled=true;
+    e.preventDefault();var f=e.target,b=f.querySelector('[type=submit]');if(!f.msg.value.trim()){er.textContent='Write a message first.';er.hidden=false;ta.focus();return;}b.disabled=true;
     firebase.app().firestore().collection('feedback').add({kind:(f.querySelector('input[name=fbk]:checked')||{}).value||'other',
-      msg:f.msg.value.trim().slice(0,3000),page:location.pathname,ua:String(navigator.userAgent).slice(0,300),
+      msg:f.msg.value.trim().slice(0,2000),page:location.pathname,ua:String(navigator.userAgent).slice(0,300),
       v:String(self.APP_VERSION||''),t:Date.now(),uid:u.uid,name:(u.displayName||'').slice(0,60),done:false})
     .then(function(){d.close();toast('Thanks! Feedback sent.');}).catch(function(){b.disabled=false;toast('Couldn’t send that. Try again.');});
   });

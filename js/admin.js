@@ -36,22 +36,24 @@ function render(){
   var plays=users.reduce(function(n,u){return n+(u.playCount||0);},0),week=users.filter(function(u){return (u.lastSeen||0)>Date.now()-7*DAY;}).length;
   var h='<div class="stats">'+[['Accounts',users.length],['Active this week',week],['Plays logged',plays],['Shared scenarios',scs.length]].map(function(x){return '<div class="stat"><span class="lbl">'+x[0]+'</span><b class="num">'+x[1]+'</b></div>';}).join('')+'</div>';
   var open=fbs.filter(function(f){return !f.done;}).length;
-  h+='<div class="bar"><div class="tabs" role="tablist">'+[['users','Accounts'],['scs','Shared scenarios'],['fb','Feedback'+(open?' ('+open+')':'')],['errs','Errors'+(errs.length?' ('+errs.length+')':'')]].map(function(t){return '<button class="tab" role="tab" aria-selected="'+(ui.tab===t[0])+'" data-a="tab" data-t="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div>'+
+  h+='<div class="bar admbar"><div class="tabs" role="tablist">'+[['users','Accounts'],['scs','Scenarios'],['fb','Feedback',open],['errs','Errors',errs.length]].map(function(t){return '<button class="tab" role="tab" aria-selected="'+(ui.tab===t[0])+'" data-a="tab" data-t="'+t[0]+'">'+t[1]+(t[2]?'<span class="tabn" aria-label="'+t[2]+' new">'+t[2]+'</span>':'')+'</button>';}).join('')+'</div>'+
+    '<label class="field admq"><span class="lbl">Search</span><input class="f" id="q" value="'+esc(ui.q)+'" placeholder="'+({users:'Name or email',scs:'Name or author',fb:'Message or person',errs:'Message, page or person'})[ui.tab]+'" autocomplete="off"></label>'+
     '<button class="btn sm" data-a="reload" title="Loaded '+esc(new Date(loadedAt).toLocaleTimeString())+'">Refresh</button></div>';
   h+=ui.tab==='scs'?scsHtml():ui.tab==='fb'?fbHtml():ui.tab==='errs'?errsHtml():usersHtml();
   app.innerHTML=h;
   if(keep){var el=document.getElementById(keep);if(el){el.focus();try{el.setSelectionRange(el.value.length,el.value.length);}catch(e){}}}
 }
+// the search box filters whichever tab is open
+function hit(t){var q=ui.q.trim().toLowerCase();return !q||String(t||'').toLowerCase().indexOf(q)>=0;}
 function usersHtml(){
   var q=ui.q.trim().toLowerCase();
   var list=users.filter(function(u){return !q||((u.name||'')+' '+(u.email||'')).toLowerCase().indexOf(q)>=0;}).sort(function(a,b){return (b.lastSeen||0)-(a.lastSeen||0);});
-  return '<label class="field"><span class="lbl">Search</span><input class="f" id="q" value="'+esc(ui.q)+'" placeholder="Name or email" autocomplete="off"></label>'+
-    (list.length?'<ul class="adm">'+list.map(function(u){return '<li>'+avatarHtml(u.name||u.email,u.photo,u.color)+'<div class="grow"><span class="row tight"><b>'+esc(u.name||'(no name)')+'</b>'+(u.id===me.uid?'<span class="chip ok">You</span>':'')+'</span>'+
+  return (list.length?'<ul class="adm">'+list.map(function(u){return '<li>'+avatarHtml(u.name||u.email,u.photo,u.color)+'<div class="grow"><span class="row tight"><b>'+esc(u.name||'(no name)')+'</b>'+(u.id===me.uid?'<span class="chip ok">You</span>':'')+'</span>'+
       '<span class="note">'+esc(u.email||'')+' · '+(u.playCount||0)+' play'+(u.playCount===1?'':'s')+' · joined '+esc(ago(u.created))+' · last seen '+esc(ago(u.lastSeen))+'</span></div></li>';}).join('')+'</ul>':'<p class="note">No accounts match.</p>')+
     '<p class="note">To remove an account, delete it in Firebase › Authentication and its document under <code>users</code> in Firestore. People can also delete their own from Settings.</p>';
 }
 function scsHtml(){
-  var list=scs.slice().sort(function(a,b){return (a.type||'').localeCompare(b.type||'')||a.name.localeCompare(b.name);});
+  var list=scs.filter(function(s){return hit(s.name+' '+(s.author||''));}).sort(function(a,b){return (a.type||'').localeCompare(b.type||'')||a.name.localeCompare(b.name);});
   return '<section class="sec"><h2>Add a shared scenario</h2><p class="note">Everyone can pick these when logging a play. The '+MOM.OFFICIAL.length+' official and '+MOM.VALKYRIE.length+' Valkyrie scenarios are already built in; use this for anything missing, such as a Valkyrie scenario newer than the built-in list (refresh that with <code>scripts/fetch-valkyrie.py</code>).</p>'+
     '<form class="stack" data-form="addsc"><div class="grid2"><label class="field"><span class="lbl">Name</span><input class="f" id="sc-name" maxlength="80" required></label>'+
     '<label class="field"><span class="lbl">Kind</span><select class="f" id="sc-type"><option value="valkyrie">Valkyrie</option><option value="official">Official</option></select></label>'+
@@ -59,17 +61,20 @@ function scsHtml(){
     '<label class="field"><span class="lbl">Link (optional)</span><input class="f" id="sc-link" type="url" maxlength="300" placeholder="https://"></label></div>'+
     '<div class="row"><button class="btn pri" type="submit">Add</button></div></form></section>'+
     (list.length?'<ul class="adm">'+list.map(function(s){return '<li><div class="grow"><b>'+esc(s.name)+'</b><span class="note">'+esc(s.type==='official'?'Official':'Valkyrie')+(s.author?' · by '+esc(s.author):'')+(s.link&&/^https:\/\//.test(s.link)?' · <a href="'+esc(s.link)+'" target="_blank" rel="noopener">link</a>':'')+'</span></div>'+
-      '<button class="btn sm" data-a="delsc" data-id="'+esc(s.id)+'">Remove</button></li>';}).join('')+'</ul>':'<p class="note">No shared scenarios yet. The '+MOM.OFFICIAL.length+' official and '+MOM.VALKYRIE.length+' Valkyrie scenarios are built in.</p>');
+      '<button class="btn sm" data-a="delsc" data-id="'+esc(s.id)+'">Remove</button></li>';}).join('')+'</ul>':scs.length?'<p class="note">No shared scenarios match.</p>':'<p class="note">No shared scenarios yet. The '+MOM.OFFICIAL.length+' official and '+MOM.VALKYRIE.length+' Valkyrie scenarios are built in.</p>');
 }
 function fbHtml(){
   if(!fbs.length)return '<p class="note">No feedback yet.</p>';
-  return '<ul class="adm">'+fbs.map(function(f){return '<li class="'+(f.done?'done':'')+'"><div class="grow"><span class="row tight"><span class="chip '+(f.kind==='bug'?'bad':f.kind==='idea'?'ok':'muted')+'">'+esc(f.kind==='bug'?'Problem':f.kind==='idea'?'Idea':'Other')+'</span><b>'+esc(nameOf(f.uid))+'</b><span class="note">'+esc(when(f.t))+' · '+esc(f.v||'')+' · '+esc(browserOf(f.ua))+'</span></span>'+
+  var list=fbs.filter(function(f){return hit(f.msg+' '+nameOf(f.uid)+' '+(f.page||''));});
+  if(!list.length)return '<p class="note">No feedback matches.</p>';
+  return '<ul class="adm">'+list.map(function(f){return '<li class="'+(f.done?'done':'')+'"><div class="grow"><span class="row tight"><span class="chip '+(f.kind==='bug'?'bad':f.kind==='idea'?'ok':'muted')+'">'+esc(f.kind==='bug'?'Bug':f.kind==='idea'?'Idea':'Other')+'</span><b>'+esc(nameOf(f.uid))+'</b><span class="note">'+esc(when(f.t))+' · '+esc(f.v||'')+' · '+esc(browserOf(f.ua))+'</span></span>'+
     '<span class="msg">'+esc(f.msg)+'</span></div><div class="row tight">'+(f.done?'':'<button class="btn sm" data-a="fbdone" data-id="'+esc(f.id)+'">Done</button>')+'<button class="btn sm ghost" data-a="fbdel" data-id="'+esc(f.id)+'">Delete</button></div></li>';}).join('')+'</ul>';
 }
 function errsHtml(){
   if(!errs.length)return '<p class="note">No errors recorded.</p>';
-  return '<div class="row"><button class="btn sm" data-a="clearerrs">Clear all</button></div><ul class="adm">'+errs.map(function(e){return '<li><div class="grow"><b class="mono">'+esc(e.msg)+'</b><span class="note">'+esc(when(e.t))+' · '+esc(e.page)+' · '+esc(e.v||'')+' · '+esc(browserOf(e.ua))+' · '+esc(nameOf(e.uid))+'</span>'+
-    (e.stack?'<details><summary class="note">Stack</summary><pre>'+esc(e.stack)+'</pre></details>':'')+'</div><button class="btn sm ghost" data-a="errdel" data-id="'+esc(e.id)+'">Clear</button></li>';}).join('')+'</ul>';
+  var list=errs.filter(function(e){return hit(e.msg+' '+(e.page||'')+' '+nameOf(e.uid));});
+  return '<div class="row"><button class="btn sm" data-a="clearerrs">Clear all</button></div>'+(list.length?'<ul class="adm">'+list.map(function(e){return '<li><div class="grow"><b class="mono">'+esc(e.msg)+'</b><span class="note">'+esc(when(e.t))+' · '+esc(e.page)+' · '+esc(e.v||'')+' · '+esc(browserOf(e.ua))+' · '+esc(nameOf(e.uid))+'</span>'+
+    (e.stack?'<details><summary class="note">Stack</summary><pre>'+esc(e.stack)+'</pre></details>':'')+'</div><button class="btn sm ghost" data-a="errdel" data-id="'+esc(e.id)+'">Clear</button></li>';}).join('')+'</ul>':'<p class="note">No errors match.</p>');
 }
 
 app.addEventListener('click',function(e){
