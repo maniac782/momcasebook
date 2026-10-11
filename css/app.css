@@ -38,7 +38,10 @@ h2{font-size:24px}
 .brand img{border-radius:8px;flex:none}
 .brand span{font-family:var(--display);font-size:21px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .brand b{font-weight:400}
-@media (max-width:420px){.brand span{font-size:18px}.brand b{display:block;font-size:13px;color:var(--muted);font-family:var(--body);letter-spacing:.06em;text-transform:uppercase}}
+/* the Beta pill after the name, as on the Arkham Horror RPG Ledger (the admin page shows its Admin tag there instead) */
+.brand .beta{display:inline-block;vertical-align:4px;margin-left:4px;font-style:normal;font-family:var(--body);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 7px;line-height:1.5}
+/* phones (up to the widest iPhones): the name on two lines so it isn't cut off */
+@media (max-width:480px){.brand span{font-size:18px}.brand b{display:block;font-size:13px;color:var(--muted);font-family:var(--body);letter-spacing:.06em;text-transform:uppercase}.brand .beta{font-size:9px;padding:0 6px;vertical-align:3px}}
 
 main{flex:1;width:100%;max-width:980px;margin:0 auto;padding:16px 16px 56px;display:flex;flex-direction:column;gap:16px}
 .foot{max-width:980px;width:100%;margin:0 auto;padding:16px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
