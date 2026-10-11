@@ -10,5 +10,5 @@ and tile and monster names read from their identifiers. No images or other files
 
 Each scenario's own file (linked from the Valkyrie scenario catalogue) is only read to list the tiles and monsters it
 uses; nothing from it is published apart from that list. Tile numbers are from the community
-[Mansions of Madness Tiles Index v5.2](https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index),
-by way of Dan's [valkyrie-tools packlist](https://github.com/maniac782/valkyrie-tools/tree/main/packlist).
+[Mansions of Madness Tiles Index v5.2](https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index)
+(`scripts/tiles-index-from-pdf.py`), first used in Dan's [valkyrie-tools packlist](https://github.com/maniac782/valkyrie-tools/tree/main/packlist).

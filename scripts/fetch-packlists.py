@@ -3,8 +3,8 @@ the box), the website version of Dan's packlist tool (github.com/maniac782/valky
 
 For each scenario in the Valkyrie catalogue it downloads the scenario file (<url><key>.valkyrie, a zip of .ini files),
 finds the tiles and monsters it adds, and labels each with:
-- its index in the community Mansions of Madness Tiles Index v5.2 (scripts/tiles_index.py, from Dan's tool), using the
-  tile's other side when only that side is indexed;
+- its number in the community Mansions of Madness Tiles Index v5.2 (scripts/tiles_index.py, read from that PDF by
+  scripts/tiles-index-from-pdf.py), and the set whose symbol is printed on it;
 - the box it comes in and its printed name, from Valkyrie's own game-content files (github.com/NPBruce/valkyrie,
   Apache 2.0): unity/Assets/StreamingAssets/content/MoM. First-edition content counts as the box that reprints it:
   Recurring Nightmares (first-edition base game, Conversion Kit) and Suppressed Memories (Forbidden Alchemy, Call of the
@@ -19,7 +19,7 @@ import argparse, configparser, io, json, os, re, sys, urllib.request, zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from tiles_index import TILE_INFO  # noqa: E402
+from tiles_index import TILE_INDEX  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
 OUT = os.path.join(ROOT, 'js', 'packlists.js')
@@ -29,9 +29,11 @@ MANIFEST_URL = 'https://raw.githubusercontent.com/NPBruce/valkyrie-store/master/
 PACK_BOX = {'MoMBase': 'core', 'RN': 'rn', 'SM': 'sm', 'BtT': 'btt', 'SoA': 'soa', 'SoT': 'sot', 'HJ': 'hj', 'PotS': 'pots',
             'MoM1ET': 'rn', 'MoM1EM': 'rn', 'MoM1EI': 'rn', 'MoM1CK': 'rn',
             'FAT': 'sm', 'FAM': 'sm', 'FAI': 'sm', 'CotWT': 'sm', 'CotWM': 'sm', 'CotWI': 'sm'}
-# the box names Dan's tile index uses
-INDEX_BOX = {'Core': 'core', 'Recurring Nightmares': 'rn', 'Suppressed Memories': 'sm', 'Beyond the Threshold': 'btt',
-             'Streets of Arkham': 'soa', 'Sanctum of Twilight': 'sot', 'Horrific Journeys': 'hj', 'Path of the Serpent': 'pots'}
+# Valkyrie content pack id -> the set whose symbol is printed on the tile or figure (first-edition content keeps its
+# first-edition symbol in the boxes that reprint it)
+PACK_SET = {'MoMBase': '2e', 'BtT': 'btt', 'SoA': 'soa', 'SoT': 'sot', 'HJ': 'hj', 'PotS': 'pots',
+            'MoM1ET': '1e', 'MoM1EM': '1e', 'MoM1EI': '1e', 'MoM1CK': '1e', 'RN': '1e',
+            'FAT': 'fa', 'FAM': 'fa', 'FAI': 'fa', 'CotWT': 'cotw', 'CotWM': 'cotw', 'CotWI': 'cotw', 'SM': 'cotw'}
 SMALL = {'of', 'the', 'and', 'a', 'an', 'in', 'on', 'to', 'at'}
 
 
@@ -73,7 +75,9 @@ def camel(name, prefix):
 
 
 def load_content(root):
-    """Every tile side and monster in Valkyrie's game content: name, box, and (tiles) the side on the back."""
+    """Every tile side and monster in Valkyrie's game content: name, box, set, number and (tiles) the side on the back.
+    A side can be defined by more than one pack (Campsite is in Call of the Wild and Path of the Serpent), so each side
+    maps to a list of definitions."""
     tiles, monsters = {}, {}
     for dirpath, _, files in os.walk(root):
         if 'content_pack.ini' not in files:
@@ -85,21 +89,32 @@ def load_content(root):
         if 'tiles.ini' in files:
             for sec, d in ini_sections(open(os.path.join(dirpath, 'tiles.ini'), encoding='utf-8-sig').read()).items():
                 if sec.startswith('TileSide'):
-                    tiles[sec] = {'n': nice(d.get('name'), 'TILE') or camel(sec, 'TileSide'), 'x': box, 'back': d.get('reverse', '')}
+                    tiles.setdefault(sec, []).append({'n': nice(d.get('name'), 'TILE') or camel(sec, 'TileSide'), 'x': box,
+                                                      'e': PACK_SET.get(pack, ''), 'back': d.get('reverse', ''), 'pack': pack,
+                                                      'i': TILE_INDEX.get(pack + ':' + sec, '')})
         if 'monsters.ini' in files:
             for sec, d in ini_sections(open(os.path.join(dirpath, 'monsters.ini'), encoding='utf-8-sig').read()).items():
                 if sec.startswith('Monster'):
-                    monsters[sec] = {'n': nice(d.get('name'), 'MONSTER') or camel(sec, 'Monster'), 'x': box}
+                    monsters[sec] = {'n': nice(d.get('name'), 'MONSTER') or camel(sec, 'Monster'), 'x': box, 'e': PACK_SET.get(pack, '')}
+    # a side the index doesn't list is still on a numbered tile: use the number of the side on its back
+    for side, defs in tiles.items():
+        for d in defs:
+            if not d['i']:
+                back = [b for b in tiles.get(d['back'], []) if b['pack'] == d['pack'] and b['i']]
+                if back:
+                    d['i'] = back[0]['i']
     return tiles, monsters
 
 
-def index_of(side, tiles):
-    """(index like '9M', box) from the tile index, trying the other side of the same tile too."""
-    for s in (side, tiles.get(side, {}).get('back', '')):
-        if s in TILE_INFO:
-            size, idx, box = TILE_INFO[s]
-            return idx, INDEX_BOX.get(box)
-    return '', None
+def side_def(side, tiles, boxes):
+    """The definition of a side for this scenario: when two packs define it, the one from a box the scenario uses."""
+    defs = tiles.get(side) or []
+    if len(defs) > 1:
+        pick = [d for d in defs if d['x'] in boxes]
+        if len(pick) == 1:
+            return pick[0], []
+        return defs[0], defs[1:]
+    return (defs[0] if defs else {}), []
 
 
 def idx_key(i):
@@ -120,7 +135,7 @@ def localized(files):
     return {}
 
 
-def packlist(data, tiles, monsters):
+def packlist(data, tiles, monsters, boxes=()):
     """The packing list for one scenario file (bytes of the .valkyrie zip)."""
     z = zipfile.ZipFile(io.BytesIO(data))
     files = {}
@@ -150,14 +165,15 @@ def packlist(data, tiles, monsters):
         if not side or side in sides_seen:
             continue
         sides_seen.add(side)
-        c = tiles.get(side, {})
-        idx, ibox = index_of(side, tiles)
-        t = {'n': c.get('n') or camel(side, 'TileSide'), 'x': c.get('x') or ibox or ''}
-        if idx:
-            t['i'] = idx
+        c, alts = side_def(side, tiles, boxes)
+        t = {'n': c.get('n') or camel(side, 'TileSide'), 'x': c.get('x', ''), 'e': c.get('e', '')}
+        if c.get('i'):
+            t['i'] = c['i']
+        if alts:   # can't tell which box's tile is meant: offer both numbers
+            t['alt'] = [{'i': a['i'], 'e': a['e'], 'x': a['x']} for a in alts if a.get('i')]
         back = c.get('back')
-        if back and back in tiles:
-            t['b'] = tiles[back]['n']
+        if back and tiles.get(back):
+            t['b'] = tiles[back][0]['n']
         if '6player' in comp.lower():
             t['six'] = 1
         out_tiles.append(t)
@@ -183,7 +199,7 @@ def packlist(data, tiles, monsters):
                         uses[real].append(cn)
     out_mon = []
     for r in order:
-        mo = {'n': monsters[r]['n'], 'x': monsters[r]['x']}
+        mo = {'n': monsters[r]['n'], 'x': monsters[r]['x'], 'e': monsters[r]['e']}
         if uses[r]:
             mo['as'] = uses[r][:6]
         out_mon.append(mo)
@@ -228,7 +244,7 @@ def main():
                 data = open(p, 'rb').read()
             else:
                 data = urllib.request.urlopen(e.get('url', '') + key + '.valkyrie', timeout=120).read()
-            t, mo = packlist(data, tiles, monsters)
+            t, mo = packlist(data, tiles, monsters, {PACK_BOX[pk] for pk in e.get('packs', '').split() if pk in PACK_BOX})
         except Exception as ex:  # keep the old list if there is one
             failed.append('%s (%s)' % (key, str(ex)[:80]))
             if key in old:
@@ -245,8 +261,9 @@ def main():
     head = ('/* Mansions of Madness Casebook: packing lists for the Valkyrie scenarios, keyed by catalogue key (js/valkyrie.js).\n'
             '   Generated by scripts/fetch-packlists.py from each scenario file, the community Tiles Index v5.2 (tile numbers)\n'
             '   and Valkyrie\'s game content (names and boxes); the website version of Dan\'s valkyrie-tools packlist. Do not edit.\n'
-            '   need: boxes it uses; tiles: n name, i index (e.g. 9M), x box, b the other side, six 6-player only;\n'
-            '   monsters: n name, x box, as custom monsters played with that figure; other: extra content packs it needs. */\n')
+            '   need: boxes it uses; tiles: n name, i number (e.g. 9M), e set symbol printed on it, x box it comes in, b the other\n'
+            '   side, six 6-player only, alt other possible tiles; monsters: n name, e set, x box, as custom monsters played with\n'
+            '   that figure; other: extra content packs it needs. */\n')
     body = 'globalThis.MOM_PACKLISTS={\n' + ',\n'.join(json.dumps(k, ensure_ascii=False) + ':' + json.dumps(out[k], ensure_ascii=False, separators=(',', ':')) for k in sorted(out)) + '\n};\n'
     new = head + body
     changed = not os.path.exists(OUT) or open(OUT, encoding='utf-8').read() != new

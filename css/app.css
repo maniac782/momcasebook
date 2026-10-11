@@ -414,3 +414,8 @@ select.f.dd-open{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in sr
 .pk.on .pk-txt b{text-decoration:line-through;color:var(--muted)}
 .pk.on .pk-idx{opacity:.55}
 .btn .ic{flex:none}
+/* set tags in packing lists: which symbol is printed on the tile or figure (colours avoid yellow, see CLAUDE.md) */
+.set{display:inline-block;min-width:34px;padding:0 6px;border-radius:5px;font-size:11.5px;font-weight:700;letter-spacing:.02em;text-align:center;color:#fff;vertical-align:1px;line-height:17px}
+.set.s-2e{background:#4b5563}.set.s-1e{background:#6b4fa0}.set.s-cotw{background:#2f7a4a}.set.s-fa{background:#1f6f78}
+.set.s-btt{background:#2f5fb3}.set.s-soa{background:#9b2c2c}.set.s-sot{background:#9a3a7a}.set.s-hj{background:#2b3f74}
+.set.s-pots{background:#7a4a2a}.set.s-fan{background:transparent;color:var(--muted);border:1px solid var(--line)}

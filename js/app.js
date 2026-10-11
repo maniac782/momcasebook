@@ -356,6 +356,11 @@ function logFromPlan(id){
 // valkyrie-tools packlist. Ticks are kept on this device only, per scenario, so you can pack at the table.
 var ICON_BOX='<svg class="ic" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg>';
 function packOf(s){var t=s&&(s.type||s.from);return t==='valkyrie'&&s.vkey&&(window.MOM_PACKLISTS||{})[s.vkey]||null;}
+// the set whose symbol is printed on a tile or figure, as a short colour-coded tag (Fantasy Flight's symbols themselves
+// can't be used here); first-edition content keeps its first-edition symbol in the boxes that reprint it
+var SETS={'2e':['Core','Second Edition Core'],'1e':['1E','First Edition Core'],'cotw':['CotW','Call of the Wild'],'fa':['FA','Forbidden Alchemy'],
+  btt:['BtT','Beyond the Threshold'],soa:['SoA','Streets of Arkham'],sot:['SoT','Sanctum of Twilight'],hj:['HJ','Horrific Journeys'],pots:['PotS','Path of the Serpent']};
+function setTag(e){var t=SETS[e];return t?'<span class="set s-'+e+'" title="'+esc(t[1])+'">'+esc(t[0])+'</span>':'<span class="set s-fan" title="Not from a Fantasy Flight box">Fan</span>';}
 function boxName(id){return id?(MOM.productName(id)||id):'fan-made tile';}
 function canPlay(s){var p=packOf(s);if(!p||p.other)return false;var o=owned();return p.need.every(function(b){return o.indexOf(b)>=0;});}
 function needsHtml(s){var p=packOf(s);if(!p||!p.need.length)return '';var o=owned();
@@ -368,9 +373,11 @@ function packDialog(id){
   var idx=function(i){var m=/^(\d+)([SML])$/.exec(i||'');return m?m[1]+'\u2009'+m[2]:'';};
   var item=function(k,name,sub,badge){return '<li><label class="pk'+(done[k]?' on':'')+'"><input type="checkbox" data-k="'+k+'"'+(done[k]?' checked':'')+'>'+
     (badge?'<span class="pk-idx num">'+badge+'</span>':'')+'<span class="pk-txt"><b>'+esc(name)+'</b><span class="note">'+sub+'</span></span></label></li>';};
-  var tile=function(t,i){return item('t'+i,t.n,esc(boxName(t.x))+(t.b?' \u00b7 other side: '+esc(t.b):''),idx(t.i)||'\u2014');};
+  // where it is: the set's tag, the box when that differs (first-edition sets are in Recurring Nightmares or Suppressed Memories), the back
+  var where=function(o){var t=SETS[o.e],box=o.x&&t&&['1e','fa','cotw'].indexOf(o.e)>=0?' \u00b7 in '+esc(boxName(o.x)):'';return setTag(o.e)+(t?'':' fan-made tile')+box;};
+  var tile=function(t,i){return item('t'+i,t.n,where(t)+(t.b?' \u00b7 other side: '+esc(t.b):'')+(t.alt&&t.alt.length?' \u00b7 or '+t.alt.map(function(a){return idx(a.i)+' '+setTag(a.e);}).join(', '):''),idx(t.i)||'\u2014');};
   var normal=[],six=[];p.tiles.forEach(function(t,i){(t.six?six:normal).push(tile(t,i));});
-  var mons=p.monsters.map(function(m,i){return item('m'+i,m.n,esc(boxName(m.x))+(m.as?' \u00b7 plays '+esc(m.as.join(', ')):''),'');});
+  var mons=p.monsters.map(function(m,i){return item('m'+i,m.n,where(m)+(m.as?' \u00b7 plays '+esc(m.as.join(', ')):''),'');});
   var o=owned(),miss=p.need.filter(function(b){return o.indexOf(b)<0;});
   var d=openDialog('<div class="dlg-head"><h2>Packing list: '+esc(s.name)+'</h2><button class="x" type="button" data-close aria-label="Close">\u00d7</button></div>'+
     '<p class="note">Needs '+p.need.map(function(b){return esc(boxName(b));}).join(' + ')+(p.other?' + fan-made pack '+esc(p.other.join(', ')):'')+'.'+
@@ -379,7 +386,7 @@ function packDialog(id){
     (normal.length?'<h3 class="pk-h">Tiles <span class="note">'+normal.length+'</span></h3><ul class="pk-list">'+normal.join('')+'</ul>':'')+
     (six.length?'<h3 class="pk-h">Tiles for 6 players only <span class="note">'+six.length+'</span></h3><ul class="pk-list">'+six.join('')+'</ul>':'')+
     (mons.length?'<h3 class="pk-h">Monster figures <span class="note">'+mons.length+'</span></h3><ul class="pk-list">'+mons.join('')+'</ul>':'')+
-    '<p class="note fine">Tile numbers follow the community <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L for small, medium, large); a \u2014 means that tile isn\u2019t numbered there yet, so look for it by name or by its other side. From the scenario file in the Valkyrie catalogue.</p>'+
+    '<p class="note fine">Tile numbers follow the community <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L for small, medium, large); the coloured tag is the set whose symbol is printed on the tile or figure. A \u2014 means a fan-made tile that isn\u2019t in any box. From the scenario file in the Valkyrie catalogue.</p>'+
     '<div class="row end"><button class="btn" type="button" data-close>Done</button></div>','Packing list');
   var count=function(){var all=d.querySelectorAll('.pk input'),n=0;all.forEach(function(c){if(c.checked)n++;});d.querySelector('.pk-count').textContent=n+' of '+all.length+' packed';};
   var save=function(){var l=[];d.querySelectorAll('.pk input:checked').forEach(function(c){l.push(c.dataset.k);});try{if(l.length)localStorage.setItem(KEY,JSON.stringify(l));else localStorage.removeItem(KEY);}catch(e){}};
