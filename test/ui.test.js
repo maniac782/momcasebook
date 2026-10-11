@@ -148,7 +148,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual((await p.textContent('.dd .dd-opt.sel')).trim(),'Any','current choice ticked');
   assert.strictEqual(await p.locator('.dd-search').count(),0,'no search box on a short list');await p.waitForTimeout(250);
   await p.screenshot({path:out+'/3g-dropdown.png'});
-  await p.click('.dd .dd-opt:has-text("Failed")');await p.waitForSelector('.dd-wrap',{state:'detached'});
+  await p.locator('.dd .dd-opt',{hasText:/^\s*Lost\s*$/}).click();await p.waitForSelector('.dd-wrap',{state:'detached'});
   assert.strictEqual(await p.inputValue('#fres'),'fail','menu choice sets the filter');
   assert.ok(await p.locator('.plays > li').count()>0);
   await p.focus('#fres');await p.keyboard.press('ArrowDown');await p.waitForSelector('.dd');
@@ -226,11 +226,11 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.click('[data-t=scenarios]');await p.fill('#sq','exotic');await p.waitForFunction(n=>[...document.querySelectorAll('.scs li b')].some(b=>b.textContent===n),'Exotic Material');
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('text=You: 1 play').count(),'your record next to the community');
   await p.screenshot({path:out+'/5e-community.png'});
-  // a played, never-passed scenario says Failed, and the star sits before the name
-  assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('.chip:text-is("Failed")').count(),'Failed chip');
+  // a played, never-won scenario says Lost, and the star sits before the name
+  assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('.chip:text-is("Lost")').count(),'Lost chip');
   assert.ok(await p.evaluate(()=>{const li=[...document.querySelectorAll('.scs li.sc')].find(l=>l.textContent.includes('Exotic Material'));return li.firstElementChild.classList.contains('star');}),'star first in the row');
   await p.selectOption('#sf-status','failed');await p.waitForFunction(()=>document.querySelectorAll('.scs li .chip').length>0);
-  assert.ok(await p.evaluate(()=>[...document.querySelectorAll('.scs li.sc')].every(l=>l.querySelector('.chip').textContent==='Failed')),'Failed filter');
+  assert.ok(await p.evaluate(()=>[...document.querySelectorAll('.scs li.sc')].every(l=>l.querySelector('.chip').textContent==='Lost')),'Lost filter');
   await p.selectOption('#sf-status','all');
   // played scenarios offer Play again, filled from last time (it was a fail, so attempt 2)
   assert.ok(await p.locator('.scs li',{hasText:'Exotic Material'}).locator('[data-a=again]').count(),'Play again on a played scenario');
@@ -284,7 +284,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.locator('li',{has:p.locator('b:text("Thursday group")')}).locator('.chip').count(),4,'group has 4 members');
   await p.screenshot({path:out+'/5c-players.png',fullPage:true});
   await p.click('.bar [data-a=log]');await p.selectOption('select[name=sc]','o-rising-tide');
-  await p.locator('.seat [name=pp]').first().fill('Dan');if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');
+  await p.locator('.seat [name=pp]').first().fill('Dan');await p.waitForTimeout(150);if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');
   await p.locator('.seat [name=pi]').first().selectOption('Agatha Crane');  // Dan's seat keeps this investigator after picking the group
   const gid=await p.locator('select[name=grp] option').nth(1).getAttribute('value');await p.selectOption('select[name=grp]',gid);
   assert.strictEqual(await p.locator('.seat').count(),4,'seats filled from group');
@@ -404,7 +404,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(/usually (Carson Sinclair|Agatha Crane)/.test(danLine),'usual investigator: '+danLine);
   // the form saves solo by people: one person, two characters
   await p.click('.bar [data-a=log]');await p.selectOption('select[name=sc]','o-rising-tide');
-  await p.locator('.seat [name=pp]').first().fill('Dan');if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');await p.locator('.seat [name=pi]').first().selectOption('Agatha Crane');
+  await p.locator('.seat [name=pp]').first().fill('Dan');await p.waitForTimeout(150);if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');await p.locator('.seat [name=pi]').first().selectOption('Agatha Crane');
   await p.click('[data-f=addseat]');await p.locator('.seat').nth(1).locator('[name=pp]').fill('Dan');if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');await p.locator('.seat').nth(1).locator('[name=pi]').selectOption('Preston Fairmont');
   await p.check('.seg.big .fail input',{force:true});await p.fill('textarea[name=notes]','solo check');await p.click('form[data-form=play] button[type=submit]');await p.waitForTimeout(200);
   assert.strictEqual(await p.evaluate(()=>Object.values(__fake.store).find(v=>v&&v.notes==='solo check').solo),true,'saved as solo');

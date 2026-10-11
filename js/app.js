@@ -18,7 +18,7 @@ var DAY=86400000;
 function fmtDate(d){if(!d)return 'No date';var x=new Date(d+'T12:00:00');return isNaN(x)?d:x.toLocaleDateString([], {year:'numeric',month:'short',day:'numeric'});}
 function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function pct(a,b){return b?Math.round(a*100/b)+'%':'—';}
-var RES={pass:['Passed','ok'],fail:['Failed','bad'],abandoned:['Abandoned','muted']};
+var RES={pass:['Won','ok'],fail:['Lost','bad'],abandoned:['Abandoned','muted']};
 function resChip(r){var x=RES[r];return x?'<span class="chip '+x[1]+'">'+x[0]+'</span>':'<span class="chip muted">No result</span>';}
 function typeName(t){return t==='official'?'Official':t==='valkyrie'?'Valkyrie':'Not matched';}
 function sortPlays(a,b){return (b.date||'').localeCompare(a.date||'')||(b.date?0:(a.seq||0)-(b.seq||0))||(b.created||0)-(a.created||0);}
@@ -134,7 +134,7 @@ function playsHtml(){
   var list=filtered(),people=names('player'),invs=names('investigator'),probs=investigatorProblems(),sprobs=scenarioProblems();
   var scs={};plays.forEach(function(p){scs[p.scenarioId]=p.scenarioName;});
   var h='<div class="filters"><label class="field grow"><span class="lbl">Search</span><input class="f" id="q" type="search" value="'+esc(ui.q)+'" placeholder="Scenario, person, investigator or notes" autocomplete="off"></label>'+
-    sel('fres','Result',ui.result,[['','Any'],['pass','Passed'],['fail','Failed'],['abandoned','Abandoned']])+
+    sel('fres','Result',ui.result,[['','Any'],['pass','Won'],['fail','Lost'],['abandoned','Abandoned']])+
     sel('fpl','Player or investigator',ui.player,[['','Anyone']].concat(people.map(function(n){return [n,n];}),invs.length?[['-','────']]:[],invs.map(function(n){return [n,n];})))+
     sel('fsc','Scenario',ui.scen,[['','Any']].concat(Object.keys(scs).sort(function(a,b){return scs[a].localeCompare(scs[b]);}).map(function(k){return [k,scs[k]];})))+'</div>';
   // the next scheduled game, if any
@@ -165,7 +165,7 @@ function playsHtml(){
   [['fix','Needs a scenario'],['official','Official'],['valkyrie','Valkyrie']].forEach(function(b){
     var items=list.filter(function(p){return kind(p)===b[0];});if(!items.length)return;
     var won=items.filter(function(p){return p.result==='pass';}).length,key='p-'+b[0];
-    h+='<details class="sec box pbox" data-box="'+key+'"'+(boxes[key]!==false?' open':'')+'><summary><h2>'+b[1]+'</h2><span class="note">'+items.length+' play'+(items.length===1?'':'s')+' \u00b7 '+won+' passed</span><span class="chev" aria-hidden="true"></span></summary>'+
+    h+='<details class="sec box pbox" data-box="'+key+'"'+(boxes[key]!==false?' open':'')+'><summary><h2>'+b[1]+'</h2><span class="note">'+items.length+' play'+(items.length===1?'':'s')+' \u00b7 '+won+' won</span><span class="chev" aria-hidden="true"></span></summary>'+
       '<ul class="plays">'+items.map(prow).join('')+'</ul></details>';
   });
   return h;
@@ -222,30 +222,30 @@ function scenariosHtml(){
   var offIds=MOM.OFFICIAL.filter(function(s){return own.indexOf(s.product)>=0;}),beat=offIds.filter(function(s){return st[s.id]&&st[s.id].pass;}).length;
   var h='<div class="filters"><label class="field grow"><span class="lbl">Search</span><input class="f" id="sq" type="search" value="'+esc(ui.sq||'')+'" placeholder="Name, author or words in the description" autocomplete="off"></label>'+
     sel('sf-src','From',sf.src,[['all','Everything'],['official','Official'],['valkyrie','Valkyrie']])+
-    sel('sf-status','Your progress',f,[['all','Any'],['new','Not played'],['failed','Failed'],['unbeaten','Not played or failed'],['beaten','Beaten']])+
+    sel('sf-status','Your progress',f,[['all','Any'],['new','Not played'],['failed','Lost'],['unbeaten','Not played or lost'],['beaten','Won']])+
     sel('sf-diff','Difficulty',sf.diff,[['any','Any'],['easy','Easy'],['medium','Medium'],['hard','Hard'],['vhard','Very hard']])+
     sel('sf-len','Length',sf.len,[['any','Any'],['short','Under 2 hours'],['mid','2 to 3 hours'],['long','3 to 4 hours'],['xlong','Over 4 hours']])+
     sel('sf-rate','Rating',sf.rate,[['any','Any'],['7','7 or more'],['8','8 or more'],['8.5','8.5 or more']])+
     sel('sf-lang','Language',sf.lang,[['any','Any']].concat(langChoices()))+
     sel('sf-own','Your collection',sf.own||'any',[['any','Anything'],['own','Playable with what I own']])+
-    sel('sf-sort','Sort by',sf.sort,[['box','Expansion'],['name','Name (A–Z)'],['rating','Highest rated'],['plays','Most played'],['short','Shortest'],['long','Longest'],['easy','Easiest'],['hard','Hardest'],['win','Easiest to pass'],['lang','Language'],['mine','Your most recent']])+
+    sel('sf-sort','Sort by',sf.sort,[['box','Expansion'],['name','Name (A–Z)'],['rating','Highest rated'],['plays','Most played'],['short','Shortest'],['long','Longest'],['easy','Easiest'],['hard','Hardest'],['win','Easiest to win'],['lang','Language'],['mine','Your most recent']])+
     '</div>';
   var narrowed=sf.diff!=='any'||sf.len!=='any'||sf.rate!=='any';
   var anyFilter=narrowed||sf.lang!=='any'||(sf.own||'any')!=='any';
-  h+='<p class="note count"><b>'+list.length+'</b> scenario'+(list.length===1?'':'s')+' \u00b7 official beaten: '+beat+' of '+offIds.length+
+  h+='<p class="note count"><b>'+list.length+'</b> scenario'+(list.length===1?'':'s')+' \u00b7 won '+beat+' of '+offIds.length+' official'+
     (narrowed&&sf.src!=='valkyrie'?' \u00b7 difficulty, length and rating are only known for Valkyrie scenarios, so official ones drop out with those filters':'')+
     (sf.lang!=='any'&&sf.src!=='valkyrie'?' \u00b7 the language filter applies to Valkyrie scenarios; official ones are in the app\u2019s own languages':'')+
     (anyFilter||sf.src!=='all'||f!=='all'||sq?' \u00b7 <a href="#" data-a="sfclear">Clear filters</a>':'')+'</p>';
   if(!list.length)return h+'<p class="note">Nothing matches. Loosen a filter. (A brand-new Valkyrie scenario appears here after the Monday refresh.)</p>';
   var row=function(s){
     var star=starredMap()[s.id],plan=star&&star.plan;
-    var x=st[s.id],chip=!x?'<span class="chip muted">Not played</span>':x.pass?'<span class="chip ok">Beaten</span>':'<span class="chip bad">Failed</span>';
+    var x=st[s.id],chip=!x?'<span class="chip muted">Not played</span>':x.pass?'<span class="chip ok">Won</span>':'<span class="chip bad">Lost</span>';
     var src=s.from==='official'?esc(MOM.productName(s.product)||'Official'):'';  // the box already says Valkyrie
     var facts=[src,s.author?'by '+esc(s.author):'',s.difficulty?diffName(s.difficulty):'',
       s.avg&&s.plays>=10?'usually '+esc(lenText([s.avg,s.avg])):s.minutes?esc(lenText(s.minutes)):'',langText(s)].filter(Boolean).join(' \u00b7 ');
     var comm=s.plays>=10&&s.rating?'<span class="rating" title="Valkyrie players\u2019 average score, 1 to 10">\u2605 '+s.rating.toFixed(1)+'</span> '+
-      (s.win!=null?Math.round(s.win*100)+'% pass':'')+' \u00b7 '+s.plays.toLocaleString()+' plays on Valkyrie':'';
-    var yours=x?'You: '+x.n+' play'+(x.n===1?'':'s')+', '+x.pass+' passed'+(x.last?', last '+esc(fmtDate(x.last)):''):'';
+      (s.win!=null?Math.round(s.win*100)+'% win rate':'')+' \u00b7 '+s.plays.toLocaleString()+' plays on Valkyrie':'';
+    var yours=x?'You: '+x.n+' play'+(x.n===1?'':'s')+', '+x.pass+' won'+(x.last?', last '+esc(fmtDate(x.last)):''):'';
     var rv=reviewsOf(s);
     return '<li class="sc">'+starBtn(s.id,!!star)+'<div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(s.name)+'</a>':esc(s.name))+'</b>'+chip+'</span>'+
       '<span class="note">'+facts+'</span>'+needsHtml(s)+(plan?'<span class="plan">'+ICON_CAL+'<span>'+esc(planText(plan))+'</span></span>':'')+(comm?'<span class="note community">'+comm+'</span>':'')+(yours?'<span class="note">'+yours+'</span>':'')+
@@ -278,7 +278,7 @@ function scenariosHtml(){
     .sort(function(a,b){var pa=stars[a.id].plan,pb=stars[b.id].plan;if(pa&&pb)return (pa.date+(pa.time||'')).localeCompare(pb.date+(pb.time||''));if(pa||pb)return pa?-1:1;return (stars[b.id].at||0)-(stars[a.id].at||0);});
   var nPlanned=starredList.filter(function(x){return stars[x.id].plan;}).length;
   h+=box('starred','Starred',starredList,ul(starredList),nPlanned?nPlanned+' scheduled':'tap Schedule to set a date');
-  h+=box('official','Official',off,offBody,'beaten '+beat+' of '+offIds.length);
+  h+=box('official','Official',off,offBody,'won '+beat+' of '+offIds.length);
   h+=box('valkyrie','Valkyrie',val,valBody,'ratings from Valkyrie players');
   if(val.length)h+='<p class="note credit">Valkyrie scenario details, ratings and descriptions come from the <a href="https://github.com/NPBruce/valkyrie-store" target="_blank" rel="noopener">Valkyrie scenario catalogue</a> (Apache License 2.0); descriptions are by each scenario\u2019s author.</p>';
   return h;
@@ -409,10 +409,10 @@ function statsHtml(){
   var n=plays.length,pass=plays.filter(function(p){return p.result==='pass';}).length,fail=plays.filter(function(p){return p.result==='fail';}).length;
   var st=scenStats(),beaten=Object.keys(st).filter(function(k){return st[k].pass;}).length;
   var tile=function(k,v,s){return '<div class="stat"><span class="lbl">'+k+'</span><b class="num">'+v+'</b>'+(s?'<small>'+s+'</small>':'')+'</div>';};
-  var h='<div class="stats">'+tile('Plays',n)+tile('Passed',pass,pct(pass,n))+tile('Failed',fail,pct(fail,n))+tile('Scenarios played',Object.keys(st).length,beaten+' beaten')+'</div>';
+  var h='<div class="stats">'+tile('Plays',n)+tile('Won',pass,pct(pass,n))+tile('Lost',fail,pct(fail,n))+tile('Scenarios played',Object.keys(st).length,beaten+' won')+'</div>';
   var table=function(title,rows,col){
     if(!rows.length)return '';var max=Math.max.apply(null,rows.map(function(r){return r.n;}));
-    return '<section class="sec"><h2>'+esc(title)+'</h2><table class="tbl"><thead><tr><th>'+esc(col)+'</th><th class="r">Plays</th><th class="r">Passed</th><th class="w">Win rate</th></tr></thead><tbody>'+
+    return '<section class="sec"><h2>'+esc(title)+'</h2><table class="tbl"><thead><tr><th>'+esc(col)+'</th><th class="r">Plays</th><th class="r">Won</th><th class="w">Win rate</th></tr></thead><tbody>'+
       rows.map(function(r){return '<tr><td>'+esc(r.k)+'</td><td class="r num">'+r.n+'</td><td class="r num">'+r.pass+'</td><td class="w"><span class="barwrap"><span class="track"><span class="meter" style="width:'+Math.max(4,Math.round(r.n*100/max))+'%"><span class="meterin" style="width:'+(r.n?Math.round(r.pass*100/r.n):0)+'%"></span></span></span><span class="num">'+pct(r.pass,r.n)+'</span></span></td></tr>';}).join('')+'</tbody></table></section>';
   };
   var tally=function(keyFn){var c={};plays.forEach(function(p){keyFn(p).forEach(function(k){if(!k)return;var r=c[k]||(c[k]={k:k,n:0,pass:0});r.n++;if(p.result==='pass')r.pass++;});});
@@ -491,7 +491,7 @@ function playersHtml(){
   var pl=people.slice().sort(byName);
   h+='<section class="sec"><div class="sec-head"><h2>Players</h2><span class="note">'+pl.length+' saved</span></div>'+
     (pl.length?'<ul class="scs">'+pl.map(function(x){var st=personStats(x.name),ing=groups.filter(function(g){return (g.members||[]).indexOf(x.id)>=0;}).sort(byName);
-      var line=st.n?st.n+' play'+(st.n===1?'':'s')+' \u00b7 '+pct(st.pass,st.n)+' passed'+(st.last?' \u00b7 last '+esc(fmtDate(st.last)):'')+(st.fav?' \u00b7 usually '+esc(st.fav):''):'No plays yet';
+      var line=st.n?st.n+' play'+(st.n===1?'':'s')+' \u00b7 '+pct(st.pass,st.n)+' won'+(st.last?' \u00b7 last '+esc(fmtDate(st.last)):'')+(st.fav?' \u00b7 usually '+esc(st.fav):''):'No plays yet';
       return '<li>'+avatarHtml(x.name,'','')+'<div class="grow"><b>'+(st.n?'<a href="#" data-a="playerplays" data-n="'+esc(x.name)+'">'+esc(x.name)+'</a>':esc(x.name))+'</b>'+
         '<span class="note">'+line+'</span>'+(x.notes?'<span class="note pnote">'+esc(x.notes)+'</span>':'')+
         (ing.length?'<span class="row tight chips">'+ing.map(function(g){return '<span class="chip muted">'+esc(g.name)+'</span>';}).join('')+'</span>':'')+'</div>'+
@@ -697,7 +697,7 @@ function playForm(p,preset){
     '<label class="field"><span class="lbl">Scenario</span><select class="f" name="sc" required>'+opts+'</select></label>'+
     '<div class="grid2"><label class="field"><span class="lbl">Date (optional)</span><input class="f" type="date" name="date" value="'+esc(p.date||'')+'" max="'+today()+'"></label>'+
     '<label class="field"><span class="lbl">Attempt</span><input class="f num" type="number" name="att" min="1" max="99" value="'+(p.attempts||1)+'" aria-describedby="att-h"><small class="note" id="att-h">Which try this was</small></label></div>'+
-    '<fieldset class="field"><legend class="lbl">Result</legend><div class="seg big" role="radiogroup">'+[['pass','Passed'],['fail','Failed'],['abandoned','Abandoned']].map(function(r){return '<label class="'+r[0]+'"><input type="radio" name="res" value="'+r[0]+'"'+(res===r[0]?' checked':'')+' required><span>'+r[1]+'</span></label>';}).join('')+'</div></fieldset>'+
+    '<fieldset class="field"><legend class="lbl">Result</legend><div class="seg big" role="radiogroup">'+[['pass','Won'],['fail','Lost'],['abandoned','Abandoned']].map(function(r){return '<label class="'+r[0]+'"><input type="radio" name="res" value="'+r[0]+'"'+(res===r[0]?' checked':'')+' required><span>'+r[1]+'</span></label>';}).join('')+'</div></fieldset>'+
     '<fieldset class="field"><legend class="lbl">Who played</legend>'+
     (groups.length?'<select class="f grp" name="grp" aria-label="Fill in from a group"><option value="">Fill in from a group\u2026</option>'+groups.slice().sort(byName).map(function(g){return '<option value="'+esc(g.id)+'">'+esc(g.name)+' ('+groupMembers(g).length+')</option>';}).join('')+'</select>':'')+
     '<div class="seats">'+party.map(seat).join('')+'</div><div class="row"><button class="btn sm" type="button" data-f="addseat">+ Add a player</button></div></fieldset>'+
@@ -755,7 +755,7 @@ async function savePlay(f){
   var scId=f.sc.value,sc;
   sc=scenById(scId);
   if(!sc||(sc.type!=='official'&&sc.type!=='valkyrie'))throw {msg:'Choose a scenario from the list.'};
-  var res=(f.querySelector('input[name=res]:checked')||{}).value;if(!res)throw {msg:'Choose Passed, Failed or Abandoned.'};
+  var res=(f.querySelector('input[name=res]:checked')||{}).value;if(!res)throw {msg:'Choose Won, Lost or Abandoned.'};
   var party=[];f.querySelectorAll('.seat').forEach(function(s){var a=s.querySelector('[name=pp]').value.trim(),b=s.querySelector('[name=pi]').value;if(b&&!MOM.isInvestigator(b))b='';if(a||b)party.push({player:a.slice(0,40),investigator:b});});
   var att=Math.max(1,Math.min(99,parseInt(f.att.value,10)||1));
   var doc={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,date:f.date.value||'',result:res,attempts:att,
