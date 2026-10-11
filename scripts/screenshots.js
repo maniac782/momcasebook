@@ -35,6 +35,7 @@ const HIDE='.demoban{display:none!important}';
     if(clipH){const w=p.viewportSize().width;o.clip={x:0,y:0,width:w,height:clipH};o.fullPage=true;}await p.screenshot(o);console.log('wrote',name);};
   const tab=async(p,t)=>{await p.click('[data-t='+t+']');await p.waitForTimeout(200);};
   const W={width:1000,height:720},WS=1.4,P={width:390,height:844},PS=600/390;
+  let pack;
 
   // Computer
   let p=await page(W,WS);await p.waitForSelector('.plays > li');
@@ -44,15 +45,21 @@ const HIDE='.demoban{display:none!important}';
   await tab(p,'players');await shot(p,'players.png',640);
   await tab(p,'stats');await shot(p,'stats.png',760);
   await tab(p,'plays');await p.click('.nextup [data-a=calmenu]');await shot(p,'next-game.png',420);
+  await p.keyboard.press('Escape');
+  // a packing list that mixes sets, with a few things already ticked
+  pack=async(p)=>{await tab(p,'scenarios');await p.fill('#sq','The Innsmouth Trial');await p.waitForTimeout(250);
+    await p.evaluate(()=>document.querySelectorAll('details[data-box]').forEach(d=>d.open=true));
+    await p.locator('.scs li:has-text("The Innsmouth Trial") [data-a=pack]').first().click();await p.waitForSelector('.pk-list');
+    for(const i of [0,1,2])await p.locator('.pk input').nth(i).check();};
+  await p.setViewportSize({width:1000,height:1000});await pack(p);await shot(p,'packing-list.png');
   await p.context().close();
 
   // Phone
   p=await page(P,PS);await p.waitForSelector('.plays > li');
-  await shot(p,'plays-phone.png');
   await p.locator('.play').first().click();await p.waitForSelector('.dlg');await shot(p,'log-phone.png');
   await p.keyboard.press('Escape');await p.waitForTimeout(150);
   await tab(p,'scenarios');await shot(p,'scenarios-phone.png');
-  await tab(p,'stats');await shot(p,'stats-phone.png');
+  await pack(p);await shot(p,'packing-phone.png');
   await p.context().close();
 
   // The welcome page, signed out

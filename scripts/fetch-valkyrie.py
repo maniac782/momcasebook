@@ -5,7 +5,7 @@ Without a path it downloads the file from GitHub. Bump js/version.js afterwards 
 Keeps names, authors, difficulty, length, the catalogue's community numbers (play count, pass rate,
 average length, rating), languages and the authors' descriptions (the catalogue is Apache 2.0; see third_party/). Rewrites the file only when something changed; scenarios that leave the
 catalogue are kept, marked retired. Run weekly by .github/workflows/valkyrie-refresh.yml."""
-import configparser, json, re, sys, os, datetime, urllib.request
+import unicodedata, configparser, json, re, sys, os, datetime, urllib.request
 URL='https://raw.githubusercontent.com/NPBruce/valkyrie-store/master/MoM/manifestDownload.ini'
 src=sys.argv[1] if len(sys.argv)>1 else None
 text=open(src,encoding='utf-8-sig').read() if src else urllib.request.urlopen(URL,timeout=60).read().decode('utf-8-sig')
@@ -46,10 +46,21 @@ for key in cp.sections():
     name=re.sub(r'\s*\(\s*v?(?:er\.?|ersion)?\s*\d+(?:\.\d+)+[a-z]?\s*\)','',name,flags=re.I)
     name=re.sub(r'\s+v?(?:er\.?|ersion)?\s*\d+\.\d+(?:\.\d+)*[a-z]?(?=\s|$)','',name,flags=re.I).strip() or name
     name=re.sub(r'\s+',' ',name)[:80]
-    k=slug(name).replace('the-','',1) if slug(name).startswith('the-') else slug(name)
+    name=re.sub(r'[\s\-\u2013\u2014:,]+$','',name) or name   # "Search for a Friend - V2.1" leaves a dangling dash
+    # a title only in a non-Latin script (Korean, Chinese, Russian) gives no usable id: show a title in Latin letters if
+    # the scenario has one, otherwise keep the original title and build the id from the catalogue key
+    latin=lambda t:bool(re.search(r'[A-Za-z0-9]',unicodedata.normalize('NFKD',t)))
+    idsrc=None
+    if not latin(name):
+        nover=lambda t:re.sub(r'\s*[\(\[]?\s*v(?:er(?:sion)?)?\.?\s*\d+(?:\.\d+)*[a-z]?\s*[\)\]]?\s*$','',clean(t),flags=re.I).strip()
+        alt=next((nover(v) for k2,v in sec.items() if k2.startswith('name.') and latin(nover(v))),None)
+        if alt: name=alt
+        else: idsrc=key
+    base=slug(idsrc or name)
+    k=base.replace('the-','',1) if base.startswith('the-') else base
     if k in seen: continue
     seen.add(k)
-    item={'id':'v-'+slug(name),'name':name,'type':'valkyrie','key':key}
+    item={'id':'v-'+base,'name':name,'type':'valkyrie','key':key}
     # original language, and every language it has a title in (translations)
     orig=sec.get('defaultlanguage','English').strip() or 'English'
     langs=sorted({k.split('.',1)[1] for k in sec if k.startswith('name.') and sec[k].strip()}|{orig})
@@ -92,9 +103,9 @@ if os.path.exists(target):
     try: old=json.loads(t[t.index('['):t.rindex(']')+1])
     except ValueError: old=[]
 # A scenario that drops out of the catalogue stays (marked retired) so plays of it still show its details.
-ids={x['id'] for x in out}
+ids={x['id'] for x in out};keys={x.get('key') for x in out}
 for x in old:
-    if x['id'] not in ids:
+    if x['id'] not in ids and x.get('key') not in keys:
         x=dict(x); x['retired']=True; out.append(x)
 out.sort(key=lambda s:slug(s['name']).replace('the-','',1))
 if old==out:
