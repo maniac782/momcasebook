@@ -28,7 +28,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   }
   const c=await ctx({viewport:{width:1100,height:900}});const p=await c.newPage();
   // counts keep their word on the same line with a no-break space (js/i18n.js); read it as a plain space here
-  {const nb=v=>typeof v==='string'?v.replace(/\u00a0/g,' '):Array.isArray(v)?v.map(nb):v;
+  {const nb=v=>typeof v==='string'?v.replace(/ /g,' '):Array.isArray(v)?v.map(nb):v;
    for(const proto of [Object.getPrototypeOf(p),Object.getPrototypeOf(p.locator('body'))])for(const m of ['textContent','innerText','allTextContents','allInnerTexts','evaluate','$$eval','$eval'])
      if(proto[m]&&!proto[m].__nb){const f=proto[m];proto[m]=async function(){return nb(await f.apply(this,arguments));};proto[m].__nb=1;}}
   p.on('pageerror',e=>errors.push('pageerror: '+e.message));p.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
@@ -262,12 +262,12 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   const pick2='A Time and Place';assert.strictEqual(await p.locator('.scs li',{hasText:'A Time and Place'}).locator('[data-a=again]').count(),0,'unplayed shows Log a play');await p.locator('.scs li',{hasText:'A Time and Place'}).locator('[data-a=log]').click();await p.waitForSelector('form[data-form=play]');
   assert.strictEqual(await p.evaluate(()=>document.querySelector('select[name=sc]').selectedOptions[0].textContent.replace(' • new','')),pick2,'Log a play opens with that scenario');
   // location: saved, shown, suggested next time (not filled in), counted in stats
-  await p.fill('input[name=loc]','Gerri\u2019s house');await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
+  await p.fill('input[name=loc]','Gerri’s house');await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
   await p.waitForSelector('.pl-meta:has-text("at Gerri")');
   await p.click('.bar [data-a=log]');assert.strictEqual(await p.inputValue('input[name=loc]'),'','a fresh Log a play starts with no place');
   assert.strictEqual(await p.inputValue('input[name=rules]'),'','no rules filled in (blank saves as Normal rules)');assert.strictEqual(await p.inputValue('input[name=date]'),'','no date');
   assert.strictEqual(await p.locator('.seat [name=pp]').first().inputValue(),'','no player filled in');assert.strictEqual(await p.locator('.seat [name=pi]').first().inputValue(),'','no investigator');
-  assert.ok(await p.locator('#dl-loc option[value="Gerri\u2019s house"]').count(),'the place is still suggested');await p.keyboard.press('Escape');
+  assert.ok(await p.locator('#dl-loc option[value="Gerri’s house"]').count(),'the place is still suggested');await p.keyboard.press('Escape');
   await p.click('[data-t=stats]');assert.ok(await p.locator('h2:text-is("Where you played")').count(),'location stats');
   // switching the list off in Settings keeps played ones only
   await p.click('[data-t=settings]');await p.uncheck('#s-valk');await p.waitForTimeout(150);
@@ -320,7 +320,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.locator('details[data-box=official] .scs li',{hasText:'Shattered Bonds'}).locator('.star.on').count(),1,'filled star in its own box too');
   await p.locator('details[data-box=starred] .scs li',{hasText:'Shattered Bonds'}).locator('[data-a=plan]').click();
   const tomorrow=await p.evaluate(()=>{const d=new Date();d.setDate(d.getDate()+1);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);});
-  await p.fill('input[name=pdate]',tomorrow);await p.fill('input[name=ptime]','19:00');await p.fill('input[name=ploc]','Gerri\u2019s house');
+  await p.fill('input[name=pdate]',tomorrow);await p.fill('input[name=ptime]','19:00');await p.fill('input[name=ploc]','Gerri’s house');
   await p.selectOption('select[name=pgrp]',{label:'Thursday group'});await p.fill('input[name=pnote]','bring snacks');
   await p.click('.dlg button[type=submit]');await p.waitForSelector('details[data-box=starred] .plan');
   assert.ok(/7 pm/.test(await p.textContent('details[data-box=starred] .plan')),'plan shows the time');
@@ -336,7 +336,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   // log it: filled in from the plan; afterwards it's off the starred list
   await p.locator('.nextup [data-a=logplan]').click();await p.waitForSelector('form[data-form=play]');
   assert.strictEqual(await p.inputValue('select[name=sc]'),'o-shattered-bonds');
-  assert.strictEqual(await p.inputValue('input[name=loc]'),'Gerri\u2019s house');
+  assert.strictEqual(await p.inputValue('input[name=loc]'),'Gerri’s house');
   assert.strictEqual(await p.locator('.seat').count(),3,'seats from the group');
   await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
   await p.waitForSelector('.nextup',{state:'detached'});
@@ -385,7 +385,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(await p.isHidden('.acctmenu'),'click outside closes it');
   await p.click('.acctbtn');await p.keyboard.press('Escape');assert.ok(await p.isHidden('.acctmenu'),'Escape closes it');
   await p.click('[data-t=settings]');assert.strictEqual(await p.locator('h2:text-is("You")').count(),0,'no longer in Settings');
-  // cross table: scenarios by investigators by default, every official one listed; swap, pick, show win rate, remembered
+  // Combinations (the cross table): scenarios by investigators by default, every official one listed; swap, pick, show win rate, remembered
   await p.click('[data-t=stats]');await p.waitForSelector('.xt');
   assert.ok(await p.locator('.xt tbody tr').count()>=24,'every official scenario in the rows');
   assert.ok(await p.locator('.xt thead th').count()>=41,'every official investigator in the columns');
@@ -395,7 +395,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.evaluate(()=>JSON.parse(localStorage.getItem('mom-xtab')).c),'result','choice remembered');
   await p.selectOption('#xt-r','scenario');await p.selectOption('#xt-c','investigator');await p.selectOption('#xt-v','plays');
   const rowVal=async(table,name)=>{await p.click('[data-t=stats]');return p.evaluate(([t,n])=>{const sec=[...document.querySelectorAll('section.sec')].find(s=>s.querySelector('h2')&&s.querySelector('h2').textContent===t);
-    if(!sec)return null;const tr=[...sec.querySelectorAll('tbody tr')].find(r=>r.cells[0].textContent.replace(/\u00a0/g,' ')===n);return tr?[+tr.cells[1].textContent,+tr.cells[2].textContent]:[0,0];},[table,name]);};
+    if(!sec)return null;const tr=[...sec.querySelectorAll('tbody tr')].find(r=>r.cells[0].textContent.replace(/ /g,' ')===n);return tr?[+tr.cells[1].textContent,+tr.cells[2].textContent]:[0,0];},[table,name]);};
   const danBefore=await rowVal('Who you played with','Dan'),twoBefore=await rowVal('Party size','2 players'),soloBefore=await rowVal('Party size','Solo');
   await p.evaluate(async()=>{const db=firebase.app().firestore(),u=firebase.app().auth().currentUser.uid;
     await db.collection('users/'+u+'/plays').add({scenarioId:'o-dark-reflections',scenarioName:'Dark Reflections',scenarioType:'official',date:'2026-10-01',result:'pass',attempts:1,

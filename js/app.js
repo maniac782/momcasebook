@@ -433,7 +433,7 @@ function lenText(m){
   var unit=function(x,n){return mins(x)?t('{n} min',{n:n}):t('{n} h',{n:n});};
   if(m[0]&&m[0]!==m[1])return mins(m[0])===mins(m[1])?unit(m[1],num(m[0])+'–'+num(m[1])):unit(m[0],num(m[0]))+'–'+unit(m[1],num(m[1]));
   return unit(m[1],num(m[1]));}
-// ---------- cross table (Stats tab): any two things against each other ----------
+// ---------- Combinations (Stats tab): any two things against each other, a cross table ----------
 // Rows and columns are picked from the dimensions below; each cell counts the plays that have both. "Include ones not
 // played yet" adds every official scenario and investigator from the boxes you own (and your saved players), so the
 // empty cells show combinations still to try. The choice is remembered on this device.
@@ -480,7 +480,7 @@ function xtabHtml(){
   if(!xt.all){rOrder.sort(byCount(rTot));cOrder.sort(byCount(cTot));}
   var sel=function(id,val,opts){return '<select class="f" id="'+id+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';};
   var dims=XDIMS.map(function(d){return [d,xdimName(d)];});
-  var h='<section class="sec xtab"><div class="sec-head"><h2>'+t('Cross table')+'</h2></div>'+
+  var h='<section class="sec xtab"><div class="sec-head"><h2>'+t('Combinations')+'</h2></div>'+
     '<p class="note">'+t('Pick what goes in the rows and the columns. An empty cell is a combination you haven’t played yet.')+'</p>'+
     '<div class="filters xt-pick"><label class="field"><span class="lbl">'+t('Rows')+'</span>'+sel('xt-r',xt.r,dims)+'</label>'+
     '<button class="btn sm xt-swap" type="button" data-a="xtswap" title="'+t('Swap rows and columns')+'" aria-label="'+t('Swap rows and columns')+'">⇄</button>'+

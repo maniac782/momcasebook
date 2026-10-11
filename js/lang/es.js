@@ -472,7 +472,7 @@ I18N.add('es',[
 [`Our first game together.`,`Nuestra primera partida juntos.`],
 [`Solved four of the five.`,`Resolvimos cuatro de los cinco.`],
 [`Mirrors everywhere. Loved it.`,`Espejos por todas partes. Nos encantó.`],
-[`Cross table`,`Tabla cruzada`],
+[`Combinations`,`Combinaciones`],
 [`Pick what goes in the rows and the columns. An empty cell is a combination you haven’t played yet.`,`Elige qué va en las filas y en las columnas. Una celda vacía es una combinación que aún no has jugado.`],
 [`Rows`,`Filas`],
 [`Swap rows and columns`,`Intercambiar filas y columnas`],

@@ -472,7 +472,7 @@ I18N.add('ca',[
 [`Our first game together.`,`La nostra primera partida junts.`],
 [`Solved four of the five.`,`Vam resoldre'n quatre de cinc.`],
 [`Mirrors everywhere. Loved it.`,`Miralls per tot arreu. Ens va encantar.`],
-[`Cross table`,`Taula creuada`],
+[`Combinations`,`Combinacions`],
 [`Pick what goes in the rows and the columns. An empty cell is a combination you haven’t played yet.`,`Tria què va a les files i a les columnes. Una cel·la buida és una combinació que encara no has jugat.`],
 [`Rows`,`Files`],
 [`Swap rows and columns`,`Intercanvia files i columnes`],
