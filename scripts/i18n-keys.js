@@ -5,11 +5,13 @@
 // test/i18n.test.js uses keys() to check every language has them all.
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..');
-const SCRIPTS=['js/app.js','js/shared.js','js/importer.js','js/catalog.js','js/i18n.js'];
+const SCRIPTS=['js/app.js','js/shared.js','js/importer.js','js/catalog.js','js/i18n.js','js/demo.js'];
 const PAGES=['index.html','admin.html','privacy.html'];
 // keys made at run time: result labels, the profile colors and "Normal rules" (Valkyrie's language names come from
 // the browser's own list, see langName in js/app.js)
 const DYNAMIC=['Won','Lost','Abandoned','Normal rules','Not stated',
+  // the first-edition and core set names (packing-list tags' tooltips, SETS in js/app.js)
+  'Second Edition Core','First Edition Core','Call of the Wild','Forbidden Alchemy',
   'slate','crimson','rust','forest','teal','navy','violet','rose'];
 function unescape(s){return s.replace(/\\u([0-9a-fA-F]{4})/g,(m,h)=>String.fromCharCode(parseInt(h,16))).replace(/\\n/g,'\n').replace(/\\(.)/g,'$1');}
 function keys(){

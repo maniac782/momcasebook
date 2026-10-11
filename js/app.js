@@ -371,7 +371,8 @@ function packOf(s){var ty=s&&(s.type||s.from);return ty==='valkyrie'&&s.vkey&&(w
 // can't be used here); first-edition content keeps its first-edition symbol in the boxes that reprint it
 var SETS={'2e':['Core','Second Edition Core'],'1e':['1E','First Edition Core'],'cotw':['CotW','Call of the Wild'],'fa':['FA','Forbidden Alchemy'],
   btt:['BtT','Beyond the Threshold'],soa:['SoA','Streets of Arkham'],sot:['SoT','Sanctum of Twilight'],hj:['HJ','Horrific Journeys'],pots:['PotS','Path of the Serpent']};
-function setTag(e){var st=SETS[e];return st?'<span class="set s-'+e+'" title="'+esc(st[1])+'">'+esc(st[0])+'</span>':'<span class="set s-fan" title="'+t('Not from a Fantasy Flight box')+'">'+t('Fan')+'</span>';}
+// the full name (in the reader's language) is the tag's tooltip; the short tag stays the same everywhere
+function setTag(e){var st=SETS[e];return st?'<span class="set s-'+e+'" title="'+esc(t(st[1]))+'">'+esc(st[0])+'</span>':'<span class="set s-fan" title="'+t('Not from a Fantasy Flight box')+'">'+t('Fan')+'</span>';}
 function boxName(id){return id?(MOM.productName(id)||id):t('fan-made tile');}
 function canPlay(s){var p=packOf(s);if(!p||p.other)return false;var o=owned();return p.need.every(function(b){return o.indexOf(b)>=0;});}
 function needsHtml(s){var p=packOf(s);if(!p||!p.need.length)return '';var o=owned();

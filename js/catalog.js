@@ -4,18 +4,18 @@
    Investigators are a fixed official list: plays can only name these. */
 (function(root){
 'use strict';
-// the two descriptive names are shown in the reader's language (js/i18n.js); the rest are the products' own names
+// product names in the reader's language (js/i18n.js): each publisher's own title for its edition
 var T=function(s){return typeof root.t==='function'?root.t(s):s;};
 var PRODUCTS=[
   {id:'core',name:T('Core game'),scenarios:['Escape from Innsmouth','Shattered Bonds','Cycle of Eternity','Rising Tide']},
   {id:'dlc',name:T('Digital (app purchase)'),scenarios:['What Lies Within','Dark Reflections','Altered Fates','Turn of a Page','Mirror of a Man']},
-  {id:'rn',name:'Recurring Nightmares',scenarios:['Dearly Departed']},
-  {id:'sm',name:'Suppressed Memories',scenarios:['Cult of Sentinel Hill']},
-  {id:'btt',name:'Beyond the Threshold',scenarios:['Gates of Silverwood Manor','Vengeful Impulses']},
-  {id:'soa',name:'Streets of Arkham',scenarios:['Astral Alchemy','Gangs of Arkham','Ill-Fated Exhibit']},
-  {id:'sot',name:'Sanctum of Twilight',scenarios:['The Twilight Diadem','Behind Closed Doors']},
-  {id:'hj',name:'Horrific Journeys',scenarios:['Murder on the Stargazer Majestic','10:50 to Arkham','Hidden Depths']},
-  {id:'pots',name:'Path of the Serpent',scenarios:['The Jungle Awakens','Into the Dark','Lost Temple of Yig']}
+  {id:'rn',name:T('Recurring Nightmares'),scenarios:['Dearly Departed']},
+  {id:'sm',name:T('Suppressed Memories'),scenarios:['Cult of Sentinel Hill']},
+  {id:'btt',name:T('Beyond the Threshold'),scenarios:['Gates of Silverwood Manor','Vengeful Impulses']},
+  {id:'soa',name:T('Streets of Arkham'),scenarios:['Astral Alchemy','Gangs of Arkham','Ill-Fated Exhibit']},
+  {id:'sot',name:T('Sanctum of Twilight'),scenarios:['The Twilight Diadem','Behind Closed Doors']},
+  {id:'hj',name:T('Horrific Journeys'),scenarios:['Murder on the Stargazer Majestic','10:50 to Arkham','Hidden Depths']},
+  {id:'pots',name:T('Path of the Serpent'),scenarios:['The Jungle Awakens','Into the Dark','Lost Temple of Yig']}
 ];
 // The official Second Edition investigators, by the product that includes them. Only these can be saved on a play
 // (firestore.rules holds the same list; test/house-rules.test.js checks they match). Sources: Valkyrie's content data
@@ -23,13 +23,13 @@ var PRODUCTS=[
 // product lists for the two figure collections.
 var INVESTIGATOR_GROUPS=[
   {product:'core',name:T('Core game'),list:['Agatha Crane','Carson Sinclair','Father Mateo','Minh Thi Phan','Preston Fairmont','Rita Young','Wendy Adams','William Yorick']},
-  {product:'rn',name:'Recurring Nightmares',list:['"Ashcan" Pete','Gloria Goldberg','Harvey Walters','Jenny Barnes','Joe Diamond','Kate Winthrop','Michael McGlen','Sister Mary']},
-  {product:'sm',name:'Suppressed Memories',list:['Amanda Sharpe','Bob Jenkins','Carolyn Fern','Darrell Simmons','Dexter Drake','Mandy Thompson','Monterey Jack','Vincent Lee']},
-  {product:'btt',name:'Beyond the Threshold',list:['Akachi Onyele','Wilson Richards']},
-  {product:'soa',name:'Streets of Arkham',list:['Diana Stanley','Finn Edwards','Marie Lambeau','Tommy Muldoon']},
-  {product:'sot',name:'Sanctum of Twilight',list:['Charlie Kane','Lily Chen']},
-  {product:'hj',name:'Horrific Journeys',list:['Agnes Baker','Jim Culver','Silas Marsh','Trish Scarborough']},
-  {product:'pots',name:'Path of the Serpent',list:['Daniela Reyes','Leo Anderson','Norman Withers','Ursula Downs']}
+  {product:'rn',name:T('Recurring Nightmares'),list:['"Ashcan" Pete','Gloria Goldberg','Harvey Walters','Jenny Barnes','Joe Diamond','Kate Winthrop','Michael McGlen','Sister Mary']},
+  {product:'sm',name:T('Suppressed Memories'),list:['Amanda Sharpe','Bob Jenkins','Carolyn Fern','Darrell Simmons','Dexter Drake','Mandy Thompson','Monterey Jack','Vincent Lee']},
+  {product:'btt',name:T('Beyond the Threshold'),list:['Akachi Onyele','Wilson Richards']},
+  {product:'soa',name:T('Streets of Arkham'),list:['Diana Stanley','Finn Edwards','Marie Lambeau','Tommy Muldoon']},
+  {product:'sot',name:T('Sanctum of Twilight'),list:['Charlie Kane','Lily Chen']},
+  {product:'hj',name:T('Horrific Journeys'),list:['Agnes Baker','Jim Culver','Silas Marsh','Trish Scarborough']},
+  {product:'pots',name:T('Path of the Serpent'),list:['Daniela Reyes','Leo Anderson','Norman Withers','Ursula Downs']}
 ];
 var INVESTIGATORS=[];INVESTIGATOR_GROUPS.forEach(function(g){INVESTIGATORS=INVESTIGATORS.concat(g.list);});
 
