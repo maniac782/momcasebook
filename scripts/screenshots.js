@@ -61,6 +61,11 @@ const HIDE='.demoban{display:none!important}';
   await tab(p,'scenarios');await shot(p,'scenarios-phone.png');
   await pack(p);await shot(p,'packing-phone.png');
   await p.context().close();
+  // the same phone in Spanish: official scenarios under the names the app uses there, the English one underneath
+  p=await page(P,PS,'?demo=1&lang=es');await p.waitForSelector('.plays > li');
+  await tab(p,'scenarios');await p.evaluate(()=>{document.querySelector('details[data-box=starred]').open=false;const o=document.querySelector('details[data-box=official]');o.open=true;o.scrollIntoView();});
+  await settle(p,true);await p.screenshot({path:path.join(out,'spanish-phone.png')});console.log('wrote spanish-phone.png');
+  await p.context().close();
 
   // The welcome page, signed out
   p=await page({width:1280,height:900},1.1,'');await p.waitForSelector('#demoframe');
