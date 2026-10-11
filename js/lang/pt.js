@@ -473,6 +473,33 @@ I18N.add('pt',[
 [`Solved four of the five.`,`Resolvemos quatro dos cinco.`],
 [`Mirrors everywhere. Loved it.`,`Espelhos por todo lado. Adoramos.`]
 ],{
+// Official scenario names from Ludopedia's entries for each box, the app's App Store release notes and in-app purchases. Not yet confirmed (translated for this site, please correct): o-the-twilight-diadem, o-murder-on-the-stargazer-majestic, o-10-50-to-arkham, o-hidden-depths, o-the-jungle-awakens, o-into-the-dark, o-lost-temple-of-yig.
+scenarios:{
+'o-cycle-of-eternity':`Ciclo da Eternidade`,
+'o-escape-from-innsmouth':`Fuga de Innsmouth`,
+'o-shattered-bonds':`Laços Destruídos`,
+'o-rising-tide':`Maré Crescente`,
+'o-what-lies-within':`O Que Jaz no Interior`,
+'o-dark-reflections':`Reflexões Escuras`,
+'o-altered-fates':`Destinos Alterados`,
+'o-turn-of-a-page':`Virar uma Página`,
+'o-mirror-of-a-man':`Espelho de um Homem`,
+'o-dearly-departed':`Saudosos Falecidos`,
+'o-cult-of-sentinel-hill':`O Culto de Sentinel Hill`,
+'o-gates-of-silverwood-manor':`Portais no Solar do Bosque Prateado`,
+'o-vengeful-impulses':`Impulsos Vingativos`,
+'o-astral-alchemy':`Alquimia Astral`,
+'o-gangs-of-arkham':`Gangues de Arkham`,
+'o-ill-fated-exhibit':`Exposição Malfadada`,
+'o-the-twilight-diadem':`O Diadema do Crepúsculo`,
+'o-behind-closed-doors':`A Portas Fechadas`,
+'o-murder-on-the-stargazer-majestic':`Assassinato no Stargazer Majestic`,
+'o-10-50-to-arkham':`O Trem das 10:50 para Arkham`,
+'o-hidden-depths':`Profundezas Ocultas`,
+'o-the-jungle-awakens':`A Selva Desperta`,
+'o-into-the-dark':`Na Escuridão`,
+'o-lost-temple-of-yig':`O Templo Perdido de Yig`
+},
 premises:{
 'o-cycle-of-eternity':`Coisas estranhas estão acontecendo na mansão Vanderbilt. Toda partida começa no mesmo saguão e leva à mesma verdade, mas os cômodos atrás das portas, e o que espera neles, mudam a cada vez que você joga.`,
 'o-shattered-bonds':`Grace Bechman, uma velha conhecida que acaba de voltar das ilhas do sul, pede sua ajuda: algo está caçando a família dela. Restaure os antigos laços que um dia protegeram o mundo e mantenha os Bechman em segurança.`,

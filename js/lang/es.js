@@ -473,6 +473,33 @@ I18N.add('es',[
 [`Solved four of the five.`,`Resolvimos cuatro de los cinco.`],
 [`Mirrors everywhere. Loved it.`,`Espejos por todas partes. Nos encantó.`]
 ],{
+// Official scenario names as the companion app and Edge's boxes give them (sources: Leyenda.net's entries for each box, the app's App Store release notes and in-app purchases, Spanish shop listings and forum posts).
+scenarios:{
+'o-cycle-of-eternity':`El ciclo de la eternidad`,
+'o-escape-from-innsmouth':`Huida de Innsmouth`,
+'o-shattered-bonds':`Lazos inquebrantables`,
+'o-rising-tide':`Marea creciente`,
+'o-what-lies-within':`Lo que acecha en el interior`,
+'o-dark-reflections':`Reflexiones oscuras`,
+'o-altered-fates':`Destinos alterados`,
+'o-turn-of-a-page':`Paso de página`,
+'o-mirror-of-a-man':`Espejo de un hombre`,
+'o-dearly-departed':`Toque de difuntos`,
+'o-cult-of-sentinel-hill':`La secta de Sentinel Hill`,
+'o-gates-of-silverwood-manor':`Las puertas de la mansión Silverwood`,
+'o-vengeful-impulses':`La venganza está servida`,
+'o-astral-alchemy':`Alquimia astral`,
+'o-gangs-of-arkham':`Guerra de bandas en Arkham`,
+'o-ill-fated-exhibit':`La exposición maldita`,
+'o-the-twilight-diadem':`La diadema del crepúsculo`,
+'o-behind-closed-doors':`Tras puertas cerradas`,
+'o-murder-on-the-stargazer-majestic':`Asesinato en el Stargazer Majestic`,
+'o-10-50-to-arkham':`Tren de las 10:50 a Arkham`,
+'o-hidden-depths':`Profundidades ignotas`,
+'o-the-jungle-awakens':`La selva ha despertado`,
+'o-into-the-dark':`En la oscuridad`,
+'o-lost-temple-of-yig':`El templo perdido de Yig`
+},
 premises:{
 'o-cycle-of-eternity':`Pasan cosas extrañas en la mansión Vanderbilt. Cada partida empieza en el mismo vestíbulo y lleva a la misma verdad, pero las habitaciones tras las puertas, y lo que aguarda en ellas, cambian cada vez que juegas.`,
 'o-shattered-bonds':`Grace Bechman, una vieja conocida recién llegada de las islas del sur, te pide ayuda: algo está dando caza a su familia. Restaura los antiguos vínculos que en su día protegieron el mundo y mantén a salvo a los Bechman.`,

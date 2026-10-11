@@ -3,8 +3,7 @@
 // Run: node test/i18n.test.js
 const assert=require('assert'),fs=require('fs'),path=require('path');
 const {keys,table,LANGS}=require('../scripts/i18n-keys.js');
-global.globalThis.MOM=undefined;
-require('../js/official-info.js');require('../js/reviews.js');
+require('../js/valkyrie.js');require('../js/catalog.js');require('../js/official-info.js');require('../js/reviews.js');
 const K=keys(),PREM=globalThis.MOM_OFFICIAL_INFO,REV=globalThis.MOM_REVIEWS;
 const holes=s=>(String(s).match(/\{\w+\}/g)||[]).sort().join(' ');
 const tags=s=>(String(s).match(/<\/?[a-z][^>]*>/g)||[]).map(x=>x.replace(/\s+/g,' ')).sort().join(' ');
@@ -32,6 +31,7 @@ for(const code of LANGS){
   }
   for(const k of Object.keys(T.strings))if(!(k in K))problems.push(code+': unused '+JSON.stringify(k));
   for(const id in PREM)if(!T.premises[id])problems.push(code+': no premise for '+id);
+  for(const s of globalThis.MOM.OFFICIAL)if(!(T.scenarios||{})[s.id])problems.push(code+': no name for scenario '+s.id);
   for(const id in REV)REV[id].forEach((r,i)=>{if(!(T.reviews[id]||[])[i])problems.push(code+': no review '+id+' #'+i);});
 }
 if(problems.length){console.error(problems.slice(0,60).join('\n')+(problems.length>60?'\n… and '+(problems.length-60)+' more':''));process.exit(1);}

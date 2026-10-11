@@ -473,6 +473,33 @@ I18N.add('fr',[
 [`Solved four of the five.`,`Quatre sur cinq résolus.`],
 [`Mirrors everywhere. Loved it.`,`Des miroirs partout. On a adoré.`]
 ],{
+// Official scenario names from the app's App Store release notes and in-app purchases, and a French players' list; "Secrets enfouis" (What Lies Within) is from that list only.
+scenarios:{
+'o-cycle-of-eternity':`Cycle de l’éternité`,
+'o-escape-from-innsmouth':`Le Cauchemar d’Innsmouth`,
+'o-shattered-bonds':`Les Liens brisés`,
+'o-rising-tide':`Marée montante`,
+'o-what-lies-within':`Secrets enfouis`,
+'o-dark-reflections':`Réflexions sombres`,
+'o-altered-fates':`Destinées altérées`,
+'o-turn-of-a-page':`Tourner une page`,
+'o-mirror-of-a-man':`Miroir d’un homme`,
+'o-dearly-departed':`Nos chers disparus`,
+'o-cult-of-sentinel-hill':`Le Culte de Sentinel Hill`,
+'o-gates-of-silverwood-manor':`Les Portes du manoir Silverwood`,
+'o-vengeful-impulses':`Impulsion vengeresse`,
+'o-astral-alchemy':`Alchimie astrale`,
+'o-gangs-of-arkham':`Les Gangs d’Arkham`,
+'o-ill-fated-exhibit':`Exposition funeste`,
+'o-the-twilight-diadem':`Le Diadème du crépuscule`,
+'o-behind-closed-doors':`À huis clos`,
+'o-murder-on-the-stargazer-majestic':`Meurtre à bord du Stargazer Majestic`,
+'o-10-50-to-arkham':`Le Train de 22h50 pour Arkham`,
+'o-hidden-depths':`Profondeurs insondables`,
+'o-the-jungle-awakens':`Le Réveil de la jungle`,
+'o-into-the-dark':`Dans les ténèbres`,
+'o-lost-temple-of-yig':`Le Temple perdu de Yig`
+},
 premises:{
 'o-cycle-of-eternity':`D’étranges choses se passent au manoir Vanderbilt. Chaque partie commence dans le même vestibule et mène à la même vérité, mais les pièces derrière les portes, et ce qui vous y attend, changent à chaque fois.`,
 'o-shattered-bonds':`Grace Bechman, une ancienne connaissance tout juste revenue des îles du Sud, vous demande de l’aide : quelque chose traque sa famille. Restaurez les anciens liens qui protégeaient autrefois le monde et mettez les Bechman à l’abri.`,

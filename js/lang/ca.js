@@ -473,6 +473,33 @@ I18N.add('ca',[
 [`Solved four of the five.`,`Vam resoldre'n quatre de cinc.`],
 [`Mirrors everywhere. Loved it.`,`Miralls per tot arreu. Ens va encantar.`]
 ],{
+// There's no Catalan edition of the game or app, so official scenario names are the Spanish ones players see in the app.
+scenarios:{
+'o-cycle-of-eternity':`El ciclo de la eternidad`,
+'o-escape-from-innsmouth':`Huida de Innsmouth`,
+'o-shattered-bonds':`Lazos inquebrantables`,
+'o-rising-tide':`Marea creciente`,
+'o-what-lies-within':`Lo que acecha en el interior`,
+'o-dark-reflections':`Reflexiones oscuras`,
+'o-altered-fates':`Destinos alterados`,
+'o-turn-of-a-page':`Paso de página`,
+'o-mirror-of-a-man':`Espejo de un hombre`,
+'o-dearly-departed':`Toque de difuntos`,
+'o-cult-of-sentinel-hill':`La secta de Sentinel Hill`,
+'o-gates-of-silverwood-manor':`Las puertas de la mansión Silverwood`,
+'o-vengeful-impulses':`La venganza está servida`,
+'o-astral-alchemy':`Alquimia astral`,
+'o-gangs-of-arkham':`Guerra de bandas en Arkham`,
+'o-ill-fated-exhibit':`La exposición maldita`,
+'o-the-twilight-diadem':`La diadema del crepúsculo`,
+'o-behind-closed-doors':`Tras puertas cerradas`,
+'o-murder-on-the-stargazer-majestic':`Asesinato en el Stargazer Majestic`,
+'o-10-50-to-arkham':`Tren de las 10:50 a Arkham`,
+'o-hidden-depths':`Profundidades ignotas`,
+'o-the-jungle-awakens':`La selva ha despertado`,
+'o-into-the-dark':`En la oscuridad`,
+'o-lost-temple-of-yig':`El templo perdido de Yig`
+},
 premises:{
 'o-cycle-of-eternity':`Passen coses estranyes a la mansió Vanderbilt. Cada partida comença al mateix vestíbul i porta a la mateixa veritat, però les habitacions de darrere les portes, i el que hi espera, canvien cada vegada que hi jugues.`,
 'o-shattered-bonds':`Grace Bechman, una vella coneguda que acaba de tornar de les illes del sud, et demana ajuda: alguna cosa està caçant la seva família. Restaura els antics vincles que un dia van protegir el món i mantén els Bechman a salvo.`,

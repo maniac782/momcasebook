@@ -474,6 +474,33 @@ I18N.add('pl',[
 [`Solved four of the five.`,`Rozwiązaliśmy cztery z pięciu.`],
 [`Mirrors everywhere. Loved it.`,`Lustra wszędzie. Świetne.`]
 ],{
+// Official scenario names confirmed from Polish reviews and shops: o-cycle-of-eternity, o-escape-from-innsmouth, o-astral-alchemy, o-gangs-of-arkham, o-ill-fated-exhibit, o-gates-of-silverwood-manor, o-10-50-to-arkham. The rest are translated for this site and not yet confirmed against Galakta's app text; please correct.
+scenarios:{
+'o-cycle-of-eternity':`Krąg Wieczności`,
+'o-escape-from-innsmouth':`Ucieczka z Innsmouth`,
+'o-shattered-bonds':`Zerwane więzy`,
+'o-rising-tide':`Przypływ`,
+'o-what-lies-within':`Co kryje się w środku`,
+'o-dark-reflections':`Mroczne odbicia`,
+'o-altered-fates':`Odmienione losy`,
+'o-turn-of-a-page':`Przewrócona kartka`,
+'o-mirror-of-a-man':`Lustro człowieka`,
+'o-dearly-departed':`Drodzy zmarli`,
+'o-cult-of-sentinel-hill':`Kult z Sentinel Hill`,
+'o-gates-of-silverwood-manor':`Wrota do Dworu Silverwood`,
+'o-vengeful-impulses':`Mściwe pobudki`,
+'o-astral-alchemy':`Astralna Alchemia`,
+'o-gangs-of-arkham':`Gangi Arkham`,
+'o-ill-fated-exhibit':`Pechowa wystawa`,
+'o-the-twilight-diadem':`Diadem Zmierzchu`,
+'o-behind-closed-doors':`Za zamkniętymi drzwiami`,
+'o-murder-on-the-stargazer-majestic':`Morderstwo na pokładzie Stargazer Majestic`,
+'o-10-50-to-arkham':`10:50 do Arkham`,
+'o-hidden-depths':`Ukryte głębiny`,
+'o-the-jungle-awakens':`Dżungla się budzi`,
+'o-into-the-dark':`W ciemność`,
+'o-lost-temple-of-yig':`Zaginiona świątynia Yiga`
+},
 premises:{
 'o-cycle-of-eternity':`W posiadłości Vanderbiltów dzieją się dziwne rzeczy. Każda gra zaczyna się w tym samym holu i prowadzi do tej samej prawdy, ale pokoje za drzwiami, i to, co w nich czeka, zmieniają się przy każdej rozgrywce.`,
 'o-shattered-bonds':`Grace Bechman, dawna znajoma, która właśnie wróciła z południowych wysp, prosi cię o pomoc: coś poluje na jej rodzinę. Przywróć dawne więzi, które niegdyś chroniły świat, i zapewnij Bechmanom bezpieczeństwo.`,

@@ -132,7 +132,7 @@ function filtered(){
     if(ui.result&&p.result!==ui.result)return false;
     if(ui.scen&&p.scenarioId!==ui.scen)return false;
     if(ui.player&&!(p.party||[]).some(function(s){return s.player===ui.player||s.investigator===ui.player;}))return false;
-    if(q){var hay=[p.scenarioName,p.notes,p.rules,p.location].concat((p.party||[]).map(function(s){return s.player+' '+s.investigator;})).join(' ').toLowerCase();if(hay.indexOf(q)<0)return false;}
+    if(q){var hay=[p.scenarioName,scName(p.scenarioId,p.scenarioName),p.notes,p.rules,p.location].concat((p.party||[]).map(function(s){return s.player+' '+s.investigator;})).join(' ').toLowerCase();if(hay.indexOf(q)<0)return false;}
     return true;
   });
 }
@@ -141,14 +141,14 @@ function playsHtml(){
   if(!plays.length)return '<section class="sec empty"><h2>'+t('No plays yet')+'</h2><p class="note">'+t('Log your first game with <b>+ Log a play</b>, or bring in the spreadsheet you’ve been keeping.')+'</p>'+
     '<div class="row"><button class="btn pri" data-a="log">'+t('+ Log a play')+'</button><button class="btn" data-a="goimport">'+t('Import a spreadsheet')+'</button></div></section>';
   var list=filtered(),people=names('player'),invs=names('investigator'),probs=investigatorProblems(),sprobs=scenarioProblems();
-  var scs={};plays.forEach(function(p){scs[p.scenarioId]=p.scenarioName;});
+  var scs={};plays.forEach(function(p){scs[p.scenarioId]=scName(p.scenarioId,p.scenarioName);});
   var h='<div class="filters"><label class="field grow"><span class="lbl">'+t('Search')+'</span><input class="f" id="q" type="search" value="'+esc(ui.q)+'" placeholder="'+t('Scenario, person, investigator or notes')+'" autocomplete="off"></label>'+
     sel('fres',t('Result'),ui.result,[['',t('Any')],['pass',t('Won')],['fail',t('Lost')],['abandoned',t('Abandoned')]])+
     sel('fpl',t('Player or investigator'),ui.player,[['',t('Anyone')]].concat(people.map(function(n){return [n,n];}),invs.length?[['-','────']]:[],invs.map(function(n){return [n,n];})))+
     sel('fsc',t('Scenario'),ui.scen,[['',t('Any')]].concat(Object.keys(scs).sort(function(a,b){return scs[a].localeCompare(scs[b]);}).map(function(k){return [k,scs[k]];})))+'</div>';
   // the next scheduled game, if any
   var np=nextPlan();
-  if(np)h='<section class="sec nextup"><div class="grow"><span class="lbl">'+t('Next game')+'</span><b>'+esc(np.sc.name)+'</b><span class="note">'+esc(planText(np.plan))+'</span></div>'+
+  if(np)h='<section class="sec nextup"><div class="grow"><span class="lbl">'+t('Next game')+'</span><b>'+esc(scName(np.sc.id,np.sc.name))+'</b><span class="note">'+esc(planText(np.plan))+'</span></div>'+
     '<div class="row tight"><span class="placewrap"><button class="btn sm" data-a="calmenu" data-sc="'+esc(np.id)+'">'+t('Add to calendar')+'</button></span>'+(packOf(np.sc)?'<button class="btn sm" data-a="pack" data-sc="'+esc(np.id)+'">'+ICON_BOX+t('Packing list')+'</button>':'')+'<button class="btn sm pri" data-a="logplan" data-sc="'+esc(np.id)+'">'+t('Log this game')+'</button></div></section>'+h;
   if(probs.length)h='<section class="sec notice" role="status"><div class="grow"><b>'+t('Some investigator names aren’t official ones')+'</b><span class="note">'+tn('{n} name ({names}) needs matching to an official investigator.','{n} names ({names}) need matching to an official investigator.',probs.length,{names:probs.slice(0,3).map(function(x){return '“'+esc(x.text)+'”';}).join(', ')+(probs.length>3?'…':'')})+'</span></div><button class="btn pri" data-a="fixinv">'+t('Fix them')+'</button></section>'+h;
   if(sprobs.length)h='<section class="sec notice" role="status"><div class="grow"><b>'+tn('{n} play isn’t matched to an official or Valkyrie scenario','{n} plays aren’t matched to an official or Valkyrie scenario',sprobs.length)+'</b><span class="note">'+t('Every play needs a real scenario. Pick the right one for each name; good guesses are filled in.')+'</span></div><button class="btn pri" data-a="fixsc">'+t('Match them')+'</button></section>'+h;
@@ -163,7 +163,7 @@ function playsHtml(){
     // the result sits at the right, centred on the card, so results line up down the list
     return '<li><button class="play" data-a="edit" data-id="'+esc(p.id)+'"><span class="pl-main">'+
       plMeta(p)+
-      '<span class="pl-name">'+esc(p.scenarioName)+'</span>'+
+      '<span class="pl-name">'+esc(scName(p.scenarioId,p.scenarioName))+'</span>'+
       (partyText(p)?'<span class="pl-party">'+partyText(p)+'</span>':'<span class="pl-party none">'+t('Players not recorded')+'</span>')+
       (p.rules&&p.rules!==NORMAL?'<span class="pl-rules">'+esc(p.rules)+'</span>':'')+
       (p.notes?'<span class="pl-notes">'+esc(p.notes)+'</span>':'')+'</span>'+
@@ -210,7 +210,7 @@ function scenariosHtml(){
   var D={easy:[0,0.35],medium:[0.35,0.6],hard:[0.6,0.8],vhard:[0.8,2]},L={short:[0,120],mid:[120,180],long:[180,240],xlong:[240,1e9]};
   var list=all.filter(function(s){
     var x=st[s.id];
-    if(sq&&((s.name||'')+' '+(s.author||'')+' '+(s.desc||'')+' '+((officialInfo(s)||{}).text||'')+' '+(premiseText(s)||'')).toLowerCase().indexOf(sq)<0)return false;
+    if(sq&&((s.name||'')+' '+scName(s.id,'')+' '+(s.author||'')+' '+(s.desc||'')+' '+((officialInfo(s)||{}).text||'')+' '+(premiseText(s)||'')).toLowerCase().indexOf(sq)<0)return false;
     if(sf.src!=='all'&&s.from!==sf.src)return false;
     if(f==='new'&&x||f==='unbeaten'&&x&&x.pass||f==='failed'&&!(x&&!x.pass)||f==='beaten'&&!(x&&x.pass))return false;
     if(sf.diff!=='any'){var d=D[sf.diff];if(!s.difficulty||s.difficulty<d[0]||s.difficulty>=d[1])return false;}
@@ -255,7 +255,7 @@ function scenariosHtml(){
       (s.win!=null?t('{n}% win rate',{n:Math.round(s.win*100)}):'')+' · '+tn('{n} play on Valkyrie','{n} plays on Valkyrie',s.plays,{n:fmtNum(s.plays)}):'';
     var yours=x?(x.last?tn('You: {n} play, {won} won, last {date}','You: {n} plays, {won} won, last {date}',x.n,{won:x.pass,date:esc(fmtDate(x.last))}):tn('You: {n} play, {won} won','You: {n} plays, {won} won',x.n,{won:x.pass})):'';
     var rv=reviewsOf(s);
-    return '<li class="sc">'+starBtn(s.id,!!star)+'<div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(s.name)+'</a>':esc(s.name))+'</b>'+chip+'</span>'+
+    return '<li class="sc">'+starBtn(s.id,!!star)+'<div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(scName(s.id,s.name))+'</a>':esc(scName(s.id,s.name)))+'</b>'+chip+'</span>'+(scName(s.id,s.name)!==s.name?'<span class="note orig" lang="en">'+esc(s.name)+'</span>':'')+
       '<span class="note">'+facts+'</span>'+needsHtml(s)+(plan?'<span class="plan">'+ICON_CAL+'<span>'+esc(planText(plan))+'</span></span>':'')+(comm?'<span class="note community">'+comm+'</span>':'')+(yours?'<span class="note">'+yours+'</span>':'')+
       (s.link&&/^https:\/\//.test(s.link)?'<span class="note"><a href="'+esc(s.link)+'" target="_blank" rel="noopener">'+t('Details')+'</a></span>':'')+
       (officialInfo(s)?'<details class="desc"><summary>'+t('Premise')+'</summary><p>'+esc(premiseText(s))+'</p><p class="note">'+t('Written for this site from {source}; no spoilers.',{source:'<a href="'+esc(officialInfo(s).url)+'" target="_blank" rel="noopener">'+esc(officialInfo(s).source)+'</a>'})+'</p></details>':'')+
@@ -314,7 +314,7 @@ function nextPlan(){var td=today(),m=starredMap(),best=null;
   Object.keys(m).forEach(function(id){var pl=m[id].plan,sc=scenById(id);if(!pl||!sc||pl.date<td)return;if(!best||(pl.date+(pl.time||''))<(best.plan.date+(best.plan.time||'')))best={id:id,sc:sc,plan:pl};});return best;}
 function planDialog(id){
   var sc=scenById(id),cur=(starredMap()[id]||{}).plan||{};if(!sc)return;
-  var d=openDialog('<form class="stack"><div class="dlg-head"><h2>'+t('Schedule: {name}',{name:esc(sc.name)})+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
+  var d=openDialog('<form class="stack"><div class="dlg-head"><h2>'+t('Schedule: {name}',{name:esc(scName(sc.id,sc.name))})+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
     '<div class="grid2"><label class="field"><span class="lbl">'+t('Date')+'</span><input class="f" type="date" name="pdate" required min="'+today()+'" value="'+esc(cur.date||'')+'"></label>'+
     '<label class="field"><span class="lbl">'+t('Time (optional)')+'</span><input class="f" type="time" name="ptime" value="'+esc(cur.time||'')+'"></label></div>'+
     '<label class="field"><span class="lbl">'+t('Where (optional)')+'</span><input class="f" name="ploc" list="dl-ploc" maxlength="60" value="'+esc(cur.location||'')+'" autocomplete="off"></label>'+
@@ -338,7 +338,7 @@ function calEvent(id){
   var start,end,allDay=!pl.time;
   if(allDay){start=pl.date.replace(/-/g,'');var e=new Date(pl.date+'T12:00:00');e.setDate(e.getDate()+1);end=e.getFullYear()+p2(e.getMonth()+1)+p2(e.getDate());}
   else{var s0=new Date(pl.date+'T'+pl.time+':00');start=stamp(s0);end=stamp(new Date(s0.getTime()+mins*60000));}
-  return {title:'Mansions of Madness: '+sc.name,details:details,location:pl.location||'',start:start,end:end,allDay:allDay,uid:id+'-'+pl.date+'@momcasebook'};
+  return {title:'Mansions of Madness: '+scName(sc.id,sc.name),details:details,location:pl.location||'',start:start,end:end,allDay:allDay,uid:id+'-'+pl.date+'@momcasebook'};
 }
 function googleCal(ev){var tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone;}catch(e){}
   return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(ev.title)+'&dates='+ev.start+'/'+ev.end+'&details='+encodeURIComponent(ev.details)+(ev.location?'&location='+encodeURIComponent(ev.location):'')+(tz&&!ev.allDay?'&ctz='+encodeURIComponent(tz):'');}
@@ -391,7 +391,7 @@ function packDialog(id){
   var normal=[],six=[];p.tiles.forEach(function(x,i){(x.six?six:normal).push(tile(x,i));});
   var mons=p.monsters.map(function(m,i){return item('m'+i,m.n,where(m)+(m.as?' · '+t('plays {names}',{names:esc(m.as.join(', '))}):''),'');});
   var o=owned(),miss=p.need.filter(function(b){return o.indexOf(b)<0;});
-  var d=openDialog('<div class="dlg-head"><h2>'+t('Packing list: {name}',{name:esc(s.name)})+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
+  var d=openDialog('<div class="dlg-head"><h2>'+t('Packing list: {name}',{name:esc(scName(s.id,s.name))})+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
     '<p class="note">'+t('Needs {boxes}.',{boxes:p.need.map(function(b){return esc(boxName(b));}).join(' + ')+(p.other?' + '+t('fan-made pack {name}',{name:esc(p.other.join(', '))}):'')})+
     (miss.length?' <span class="missing">'+t('Not ticked in your collection: {boxes}.',{boxes:esc(miss.map(boxName).join(', '))})+'</span>':'')+'</p>'+
     '<div class="row pk-bar"><span class="note pk-count"></span><button class="btn sm ghost" type="button" data-pk="clear">'+t('Clear ticks')+'</button></div>'+
@@ -407,6 +407,8 @@ function packDialog(id){
   count();
 }
 function officialInfo(s){return s.type==='official'&&(window.MOM_OFFICIAL_INFO||{})[s.id]||null;}
+// an official scenario's name in the reader's language (as in the companion app; js/lang/<code>.js), else its own name
+function scName(id,name){return (id&&I18N.scenario(id))||name||'';}
 // our premise in the reader's language (js/lang/<code>.js), else the English
 function premiseText(s){var o=officialInfo(s);return o?(I18N.premise(s.id)||o.text):'';}
 // Languages in the filter, most scenarios first, with counts.
@@ -450,7 +452,7 @@ function statsHtml(){
   var spell={};plays.forEach(function(p){peopleAt(p).names.forEach(function(n){var k=n.toLowerCase();if(!spell[k])spell[k]=n;});});
   h+=table(t('Who you played with'),tally(function(p){return peopleAt(p).names.map(function(n){return spell[n.toLowerCase()];});}),t('Player'));
   h+=table(t('Investigators'),tally(function(p){return uniq((p.party||[]).map(function(s){return (s.investigator||'').trim();}));}),t('Investigator'));
-  h+=table(t('Scenarios'),tally(function(p){return [p.scenarioName];}),t('Scenario'));
+  h+=table(t('Scenarios'),tally(function(p){return [scName(p.scenarioId,p.scenarioName)];}),t('Scenario'));
   h+=table(t('Party size'),sizes,t('Party'));
   if(plays.some(function(p){return p.location;}))h+=table(t('Where you played'),tally(function(p){return [p.location||t('Not recorded')];}),t('Where'));
   h+=table(t('Rules'),tally(function(p){return [p.rules?rulesName(p.rules):t('Not recorded')];}),t('Rules'));
@@ -477,7 +479,7 @@ function settingsHtml(){
       var fresh=imp.plays.filter(function(p){return !p.dupe;});
       h+='<div class="preview"><p><b>'+tn('{n} play to import','{n} plays to import',fresh.length)+'</b>'+(imp.plays.length-fresh.length?', '+tn('{n} already in your log','{n} already in your log',imp.plays.length-fresh.length):'')+(imp.skipped?', '+tn('{n} not-played row skipped','{n} not-played rows skipped',imp.skipped):'')+'.</p>'+
         imp.notes.map(function(n){return '<p class="note">'+esc(n)+'</p>';}).join('')+
-        (fresh.length?'<ul class="mini">'+fresh.map(function(p){return '<li>'+resChip(p.result)+' <b>'+esc(p.scenarioName)+'</b>'+(p.sheetName?' <span class="chip muted">'+t('choose below')+'</span>':'')+(p.attempts>1?' ('+tn('{n} try','{n} tries',p.attempts)+')':'')+(partyText(p)?' · '+partyText(p):'')+'</li>';}).join('')+'</ul>':'')+
+        (fresh.length?'<ul class="mini">'+fresh.map(function(p){return '<li>'+resChip(p.result)+' <b>'+esc(scName(p.scenarioId,p.scenarioName))+'</b>'+(p.sheetName?' <span class="chip muted">'+t('choose below')+'</span>':'')+(p.attempts>1?' ('+tn('{n} try','{n} tries',p.attempts)+')':'')+(partyText(p)?' · '+partyText(p):'')+'</li>';}).join('')+'</ul>':'')+
         (fresh.length&&imp.cols.players==null&&imp.cols.party==null?'<p class="note">'+t('The sheet doesn’t say who played, so players are left blank. Tap a play afterwards to add them.')+'</p>':'')+
         unmatchedHtml(imp)+
         '<div class="row">'+(fresh.length?'<button class="btn pri" data-a="doimport"'+(ui.busy?' disabled':'')+'>'+(Object.keys(imp.unmatched||{}).length?t('Import'):tn('Import {n} play','Import {n} plays',fresh.length))+'</button>':'')+'<button class="btn" data-a="cancelimport">'+t('Cancel')+'</button></div></div>';
@@ -493,7 +495,8 @@ function settingsHtml(){
 // Regular players are just names (they don't need accounts): users/{uid}/people {name, notes}. Groups are named sets of
 // them, users/{uid}/groups {name, members:[person ids]}, picked when logging a play to fill in the seats.
 function lc(x){return String(x||'').trim().toLowerCase();}
-function byName(a,b){return a.name.localeCompare(b.name,undefined,{sensitivity:'base',ignorePunctuation:true,numeric:true});}
+// official scenarios sort by the name in the reader's language (anything else by its own name)
+function byName(a,b){return scName(a.id,a.name).localeCompare(scName(b.id,b.name),undefined,{sensitivity:'base',ignorePunctuation:true,numeric:true});}
 window.byNameCmp=byName;
 function personByName(n){n=lc(n);return people.filter(function(p){return lc(p.name)===n;})[0];}
 function groupMembers(g){return (g.members||[]).map(function(id){return people.filter(function(p){return p.id===id;})[0];}).filter(Boolean);}
@@ -673,13 +676,13 @@ function fixScenarios(){
   var all=validScenarios(),byName={};
   bad.forEach(function(p){var n=p.scenarioName||t('(no name)');(byName[n]=byName[n]||[]).push(p);});
   var names=Object.keys(byName).sort();
-  var groups=MOM.PRODUCTS.map(function(pr){return '<optgroup label="'+esc(pr.name)+'">'+MOM.OFFICIAL.filter(function(s){return s.product===pr.id;}).map(function(s){return '<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>';}).join('')+'</optgroup>';}).join('')+
-    '<optgroup label="Valkyrie">'+MOM.VALKYRIE.filter(function(s){return !s.retired;}).slice().sort(window.byNameCmp).map(function(s){return '<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>';}).join('')+'</optgroup>';
+  var groups=MOM.PRODUCTS.map(function(pr){return '<optgroup label="'+esc(pr.name)+'">'+MOM.OFFICIAL.filter(function(s){return s.product===pr.id;}).map(function(s){return '<option value="'+esc(s.id)+'">'+esc(scName(s.id,s.name))+'</option>';}).join('')+'</optgroup>';}).join('')+
+    '<optgroup label="Valkyrie">'+MOM.VALKYRIE.filter(function(s){return !s.retired;}).slice().sort(window.byNameCmp).map(function(s){return '<option value="'+esc(s.id)+'">'+esc(scName(s.id,s.name))+'</option>';}).join('')+'</optgroup>';
   var d=openDialog('<form class="stack"><div class="dlg-head"><h2>'+t('Match plays to scenarios')+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
     '<p class="note">'+t('Every play must be an official or Valkyrie scenario. Each name below has its best guess chosen; change any that are wrong.')+'</p>'+
     '<ul class="fixes">'+names.map(function(n,i){var c=MOM.matchScenarios(n,all).slice(0,6);
       return '<li><div><b>'+esc(n)+'</b><span class="note"> '+tn('in {n} play','in {n} plays',byName[n].length)+'</span></div><select class="f" name="sc'+i+'" required>'+
-        (c.length?'<optgroup label="'+t('Best guesses')+'">'+c.map(function(x,k){return '<option value="'+esc(x.s.id)+'"'+(k===0?' selected':'')+'>'+esc(x.s.name)+'</option>';}).join('')+'</optgroup>':'<option value="" selected disabled>'+t('Choose a scenario…')+'</option>')+groups+'</select></li>';}).join('')+'</ul>'+
+        (c.length?'<optgroup label="'+t('Best guesses')+'">'+c.map(function(x,k){return '<option value="'+esc(x.s.id)+'"'+(k===0?' selected':'')+'>'+esc(scName(x.s.id,x.s.name))+'</option>';}).join('')+'</optgroup>':'<option value="" selected disabled>'+t('Choose a scenario…')+'</option>')+groups+'</select></li>';}).join('')+'</ul>'+
     '<p class="err" role="alert" hidden></p><div class="row end"><button class="btn" type="button" data-close>'+t('Cancel')+'</button><button class="btn pri" type="submit">'+tn('Match {n} play','Match {n} plays',bad.length)+'</button></div></form>',t('Match plays to scenarios'));
   var f=d.querySelector('form');
   f.addEventListener('submit',async function(e){
@@ -708,13 +711,13 @@ function playForm(p,preset){
   var opts='<option value="">'+t('Choose a scenario…')+'</option>';
   var own=owned(),st=scenStats();
   MOM.PRODUCTS.forEach(function(pr){var l=MOM.OFFICIAL.filter(function(s){return s.product===pr.id&&(own.indexOf(pr.id)>=0||s.id===scId);});
-    if(l.length)opts+='<optgroup label="'+esc(pr.name)+'">'+l.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===scId?' selected':'')+'>'+esc(s.name)+(st[s.id]?'':' • '+t('new'))+'</option>';}).join('')+'</optgroup>';});
+    if(l.length)opts+='<optgroup label="'+esc(pr.name)+'">'+l.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===scId?' selected':'')+'>'+esc(scName(s.id,s.name))+(st[s.id]?'':' • '+t('new'))+'</option>';}).join('')+'</optgroup>';});
   var offK={};MOM.OFFICIAL.forEach(function(s){offK[MOM.key(s.name)]=1;});
   // beyond the built-in official list: official ones the admin added, then Valkyrie
   var ex=allScenarios().filter(function(s){return !offK[MOM.key(s.name)];}).sort(byName);
   [['official',t('Official (added)')],['valkyrie',t('Valkyrie')]].forEach(function(g){var l=ex.filter(function(s){return s.type===g[0];});
-    if(l.length)opts+='<optgroup label="'+g[1]+'">'+l.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===scId?' selected':'')+'>'+esc(s.name)+'</option>';}).join('')+'</optgroup>';});
-  if(scId&&!scenById(scId)&&p.scenarioName)opts+='<option value="" selected disabled>'+t('{name} (not in the list: choose one)',{name:esc(p.scenarioName)})+'</option>';
+    if(l.length)opts+='<optgroup label="'+g[1]+'">'+l.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===scId?' selected':'')+'>'+esc(scName(s.id,s.name))+'</option>';}).join('')+'</optgroup>';});
+  if(scId&&!scenById(scId)&&p.scenarioName)opts+='<option value="" selected disabled>'+t('{name} (not in the list: choose one)',{name:esc(scName(p.scenarioId,p.scenarioName))})+'</option>';
   var seat=function(s){return '<div class="seat"><span class="pp-wrap"><input class="f combo" name="pp" data-suggest="dl-pl" autocomplete="off" placeholder="'+t('Player')+'" maxlength="40" value="'+esc(s.player||'')+'" aria-label="'+t('Player')+'">'+
     '<select class="pp-pick" tabindex="-1" aria-label="'+t('Choose a player')+'"><option value="">'+t('Choose a player')+'</option></select></span>'+
     invSelect(s.investigator||'')+
@@ -799,12 +802,12 @@ async function savePlay(f){
 function unmatchedHtml(imp){
   var names=Object.keys(imp.unmatched||{});if(!names.length)return '';
   var all=validScenarios(),byId={};all.forEach(function(s){byId[s.id]=s;});
-  var groups=MOM.PRODUCTS.map(function(pr){return '<optgroup label="'+esc(pr.name)+'">'+MOM.OFFICIAL.filter(function(s){return s.product===pr.id;}).map(function(s){return '<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>';}).join('')+'</optgroup>';}).join('')+
-    '<optgroup label="Valkyrie">'+MOM.VALKYRIE.filter(function(s){return !s.retired;}).slice().sort(byName).map(function(s){return '<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>';}).join('')+'</optgroup>';
+  var groups=MOM.PRODUCTS.map(function(pr){return '<optgroup label="'+esc(pr.name)+'">'+MOM.OFFICIAL.filter(function(s){return s.product===pr.id;}).map(function(s){return '<option value="'+esc(s.id)+'">'+esc(scName(s.id,s.name))+'</option>';}).join('')+'</optgroup>';}).join('')+
+    '<optgroup label="Valkyrie">'+MOM.VALKYRIE.filter(function(s){return !s.retired;}).slice().sort(byName).map(function(s){return '<option value="'+esc(s.id)+'">'+esc(scName(s.id,s.name))+'</option>';}).join('')+'</optgroup>';
   return '<div class="unmatched"><p><b>'+tn('{n} scenario name isn’t an exact match.','{n} scenario names aren’t an exact match.',names.length)+'</b> '+t('Every play must be an official or Valkyrie scenario: choose the right one, or skip those rows.')+'</p>'+
     names.map(function(n,i){var guess=(imp.unmatched[n]||[]).filter(function(id){return byId[id];});var count=imp.plays.filter(function(p){return !p.dupe&&p.sheetName===n;}).length;
       return '<label class="field"><span class="lbl">“'+esc(n)+'” · '+tn('{n} play','{n} plays',count)+'</span><select class="f" id="um-'+i+'">'+
-        (guess.length?'<optgroup label="'+t('Best guesses')+'">'+guess.map(function(id,k){return '<option value="'+esc(id)+'"'+(k===0?' selected':'')+'>'+esc(byId[id].name)+'</option>';}).join('')+'</optgroup>':'')+
+        (guess.length?'<optgroup label="'+t('Best guesses')+'">'+guess.map(function(id,k){return '<option value="'+esc(id)+'"'+(k===0?' selected':'')+'>'+esc(scName(id,byId[id].name))+'</option>';}).join('')+'</optgroup>':'')+
         '<option value=""'+(guess.length?'':' selected')+'>'+t('Skip these rows')+'</option>'+groups+'</select></label>';}).join('')+'</div>';
 }
 function prepareImport(rows){

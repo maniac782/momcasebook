@@ -17,7 +17,7 @@ var fromUrl=/[?&]lang=([a-z]{2})\b/.exec(location.search);
 function fromBrowser(){var l=navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||'en'];
   for(var i=0;i<l.length;i++){var c=String(l[i]||'').slice(0,2).toLowerCase();if(known(c))return c;}return 'en';}
 var lang=fromUrl&&known(fromUrl[1])?fromUrl[1]:stored&&known(stored)?stored:fromBrowser();
-var T={},P={},R={},plural=null;
+var T={},P={},R={},S={},plural=null;
 try{plural=new Intl.PluralRules(lang);}catch(e){}
 function fill(s,v){return v?String(s).replace(/\{(\w+)\}/g,function(m,k){return v[k]!=null?v[k]:m;}):String(s);}
 
@@ -25,7 +25,9 @@ var I=window.I18N={
   lang:lang,langs:LANGS,locale:LOCALE[lang],
   chosen:!!(stored&&known(stored)),   // picked by the person on this device, not just the browser's default
   // called by js/lang/<code>.js with [English, translation] pairs (a plural's translation is {one, few, many, other})
-  add:function(code,pairs,extra){if(code!==lang)return;T={};(pairs||[]).forEach(function(p){T[p[0]]=p[1];});P=(extra&&extra.premises)||{};R=(extra&&extra.reviews)||{};},
+  add:function(code,pairs,extra){if(code!==lang)return;T={};(pairs||[]).forEach(function(p){T[p[0]]=p[1];});P=(extra&&extra.premises)||{};R=(extra&&extra.reviews)||{};S=(extra&&extra.scenarios)||{};},
+  // an official scenario's name as the companion app shows it in this language (or null for the English)
+  scenario:function(id){return S[id]||null;},
   // our premise for an official scenario, and a review's summary, in this language (or null for the English)
   premise:function(id){return P[id]||null;},
   review:function(id,i){return (R[id]||[])[i]||null;},

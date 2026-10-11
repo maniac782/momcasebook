@@ -34,7 +34,7 @@ function keys(){
 function table(code){
   const I={};global.I18N={add:(c,pairs,e)=>{I.c=c;I.s={};(pairs||[]).forEach(p=>{I.s[p[0]]=p[1];});I.e=e||{};}};
   new Function('I18N',fs.readFileSync(path.join(root,'js/lang',code+'.js'),'utf8'))(global.I18N);
-  return {strings:I.s||{},premises:(I.e&&I.e.premises)||{},reviews:(I.e&&I.e.reviews)||{}};
+  return {strings:I.s||{},premises:(I.e&&I.e.premises)||{},reviews:(I.e&&I.e.reviews)||{},scenarios:(I.e&&I.e.scenarios)||{}};
 }
 module.exports={keys,table,LANGS:['es','ca','fr','pl','pt']};
 if(require.main===module){

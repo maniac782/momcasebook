@@ -469,3 +469,5 @@ select.f.dd-open{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in sr
 .set.s-2e{background:#4b5563}.set.s-1e{background:#6b4fa0}.set.s-cotw{background:#2f7a4a}.set.s-fa{background:#1f6f78}
 .set.s-btt{background:#2f5fb3}.set.s-soa{background:#9b2c2c}.set.s-sot{background:#9a3a7a}.set.s-hj{background:#2b3f74}
 .set.s-pots{background:#7a4a2a}.set.s-fan{background:transparent;color:var(--muted);border:1px solid var(--line)}
+/* an official scenario's English name under its translated one (Scenarios tab) */
+.scs .orig{font-size:12.5px;font-style:italic;margin-top:-2px}
