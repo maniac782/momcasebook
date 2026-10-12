@@ -7,20 +7,43 @@ var toastT;
 window.toast=function(m){var t=document.getElementById('toast');if(!t)return;t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){t.hidden=true;},3200);};
 
 /* A simple modal. html is the dialog's inner markup; returns the dialog element. Closes on Escape,
-   a click outside, or anything marked data-close. */
+   a click outside, or anything marked data-close. Once something has been typed or changed in a form in it, those
+   ask first ("Discard your changes?") so a stray click doesn't lose a half-filled log. d.close() (after saving)
+   closes straight away; d.clean() marks it saved without closing. */
 window.openDialog=function(html,label){
   var bg=document.createElement('div');bg.className='dlg-bg';
   bg.innerHTML='<div class="dlg" role="dialog" aria-modal="true" aria-label="'+esc(label||'')+'">'+html+'</div>';
   document.body.appendChild(bg);
-  var prev=document.activeElement;
+  var prev=document.activeElement,dirty=false;
   var close=function(){bg.remove();document.removeEventListener('keydown',key);if(prev&&prev.focus)try{prev.focus();}catch(e){}};
-  var key=function(e){if(e.key==='Escape')close();};
+  var leave=function(){if(!dirty||!document.body.contains(bg))close();else confirmDiscard(close);};
+  var key=function(e){if(e.key==='Escape'&&!document.querySelector('.dd-wrap'))leave();};
   document.addEventListener('keydown',key);
-  bg.addEventListener('click',function(e){if(e.target===bg||e.target.closest('[data-close]'))close();});
-  bg.close=close;
+  // only changes after someone has touched it count (filling the form in as it opens doesn't)
+  var touched=false,touch=function(){touched=true;};
+  bg.addEventListener('pointerdown',touch,true);bg.addEventListener('keydown',touch,true);
+  var edited=function(e){if(touched&&e.target.closest&&e.target.closest('form'))dirty=true;};
+  bg.addEventListener('input',edited);bg.addEventListener('change',edited);
+  bg.addEventListener('click',function(e){if(e.target===bg||e.target.closest('[data-close]'))leave();});
+  bg.close=close;bg.clean=function(){dirty=false;};
   var f=bg.querySelector('input,textarea,select,button.pri');if(f)setTimeout(function(){f.focus();},30);
   return bg;
 };
+
+// Asked before a dialog with unsaved edits closes: Keep editing (the default, also Escape or a click outside) or
+// Discard changes.
+function confirmDiscard(discard){
+  var bg=document.createElement('div');bg.className='dlg-bg dlg-ask';
+  bg.innerHTML='<div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="ask-h"><h2 id="ask-h">'+t('Discard your changes?')+'</h2>'+
+    '<p class="note">'+t('What you’ve entered here hasn’t been saved.')+'</p>'+
+    '<div class="row end"><button class="btn" type="button" data-ask="discard">'+t('Discard changes')+'</button><button class="btn pri" type="button" data-ask="keep">'+t('Keep editing')+'</button></div></div>';
+  document.body.appendChild(bg);
+  var done=function(go){bg.remove();window.removeEventListener('keydown',key,true);if(go)discard();};
+  var key=function(e){if(e.key==='Escape'){e.stopPropagation();e.preventDefault();done(false);}};
+  window.addEventListener('keydown',key,true);
+  bg.addEventListener('click',function(e){var b=e.target.closest('[data-ask]');if(b)done(b.dataset.ask==='discard');else if(e.target===bg)done(false);});
+  bg.querySelector('[data-ask=keep]').focus();
+}
 
 /* ---------- Install as an app ----------
    Chrome, Edge and Android give a one-tap install prompt (kept from beforeinstallprompt);

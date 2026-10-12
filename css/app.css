@@ -287,6 +287,9 @@ html.embed main{padding-top:4px}
 .dlg-bg{position:fixed;inset:0;z-index:20;background:rgba(6,9,12,.55);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:max(24px,env(safe-area-inset-top)) 12px 24px}
 .dlg{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;width:100%;max-width:560px;padding:16px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
 .dlg>*+*{margin-top:12px}
+/* "Discard your changes?" sits above the dialog it's about, in the middle of the screen */
+.dlg-ask{z-index:45;align-items:center}
+.dlg-ask .dlg{max-width:380px}
 .dlg-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .dlg .steps{padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .seats{display:flex;flex-direction:column;gap:8px}

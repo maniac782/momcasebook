@@ -146,7 +146,13 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(await p.locator('.dd-wrap.combo .dd-new:has-text("Robin Q")').count(),'a new name is offered as new');
   await p.keyboard.press('Escape');assert.strictEqual(await p.locator('.dlg').count(),1,'Escape closes only the list');
   assert.strictEqual(await p.locator('.seat').nth(1).locator('[name=pp]').inputValue(),'Robin Q','typed name kept');
-  await p.keyboard.press('Escape');await p.waitForSelector('.dlg',{state:'detached'});
+  // with edits, leaving asks first: Keep editing keeps everything; a click outside asks too; Discard closes
+  await p.keyboard.press('Escape');await p.waitForSelector('.dlg-ask');
+  await p.screenshot({path:out+'/4c-discard-changes.png'});
+  await p.click('.dlg-ask [data-ask=keep]');assert.strictEqual(await p.locator('.dlg-ask').count(),0,'asked once');
+  assert.strictEqual(await p.locator('.seat').nth(1).locator('[name=pp]').inputValue(),'Robin Q','kept editing with nothing lost');
+  await p.mouse.click(5,300);await p.waitForSelector('.dlg-ask');assert.strictEqual(await p.locator('.dlg-bg').count(),2,'a click outside asks instead of closing');
+  await p.click('.dlg-ask [data-ask=discard]');await p.waitForSelector('.dlg',{state:'detached'});
   // our own dropdown menu: mouse, keyboard, search on long lists, and Escape only closes the menu inside a dialog
   await p.click('#fres');await p.waitForSelector('.dd .dd-opt.sel');
   assert.strictEqual((await p.textContent('.dd .dd-opt.sel')).trim(),'Any','current choice ticked');
@@ -166,7 +172,8 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.inputValue('.dlg select[name=sc]'),'v-the-sea-devils','search and Enter picks it');
   await p.click('.dlg select[name=sc]');await p.waitForSelector('.dd');await p.keyboard.press('Escape');await p.waitForTimeout(200);
   assert.strictEqual(await p.locator('.dlg').count(),1,'Escape closes only the menu');assert.strictEqual(await p.locator('.dd-wrap').count(),0);
-  await p.keyboard.press('Escape');await p.waitForSelector('.dlg',{state:'detached'});
+  await p.keyboard.press('Escape');await p.waitForSelector('.dlg-ask');await p.keyboard.press('Escape');assert.strictEqual(await p.locator('.dlg-ask').count(),0,'Escape on the question keeps editing');
+  await p.keyboard.press('Escape');await p.click('.dlg-ask [data-ask=discard]');await p.waitForSelector('.dlg',{state:'detached'});
   await p.click('[data-t=scenarios]');await p.waitForSelector('#sf-sort');
   // packing lists for Valkyrie scenarios (Dan's valkyrie-tools packlist): needs line, tiles by index, ticks kept
   await p.fill('#sq','Exotic Material');await p.waitForTimeout(150);
@@ -594,7 +601,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await q.locator('.seat [name=pp]').first().inputValue(),'Dan','picked on the phone');
   await q.tap('.dlg select[name=sc]');await q.waitForTimeout(300);
   assert.strictEqual(await q.locator('.dd-wrap').count(),0,'a tap on a phone gets the phone\'s own picker, not ours');
-  await q.keyboard.press('Escape');await q.waitForTimeout(100);if(await q.locator('.dlg').count())await q.keyboard.press('Escape');await q.click('[data-t=stats]');await q.screenshot({path:out+'/11-phone-stats-dark.png',fullPage:true});
+  await q.keyboard.press('Escape');await q.waitForTimeout(100);if(await q.locator('.dlg-ask').count())await q.tap('.dlg-ask [data-ask=discard]');if(await q.locator('.dlg').count()){await q.keyboard.press('Escape');if(await q.locator('.dlg-ask').count())await q.tap('.dlg-ask [data-ask=discard]');}await q.click('[data-t=stats]');await q.screenshot({path:out+'/11-phone-stats-dark.png',fullPage:true});
   await browser.close();
   if(errors.length){console.error(errors.join('\n'));process.exit(1);}
   console.log('ui: all checks passed; screenshots in '+out);

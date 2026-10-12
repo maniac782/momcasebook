@@ -738,7 +738,7 @@ function openAccount(){
   });
   box.addEventListener('submit',function(e){
     e.preventDefault();var n=box.querySelector('[name=aname]').value.trim().replace(/\s+/g,' ').slice(0,40);
-    fb.db.doc('users/'+me.uid).set({name:n},{merge:true}).then(function(){toast(t('Saved.'));}).catch(function(err){toast(friendly(err));});
+    fb.db.doc('users/'+me.uid).set({name:n},{merge:true}).then(function(){d.clean();toast(t('Saved.'));}).catch(function(err){toast(friendly(err));});
   });
 }
 window.addEventListener('acct-account',openAccount);
