@@ -663,12 +663,12 @@ function playersHtml(){
     (pl.length?'<ul class="scs">'+pl.map(function(x){var st=personStats(x.name),ing=groups.filter(function(g){return (g.members||[]).indexOf(x.id)>=0;}).sort(byName);
       var line=st.n?tn('{n} play','{n} plays',st.n)+' · '+t('{pct} won',{pct:pct(st.pass,st.n)})+(st.last?' · '+t('last {date}',{date:esc(fmtDate(st.last))}):''):t('No plays yet');
       var inv=x.inv&&MOM.isInvestigator(x.inv)?x.inv:'';
-      return '<li'+(inv?' class="has-inv"':'')+'>'+(inv?'<button type="button" class="inv-face" data-a="invcard" data-n="'+esc(inv)+'" aria-label="'+t('Show {name}’s card',{name:esc(inv)})+'" title="'+esc(inv)+'"><img src="'+invImg(inv,'face')+'" alt="" loading="lazy" width="160" height="160"></button>':avatarHtml(x.name,'','','pl'))+
+      return '<li class="person'+(inv?' has-inv':'')+'">'+(inv?'<button type="button" class="inv-face" data-a="invcard" data-n="'+esc(inv)+'" aria-label="'+t('Show {name}’s card',{name:esc(inv)})+'" title="'+esc(inv)+'"><img src="'+invImg(inv,'face')+'" alt="" loading="lazy" width="160" height="160"></button>':avatarHtml(x.name,'','','pl'))+
         '<div class="grow"><b>'+(st.n?'<a href="#" data-a="playerplays" data-n="'+esc(x.name)+'">'+esc(x.name)+'</a>':esc(x.name))+'</b>'+
         (inv?'<span class="inv-line">'+t('Plays {name}',{name:'<a href="#" data-a="invcard" data-n="'+esc(inv)+'">'+esc(inv)+'</a>'})+'</span>':'')+
         '<span class="note">'+line+'</span>'+playedAsHtml(st.invs)+(x.notes?'<span class="note pnote">'+esc(x.notes)+'</span>':'')+
         (ing.length?'<span class="row tight chips">'+ing.map(function(g){return '<span class="chip muted">'+esc(g.name)+'</span>';}).join('')+'</span>':'')+'</div>'+
-        '<div class="row tight"><button class="btn sm" data-a="editperson" data-id="'+esc(x.id)+'">'+t('Edit')+'</button><button class="btn sm ghost" data-a="delperson" data-id="'+esc(x.id)+'">'+t('Delete')+'</button></div></li>';}).join('')+'</ul>'
+        '<div class="row tight pacts"><button class="btn sm" data-a="editperson" data-id="'+esc(x.id)+'">'+t('Edit')+'</button><button class="btn sm ghost" data-a="delperson" data-id="'+esc(x.id)+'">'+t('Delete')+'</button></div></li>';}).join('')+'</ul>'
       :'<p class="note">'+t('Add the people you play with. They don’t need accounts; it’s just their names, for picking quickly when you log a play and for stats per person.')+'</p>')+'</section>';
   // names typed into plays but not saved
   var loose=names('player').filter(function(n){return !personByName(n);});
@@ -679,9 +679,10 @@ function playersHtml(){
 // every investigator someone has played, most played first, each opening its card
 function playedAsHtml(invs){
   if(!invs||!invs.length)return '';
-  return '<div class="played-as"><span class="lbl">'+t('Played as')+'</span>'+invs.map(function(v){var nm=esc(v[0]),ttl=nm+' · '+tn('{n} play','{n} plays',v[1]);
-    return MOM.isInvestigator(v[0])?'<button type="button" class="ipill" data-a="invcard" data-n="'+nm+'" title="'+ttl+'" aria-label="'+ttl+'"><img src="'+invImg(v[0],'face')+'" alt="" loading="lazy" width="160" height="160"><span>'+nm+'</span><b>'+v[1]+'</b></button>'
-      :'<span class="ipill" title="'+ttl+'"><span>'+nm+'</span><b>'+v[1]+'</b></span>';}).join('')+'</div>';
+  return '<div class="played-as"><span class="lbl">'+t('Played as')+'</span><div class="ipills">'+invs.map(function(v){var nm=esc(v[0]),ttl=nm+' · '+tn('{n} play','{n} plays',v[1]),ok=MOM.isInvestigator(v[0]);
+    return (ok?'<button type="button" class="ipill" data-a="invcard" data-n="'+nm+'" aria-label="'+ttl+'"':'<span class="ipill"')+' title="'+ttl+'">'+
+      (ok?'<img src="'+invImg(v[0],'face')+'" alt="" loading="lazy" width="160" height="160">':'<i aria-hidden="true">?</i>')+
+      '<span>'+nm+'</span><b>'+v[1]+'</b>'+(ok?'</button>':'</span>');}).join('')+'</div></div>';
 }
 function newId(){return fb.db.collection('users/'+me.uid+'/people').doc().id;}
 function savePerson(name,notes,inv){var id=newId();var d={name:name,notes:notes||'',created:Date.now()};if(inv)d.inv=inv;return fb.db.doc('users/'+me.uid+'/people/'+id).set(d).then(function(){return id;});}
