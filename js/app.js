@@ -411,7 +411,7 @@ function packDialog(id){
     '<p class="note">'+t('Needs {boxes}.',{boxes:p.need.map(function(b){return esc(boxName(b));}).join(' + ')+(p.other?' + '+t('fan-made pack {name}',{name:esc(p.other.join(', '))}):'')})+
     (miss.length?' <span class="missing">'+t('Not ticked in your collection: {boxes}.',{boxes:esc(miss.map(boxName).join(', '))})+'</span>':'')+'</p>'+
     '<div class="row pk-bar"><span class="note pk-count"></span>'+
-      (numbered?'<label class="pk-order"><span class="note">'+t('Tile order')+'</span><select data-pk="order"><option value="play"'+(mode==='play'?' selected':'')+'>'+t('As they come into play')+'</option><option value="num"'+(mode==='num'?' selected':'')+'>'+t('By tile number')+'</option></select></label>':'')+
+      (numbered?'<label class="pk-order"><span class="note">'+t('Tile order')+'</span><select class="f" data-pk="order"><option value="play"'+(mode==='play'?' selected':'')+'>'+t('As they come into play')+'</option><option value="num"'+(mode==='num'?' selected':'')+'>'+t('By tile number')+'</option></select></label>':'')+
       '<button class="btn sm ghost" type="button" data-pk="clear">'+t('Clear ticks')+'</button></div>'+
     '<div class="pk-tiles">'+tileLists()+'</div>'+
     (mons.length?'<h3 class="pk-h">'+t('Monster figures')+' <span class="note">'+mons.length+'</span></h3><ul class="pk-list">'+mons.join('')+'</ul>':'')+

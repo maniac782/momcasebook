@@ -453,7 +453,8 @@ select.f.dd-open{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in sr
 .needs .missing,.missing{color:var(--bad)}
 .pk-bar{justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
 .pk-order{display:flex;align-items:center;gap:6px;margin-left:auto}
-.pk-order select{width:auto;padding:4px 28px 4px 8px;font-size:14px}
+.pk-order select.f{width:auto}
+.pk-bar .btn{min-height:42px}
 .pk-tiles>*+*{margin-top:12px}
 .pk-h{font-size:19px;margin-top:4px}
 .pk-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;overflow:hidden}

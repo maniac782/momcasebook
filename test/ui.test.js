@@ -177,7 +177,8 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.locator('.pk input').first().check();await p.locator('.pk input').nth(1).check();
   assert.ok(/^2 of /.test(await p.textContent('.pk-count')),'ticks counted');
   // tile order: by number puts the Tiles Index order (small before medium); ticks survive the switch
-  await p.selectOption('[data-pk=order]','num');
+  await p.click('[data-pk=order]');assert.ok(await p.locator('.dd .dd-opt').count()===2,'tile order uses the site dropdown');
+  await p.locator('.dd .dd-opt').nth(1).click();assert.strictEqual(await p.$eval('[data-pk=order]',s=>s.value),'num','picked from the dropdown');
   const nums=await p.$$eval('.pk-tiles .pk-idx',l=>l.map(x=>x.textContent.replace(/\s+/g,'')));
   const key=x=>{const m=/^(\d+)([SML])$/.exec(x);return m?'SML'.indexOf(m[2])*1000+ +m[1]:9999;};
   assert.deepStrictEqual(nums,[...nums].sort((a,b)=>key(a)-key(b)),'sorted by tile number');
