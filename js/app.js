@@ -638,7 +638,7 @@ function cardView(name,from){
   var bg=document.createElement('div');bg.className='lb lb-card';bg.setAttribute('role','dialog');bg.setAttribute('aria-modal','true');bg.setAttribute('aria-label',name);
   bg.innerHTML='<button class="lb-x" type="button" aria-label="'+t('Close')+'">×</button>'+
     '<button class="card3d" type="button" aria-label="'+t('Flip card')+'"><span class="card3d-in"><img class="card3d-f" src="'+invImg(name,'front')+'" alt="'+esc(name)+'"><img class="card3d-b" src="'+invImg(name,'back')+'" alt="'+t('{name}, back of the card',{name:esc(name)})+'"></span></button>'+
-    '<p class="lb-cap"><b>'+esc(name)+'</b> <button class="btn sm lb-flip" type="button">'+t('Flip card')+'</button></p><p class="lb-note">© Fantasy Flight Games</p>';
+    '<div class="lb-side"><p class="lb-cap"><b>'+esc(name)+'</b> <button class="btn sm lb-flip" type="button">'+t('Flip card')+'</button></p><p class="lb-note">© Fantasy Flight Games</p></div>';
   var card=bg.querySelector('.card3d');
   var flip=function(){card.classList.toggle('flipped');};
   var close=function(){bg.remove();window.removeEventListener('keydown',key,true);if(from&&from.focus)try{from.focus();}catch(e){}};

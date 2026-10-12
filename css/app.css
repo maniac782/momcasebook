@@ -521,6 +521,16 @@ button.ipill:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .lb-cap .lb-flip{margin-left:10px;vertical-align:middle}
 .lb-note{margin:6px 0 0;color:#a9adb6;font-size:12px}
 @media (prefers-reduced-motion:reduce){.card3d-in{transition:none}}
+.lb-side{text-align:center}
+/* a phone turned sideways: the card as tall as the screen, its name and Flip beside it */
+@media (orientation:landscape) and (max-height:540px){
+  .lb-card{flex-direction:row;gap:16px;padding:8px max(60px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left))}
+  .lb-card .card3d{flex:none;width:min(calc(100vw - 230px),calc((100dvh - 16px)*600/351))}
+  .lb-card .lb-side{flex:0 1 150px;text-align:left}
+  .lb-card .lb-cap{margin:0;text-align:left}
+  .lb-card .lb-cap .lb-flip{display:block;margin:10px 0 0}
+  .lb-card .lb-note{margin-top:10px}
+}
 @media (max-width:480px){.inv-face,.avatar.pl{width:48px;height:48px}.avatar.pl{font-size:21px}}
 .pk.on .pk-pic{opacity:.55}
 .pk-pic.pk-tile{width:auto;height:48px;max-width:96px;border-radius:4px;display:block}
