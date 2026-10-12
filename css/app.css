@@ -459,6 +459,8 @@ select.f.dd-open{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in sr
 .pk:hover{background:var(--surface2)}
 .pk input{width:20px;height:20px;flex:none;accent-color:var(--accent);margin:0}
 .pk-idx{flex:none;min-width:44px;text-align:center;padding:2px 6px;border-radius:6px;background:var(--slate-soft);color:var(--ink);font-size:13px}
+.pk-pic{flex:none;width:48px;height:48px;border-radius:50%;object-fit:cover}
+.pk.on .pk-pic{opacity:.55}
 .pk-txt{display:flex;flex-direction:column;min-width:0}
 .pk-txt b{font-weight:600}
 .pk.on .pk-txt b{text-decoration:line-through;color:var(--muted)}

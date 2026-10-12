@@ -209,6 +209,7 @@ I18N.add('pt',[
 [`Tiles`,`Peças de mapa`],
 [`Tiles for 6 players only`,`Peças de mapa só para 6 jogadores`],
 [`Monster figures`,`Miniaturas de monstros`],
+[`Monster art © Fantasy Flight Games.`,`Ilustrações dos monstros © Fantasy Flight Games.`],
 [`Tile numbers follow the community <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L for small, medium, large); the colored tag is the set whose symbol is printed on the tile or figure. A — means a fan-made tile that isn’t in any box. From the scenario file in the Valkyrie catalogue.`,`Os números das peças seguem o <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> da comunidade (S, M, L para pequena, média, grande); a etiqueta colorida é o conjunto cujo símbolo está impresso na peça ou na miniatura. Um — indica uma peça feita por fãs que não está em nenhuma caixa. Tirado do arquivo do cenário no catálogo do Valkyrie.`],
 [`Done`,`Pronto`],
 [`{n} of {total} packed`,`{n} de {total} separados`],
