@@ -184,6 +184,7 @@ I18N.add('es',[
 [`Their investigator (optional)`,`Su investigador (opcional)`],
 [`Shown with them on the Players tab, and filled in for them when you log a play.`,`Aparece con esta persona en la pestaña Jugadores y se rellena por ella al registrar una partida.`],
 [`Show {name}’s card`,`Ver la carta de {name}`],
+[`Plays {name}`,`Juega con {name}`],
 [`Flip card`,`Girar la carta`],
 [`{name}, back of the card`,`{name}, reverso de la carta`],
 [`Date`,`Fecha`],

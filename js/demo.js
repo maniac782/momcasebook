@@ -15,8 +15,8 @@
       'o-hidden-depths':{at:now-9*864e5},
       'o-the-twilight-diadem':{at:now-20*864e5}
     }};
-  [['alex','Alex',''],['mara','Mara',t('Hosts most Thursdays')],['theo','Theo',t('Always wants the Seeker')],['jules','Jules',''],['sam','Sam',t('Alex’s brother')]]
-    .forEach(function(x){docs[P+'/people/'+x[0]]={name:x[1],notes:x[2],created:now-80*864e5};});
+  [['alex','Alex','','Agatha Crane'],['mara','Mara',t('Hosts most Thursdays'),'Rita Young'],['theo','Theo',t('Always wants the Seeker'),'Joe Diamond'],['jules','Jules',''],['sam','Sam',t('Alex’s brother')]]
+    .forEach(function(x){var d={name:x[1],notes:x[2],created:now-80*864e5};if(x[3])d.inv=x[3];docs[P+'/people/'+x[0]]=d;});
   docs[P+'/groups/thursday']={name:t('Thursday night'),members:['alex','mara','theo','jules'],created:now-80*864e5};
   docs[P+'/groups/family']={name:t('Family'),members:['alex','sam'],created:now-80*864e5};
   var NORMAL='Normal rules';

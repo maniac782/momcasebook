@@ -631,8 +631,8 @@ function personStats(name){
 }
 // a player's investigator: the one set for them on the Players tab, else the one they've played most
 function usualInv(name){var x=personByName(name);if(x&&x.inv&&MOM.isInvestigator(x.inv))return x.inv;var fav=personStats(name).fav;return fav&&MOM.isInvestigator(fav)?fav:'';}
-// an investigator card's picture: 'front', 'back' or 'thumb' (img/investigators/, from github.com/any2cards/mom2e)
-function invImg(name,side){var k=String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return side==='thumb'?'img/investigators/thumb/'+k+'.webp':'img/investigators/'+k+'-'+side+'.webp';}
+// an investigator card's picture: 'front', 'back' or 'face' (a round-crop portrait) (img/investigators/, from github.com/any2cards/mom2e)
+function invImg(name,side){var k=String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return side==='thumb'||side==='face'?'img/investigators/'+side+'/'+k+'.webp':'img/investigators/'+k+'-'+side+'.webp';}
 // An investigator's card full size, front first; the card itself, the Flip button, Space or F turns it over.
 function cardView(name,from){
   var bg=document.createElement('div');bg.className='lb lb-card';bg.setAttribute('role','dialog');bg.setAttribute('aria-modal','true');bg.setAttribute('aria-label',name);
@@ -661,11 +661,13 @@ function playersHtml(){
   var pl=people.slice().sort(byName);
   h+='<section class="sec"><div class="sec-head"><h2>'+t('Players')+'</h2><span class="note">'+tn('{n} saved','{n} saved',pl.length)+'</span></div>'+
     (pl.length?'<ul class="scs">'+pl.map(function(x){var st=personStats(x.name),ing=groups.filter(function(g){return (g.members||[]).indexOf(x.id)>=0;}).sort(byName);
-      var line=st.n?tn('{n} play','{n} plays',st.n)+' · '+t('{pct} won',{pct:pct(st.pass,st.n)})+(st.last?' · '+t('last {date}',{date:esc(fmtDate(st.last))}):'')+(st.fav?' · '+t('usually {name}',{name:esc(st.fav)}):''):t('No plays yet');
-      return '<li>'+avatarHtml(x.name,'','')+'<div class="grow"><b>'+(st.n?'<a href="#" data-a="playerplays" data-n="'+esc(x.name)+'">'+esc(x.name)+'</a>':esc(x.name))+'</b>'+
+      var line=st.n?tn('{n} play','{n} plays',st.n)+' · '+t('{pct} won',{pct:pct(st.pass,st.n)})+(st.last?' · '+t('last {date}',{date:esc(fmtDate(st.last))}):'')+(st.fav&&st.fav!==x.inv?' · '+t('usually {name}',{name:esc(st.fav)}):''):t('No plays yet');
+      var inv=x.inv&&MOM.isInvestigator(x.inv)?x.inv:'';
+      return '<li'+(inv?' class="has-inv"':'')+'>'+(inv?'<button type="button" class="inv-face" data-a="invcard" data-n="'+esc(inv)+'" aria-label="'+t('Show {name}’s card',{name:esc(inv)})+'" title="'+esc(inv)+'"><img src="'+invImg(inv,'face')+'" alt="" loading="lazy" width="160" height="160"></button>':avatarHtml(x.name,'','','pl'))+
+        '<div class="grow"><b>'+(st.n?'<a href="#" data-a="playerplays" data-n="'+esc(x.name)+'">'+esc(x.name)+'</a>':esc(x.name))+'</b>'+
+        (inv?'<span class="inv-line">'+t('Plays {name}',{name:'<a href="#" data-a="invcard" data-n="'+esc(inv)+'">'+esc(inv)+'</a>'})+'</span>':'')+
         '<span class="note">'+line+'</span>'+(x.notes?'<span class="note pnote">'+esc(x.notes)+'</span>':'')+
         (ing.length?'<span class="row tight chips">'+ing.map(function(g){return '<span class="chip muted">'+esc(g.name)+'</span>';}).join('')+'</span>':'')+'</div>'+
-        (x.inv&&MOM.isInvestigator(x.inv)?'<button type="button" class="inv-thumb" data-a="invcard" data-n="'+esc(x.inv)+'" aria-label="'+t('Show {name}’s card',{name:esc(x.inv)})+'" title="'+esc(x.inv)+'"><img src="'+invImg(x.inv,'thumb')+'" alt="" loading="lazy" width="120" height="70"></button>':'')+
         '<div class="row tight"><button class="btn sm" data-a="editperson" data-id="'+esc(x.id)+'">'+t('Edit')+'</button><button class="btn sm ghost" data-a="delperson" data-id="'+esc(x.id)+'">'+t('Delete')+'</button></div></li>';}).join('')+'</ul>'
       :'<p class="note">'+t('Add the people you play with. They don’t need accounts; it’s just their names, for picking quickly when you log a play and for stats per person.')+'</p>')+'</section>';
   // names typed into plays but not saved

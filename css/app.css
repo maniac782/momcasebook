@@ -490,10 +490,13 @@ details[data-box=starred]>summary h2::before{content:"\2605  ";color:var(--accen
 .lb-nav{top:50%;transform:translateY(-50%)}
 .lb-prev{left:10px}.lb-next{right:10px}
 /* an investigator's card on the Players tab, and full size with its back (cardView) */
-.inv-thumb{flex:none;padding:0;border:0;background:none;border-radius:5px;line-height:0;cursor:zoom-in;box-shadow:0 1px 3px rgba(0,0,0,.25)}
-.inv-thumb img{width:96px;height:auto;border-radius:5px;display:block}
-.inv-thumb:hover img{filter:brightness(1.1)}
-.inv-thumb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.inv-face{flex:none;align-self:flex-start;width:60px;height:60px;padding:0;border:2px solid var(--accent);border-radius:50%;overflow:hidden;background:var(--surface2);line-height:0;cursor:zoom-in;box-shadow:0 0 0 3px var(--accent-soft),0 2px 6px rgba(0,0,0,.25);transition:transform .15s}
+.inv-face img{width:100%;height:100%;object-fit:cover;display:block}
+.inv-face:hover{transform:scale(1.06)}
+.inv-face:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+.avatar.pl{width:60px;height:60px;font-size:26px;font-family:var(--display);font-weight:400}
+.inv-line{display:block;font-size:14px;margin:1px 0 2px}
+.inv-line a{font-weight:600}
 .card3d{padding:0;border:0;background:none;cursor:pointer;perspective:1600px;width:min(100%,900px,calc((100dvh - 170px)*600/351));aspect-ratio:600/351}
 .card3d-in{position:relative;display:block;width:100%;height:100%;transition:transform .6s cubic-bezier(.3,.7,.3,1);transform-style:preserve-3d}
 .card3d.flipped .card3d-in{transform:rotateY(180deg)}
@@ -502,7 +505,7 @@ details[data-box=starred]>summary h2::before{content:"\2605  ";color:var(--accen
 .lb-cap .lb-flip{margin-left:10px;vertical-align:middle}
 .lb-note{margin:6px 0 0;color:#a9adb6;font-size:12px}
 @media (prefers-reduced-motion:reduce){.card3d-in{transition:none}}
-@media (max-width:480px){.inv-thumb img{width:72px}}
+@media (max-width:480px){.inv-face,.avatar.pl{width:48px;height:48px}.avatar.pl{font-size:21px}}
 .pk.on .pk-pic{opacity:.55}
 .pk-pic.pk-tile{width:auto;height:48px;max-width:96px;border-radius:4px;display:block}
 .pk-txt{display:flex;flex-direction:column;min-width:0}

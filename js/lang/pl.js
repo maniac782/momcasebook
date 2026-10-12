@@ -185,6 +185,7 @@ I18N.add('pl',[
 [`Their investigator (optional)`,`Badacz tej osoby (opcjonalnie)`],
 [`Shown with them on the Players tab, and filled in for them when you log a play.`,`Widoczny przy tej osobie na karcie Gracze i wpisywany za nią, gdy zapisujesz rozgrywkę.`],
 [`Show {name}’s card`,`Pokaż kartę: {name}`],
+[`Plays {name}`,`Gra: {name}`],
 [`Flip card`,`Odwróć kartę`],
 [`{name}, back of the card`,`{name}, rewers karty`],
 [`Date`,`Data`],

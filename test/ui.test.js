@@ -335,15 +335,15 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.selectOption('select[name=pinv]','Agatha Crane');
   await p.click('.dlg button[type=submit]');await p.waitForSelector('.scs b:has-text("Geraldine")');
   // their investigator's card beside them; tap for the full card, tap again to flip it, Escape to close
-  await p.waitForSelector('li:has-text("Geraldine") .inv-thumb img');
-  await p.locator('li',{hasText:'Geraldine'}).locator('.inv-thumb').click();await p.waitForSelector('.lb-card .card3d-f');
+  await p.waitForSelector('li:has-text("Geraldine") .inv-face img');
+  await p.locator('li',{hasText:'Geraldine'}).locator('.inv-face').click();await p.waitForSelector('.lb-card .card3d-f');
   await p.waitForFunction(()=>{const i=document.querySelector('.card3d-f');return i&&i.complete&&i.naturalWidth>=600;});
   await p.screenshot({path:out+'/6c-investigator-card.png'});
   await p.click('.lb-card .card3d');await p.waitForTimeout(700);assert.ok(await p.locator('.card3d.flipped').count(),'flips to the back');
   await p.waitForFunction(()=>{const i=document.querySelector('.card3d-b');return i&&i.complete&&i.naturalWidth>=600;});
   await p.screenshot({path:out+'/6d-investigator-card-back.png'});
   await p.keyboard.press('Escape');assert.strictEqual(await p.locator('.lb-card').count(),0,'card closed');
-  await p.locator('li',{hasText:'Geraldine'}).filter({has:p.locator('.inv-thumb')}).screenshot({path:out+'/6e-player-with-card.png'});
+  await p.locator('li',{hasText:'Geraldine'}).filter({has:p.locator('.inv-face')}).screenshot({path:out+'/6e-player-with-card.png'});
   await p.click('[data-t=plays]');
   assert.strictEqual(await p.locator('.pl-party:has-text("Gerri")').count(),0,'old name gone from plays');
   assert.ok(await p.locator('.pl-party:has-text("Geraldine")').count()>=3,'new name in plays');

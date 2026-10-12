@@ -42,7 +42,10 @@ const HIDE='.demoban{display:none!important}';
   await shot(p,'plays.png',700);
   await tab(p,'scenarios');await p.locator('details[data-box=starred] .desc summary').first().click();
   await shot(p,'scenarios.png',760);
-  await tab(p,'players');await shot(p,'players.png',640);
+  await tab(p,'players');await settle(p);
+  // the players themselves (with their investigators' portraits) rather than the groups above them
+  {const y=await p.evaluate(()=>{const h=[...document.querySelectorAll('.sec h2')].find(e=>e.closest('.sec').querySelector('.scs .inv-face'));return h?h.closest('.sec').getBoundingClientRect().top+scrollY-16:0;});
+   await p.screenshot({path:path.join(out,'players.png'),fullPage:true,clip:{x:0,y,width:W.width,height:640}});console.log('wrote players.png');}
   await tab(p,'stats');await shot(p,'stats.png',760);
   await tab(p,'plays');await p.click('.nextup [data-a=calmenu]');await shot(p,'next-game.png',420);
   await p.keyboard.press('Escape');
