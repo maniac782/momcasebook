@@ -631,8 +631,8 @@ function personStats(name){
 }
 // a player's investigator: the one set for them on the Players tab, else the one they've played most
 function usualInv(name){var x=personByName(name);if(x&&x.inv&&MOM.isInvestigator(x.inv))return x.inv;var fav=personStats(name).fav;return fav&&MOM.isInvestigator(fav)?fav:'';}
-// an investigator card's picture: 'front', 'back' or 'face' (a round-crop portrait) (img/investigators/, from github.com/any2cards/mom2e)
-function invImg(name,side){var k=String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return side==='thumb'||side==='face'?'img/investigators/'+side+'/'+k+'.webp':'img/investigators/'+k+'-'+side+'.webp';}
+// an investigator card's picture (raise r= when the portrait crops are redone, so browsers don't keep the old ones): 'front', 'back' or 'face' (a round-crop portrait) (img/investigators/, from github.com/any2cards/mom2e)
+function invImg(name,side){var k=String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return side==='face'?'img/investigators/face/'+k+'.webp?r=2':'img/investigators/'+k+'-'+side+'.webp';}
 // An investigator's card full size, front first; the card itself, the Flip button, Space or F turns it over.
 function cardView(name,from){
   var bg=document.createElement('div');bg.className='lb lb-card';bg.setAttribute('role','dialog');bg.setAttribute('aria-modal','true');bg.setAttribute('aria-label',name);
