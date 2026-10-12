@@ -2,7 +2,7 @@
 // Run: node test/ui.test.js [screenshot dir]   (needs Playwright with Chromium)
 const {chromium}=require(process.env.PW||'playwright');const fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.join(__dirname,'..'),out=process.argv[2]||path.join(root,'test','shots');fs.mkdirSync(out,{recursive:true});
-const types={html:'text/html',js:'text/javascript',css:'text/css',png:'image/png',webmanifest:'application/manifest+json'};
+const types={html:'text/html',js:'text/javascript',css:'text/css',png:'image/png',webp:'image/webp',webmanifest:'application/manifest+json'};
 require('../js/valkyrie.js');require('../js/catalog.js');require('../js/importer.js');
 const rows=globalThis.MOMImport.parseCSV(fs.readFileSync(path.join(__dirname,'fixture-sheet.csv'),'utf8'));
 const typo=[['Scenario','Played','Pass/Fail'],['Altered Fate','Y','Fail'],['Escape Innsmouth','Y','Pass'],['Mansion','Y','Pass'],['The Lighthouse Keeper','Y','Pass']];
