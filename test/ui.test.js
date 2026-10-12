@@ -458,7 +458,9 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.waitForSelector('.scs li');
   const danLine=await p.$$eval('.scs li',ls=>{const l=ls.find(x=>{const b=x.querySelector('.grow > b');return b&&b.textContent.trim()==='Dan';});return l?l.querySelector('.note').textContent:'';});
   assert.ok(new RegExp('^'+danAfter[0]+' plays').test(danLine),'Players tab agrees with Stats ('+danAfter[0]+'): '+danLine);
-  assert.ok(/usually (Carson Sinclair|Agatha Crane)/.test(danLine),'usual investigator: '+danLine);
+  const danInvs=await p.$$eval('.scs li',ls=>{const l=ls.find(x=>{const b=x.querySelector('.grow > b');return b&&b.textContent.trim()==='Dan';});return l?[...l.querySelectorAll('.played-as .ipill span')].map(e=>e.textContent):[];});
+  assert.ok(danInvs.includes('Carson Sinclair')&&danInvs.includes('Agatha Crane'),'played as both characters: '+danInvs);
+  await p.locator('.scs li',{hasText:'Dan'}).locator('.played-as').screenshot({path:out+'/6f-played-as.png'});
   // the form saves solo by people: one person, two characters
   await p.click('.bar [data-a=log]');await p.selectOption('select[name=sc]','o-rising-tide');
   await p.locator('.seat [name=pp]').first().fill('Dan');await p.waitForTimeout(150);if(await p.locator('.dd-wrap.combo').count())await p.keyboard.press('Escape');await p.locator('.seat [name=pi]').first().selectOption('Agatha Crane');

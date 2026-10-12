@@ -494,6 +494,15 @@ details[data-box=starred]>summary h2::before{content:"\2605  ";color:var(--accen
 .inv-face img{width:100%;height:100%;object-fit:cover;display:block}
 .inv-face:hover{transform:scale(1.06)}
 .inv-face:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+.played-as{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 2px}
+.played-as .lbl{margin:0 2px 0 0}
+.ipill{display:inline-flex;align-items:center;gap:6px;padding:2px 4px 2px 2px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);color:var(--ink);font:inherit;font-size:13px;line-height:1;white-space:nowrap}
+.ipill:not(button){padding-left:10px}
+button.ipill{cursor:zoom-in}
+button.ipill:hover{border-color:var(--accent)}
+button.ipill:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.ipill img{width:24px;height:24px;border-radius:50%;object-fit:cover;display:block}
+.ipill b{min-width:20px;padding:3px 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:12px;text-align:center}
 .avatar.pl{width:60px;height:60px;font-size:26px;font-family:var(--display);font-weight:400}
 .inv-line{display:block;font-size:14px;margin:1px 0 2px}
 .inv-line a{font-weight:600}
