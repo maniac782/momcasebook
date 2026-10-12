@@ -146,6 +146,11 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(await p.locator('.dd-wrap.combo .dd-new:has-text("Robin Q")').count(),'a new name is offered as new');
   await p.keyboard.press('Escape');assert.strictEqual(await p.locator('.dlg').count(),1,'Escape closes only the list');
   assert.strictEqual(await p.locator('.seat').nth(1).locator('[name=pp]').inputValue(),'Robin Q','typed name kept');
+  // Where and Rules suggest past answers in the site's own menu (not the browser's), like the player box
+  await p.locator('[name=rules]').click();await p.waitForSelector('.dd-wrap.combo .dd-opt');
+  assert.ok(await p.locator('.dd-wrap.combo .dd-opt').count()>=1,'rules suggestions in our menu');
+  assert.strictEqual(await p.locator('[name=rules]').getAttribute('list'),null,'no browser list on a computer');
+  await p.keyboard.press('Escape');
   // with edits, leaving asks first: Keep editing keeps everything; a click outside asks too; Discard closes
   await p.keyboard.press('Escape');await p.waitForSelector('.dlg-ask');
   await p.screenshot({path:out+'/4c-discard-changes.png'});

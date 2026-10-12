@@ -23,6 +23,8 @@ a{color:var(--ink);text-decoration-color:var(--muted);text-underline-offset:2px}
 a:hover{text-decoration-color:var(--ink)}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+/* every box (text, dropdown, pick-or-type, date, notes) looks the same when it's in use: the accent border and glow */
+.f:focus,.f:focus-visible,.f.dd-open,.langpick select.dd-open{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.92em}
 .note{color:var(--muted);font-size:14px;margin:0}
 .pad{padding:24px 0}
@@ -425,7 +427,6 @@ details[data-box=starred]>summary h2::before{content:"\2605  ";color:var(--accen
 .pl-meta{font-size:14px;color:var(--muted);line-height:1.3}
 
 /* dropdown menus (js/shared.js opens these in place of the browser's own list) */
-select.f.dd-open{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
 .dd-wrap{position:fixed;inset:0;z-index:40;pointer-events:none}
 .dd{position:fixed;pointer-events:auto;display:flex;flex-direction:column;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;
   box-shadow:0 12px 32px rgba(0,0,0,.22),0 2px 6px rgba(0,0,0,.12);overflow:hidden;font-size:15px;

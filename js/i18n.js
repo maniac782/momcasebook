@@ -38,7 +38,7 @@ var I=window.I18N={
     var save=window.momSaveLang?window.momSaveLang(code):null;
     if(save&&save.then){var t0=setTimeout(go,1500);save.then(function(){clearTimeout(t0);go();},function(){clearTimeout(t0);go();});}else go();},
   // a language picker (the footer's, and Settings')
-  picker:function(id,cls){return '<select id="'+id+'" class="'+(cls||'')+'" aria-label="'+t('Language')+'">'+LANGS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===lang?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select>';},
+  picker:function(id,cls){return '<select id="'+id+'" data-dd class="'+(cls||'')+'" aria-label="'+t('Language')+'">'+LANGS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===lang?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select>';},
   // translate the page's own HTML: elements marked data-t (their contents), and data-t-title / -placeholder / -aria-label
   apply:function(root){
     root=root||document;

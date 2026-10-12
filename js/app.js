@@ -317,7 +317,7 @@ function planDialog(id){
   var d=openDialog('<form class="stack"><div class="dlg-head"><h2>'+t('Schedule: {name}',{name:esc(scName(sc.id,sc.name))})+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
     '<div class="grid2"><label class="field"><span class="lbl">'+t('Date')+'</span><input class="f" type="date" name="pdate" required min="'+today()+'" value="'+esc(cur.date||'')+'"></label>'+
     '<label class="field"><span class="lbl">'+t('Time (optional)')+'</span><input class="f" type="time" name="ptime" value="'+esc(cur.time||'')+'"></label></div>'+
-    '<label class="field"><span class="lbl">'+t('Where (optional)')+'</span><input class="f" name="ploc" list="dl-ploc" maxlength="60" value="'+esc(cur.location||'')+'" autocomplete="off"></label>'+
+    '<label class="field"><span class="lbl">'+t('Where (optional)')+'</span><input class="f combo" name="ploc" list="dl-ploc" data-suggest="dl-ploc" maxlength="60" value="'+esc(cur.location||'')+'" autocomplete="off"></label>'+
     '<datalist id="dl-ploc">'+places().map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
     (groups.length?'<label class="field"><span class="lbl">'+t('Group (optional)')+'</span><select class="f" name="pgrp"><option value="">'+t('No group')+'</option>'+groups.slice().sort(byName).map(function(g){return '<option value="'+esc(g.id)+'"'+(g.id===cur.groupId?' selected':'')+'>'+esc(g.name)+'</option>';}).join('')+'</select></label>':'')+
     '<label class="field"><span class="lbl">'+t('Note (optional)')+'</span><input class="f" name="pnote" maxlength="200" value="'+esc(cur.note||'')+'" placeholder="'+t('e.g. bring snacks, use modified rules')+'"></label>'+
@@ -838,7 +838,7 @@ function playForm(p,preset){
   [['official',t('Official (added)')],['valkyrie',t('Valkyrie')]].forEach(function(g){var l=ex.filter(function(s){return s.type===g[0];});
     if(l.length)opts+='<optgroup label="'+g[1]+'">'+l.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===scId?' selected':'')+'>'+esc(scName(s.id,s.name))+'</option>';}).join('')+'</optgroup>';});
   if(scId&&!scenById(scId)&&p.scenarioName)opts+='<option value="" selected disabled>'+t('{name} (not in the list: choose one)',{name:esc(scName(p.scenarioId,p.scenarioName))})+'</option>';
-  var seat=function(s){return '<div class="seat"><span class="pp-wrap"><input class="f combo" name="pp" data-suggest="dl-pl" autocomplete="off" placeholder="'+t('Player')+'" maxlength="40" value="'+esc(s.player||'')+'" aria-label="'+t('Player')+'">'+
+  var seat=function(s){return '<div class="seat"><span class="pp-wrap"><input class="f combo" name="pp" data-suggest="dl-pl" data-new="'+t('new player')+'" autocomplete="off" placeholder="'+t('Player')+'" maxlength="40" value="'+esc(s.player||'')+'" aria-label="'+t('Player')+'">'+
     '<select class="pp-pick" tabindex="-1" aria-label="'+t('Choose a player')+'"><option value="">'+t('Choose a player')+'</option></select></span>'+
     invSelect(s.investigator||'')+
     '<button class="x" type="button" data-f="rmseat" aria-label="'+t('Remove this seat')+'">×</button></div>';};
@@ -853,9 +853,9 @@ function playForm(p,preset){
     '<fieldset class="field"><legend class="lbl">'+t('Who played')+'</legend>'+
     (groups.length?'<select class="f grp" name="grp" aria-label="'+t('Fill in from a group')+'"><option value="">'+t('Fill in from a group…')+'</option>'+groups.slice().sort(byName).map(function(g){return '<option value="'+esc(g.id)+'">'+esc(g.name)+' ('+groupMembers(g).length+')</option>';}).join('')+'</select>':'')+
     '<div class="seats">'+party.map(seat).join('')+'</div><div class="row"><button class="btn sm" type="button" data-f="addseat">'+t('+ Add a player')+'</button></div></fieldset>'+
-    '<label class="field"><span class="lbl">'+t('Where (optional)')+'</span><input class="f" name="loc" list="dl-loc" maxlength="60" placeholder="'+t('e.g. home, a friend’s house or the game store')+'" value="'+esc(p.location||'')+'" autocomplete="off"></label>'+
+    '<label class="field"><span class="lbl">'+t('Where (optional)')+'</span><input class="f combo" name="loc" list="dl-loc" data-suggest="dl-loc" maxlength="60" placeholder="'+t('e.g. home, a friend’s house or the game store')+'" value="'+esc(p.location||'')+'" autocomplete="off"></label>'+
     '<datalist id="dl-loc">'+places().map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
-    '<label class="field"><span class="lbl">'+t('Rules')+'</span><input class="f" name="rules" list="dl-rules" maxlength="80" placeholder="'+t(NORMAL)+'" value="'+esc(p.rules?rulesName(p.rules):'')+'"></label>'+
+    '<label class="field"><span class="lbl">'+t('Rules')+'</span><input class="f combo" name="rules" list="dl-rules" data-suggest="dl-rules" autocomplete="off" maxlength="80" placeholder="'+t(NORMAL)+'" value="'+esc(p.rules?rulesName(p.rules):'')+'"></label>'+
     '<label class="field"><span class="lbl">'+t('Notes')+'</span><textarea class="f" name="notes" rows="4" maxlength="4000" placeholder="'+t('What happened? Anything to remember next time?')+'">'+esc(p.notes||'')+'</textarea></label>'+
     '<datalist id="dl-pl">'+ppl.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
     '<datalist id="dl-rules">'+rulesUsed().map(function(n){return '<option value="'+esc(rulesName(n))+'">';}).join('')+'</datalist>'+

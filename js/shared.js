@@ -307,7 +307,7 @@ window.accountMenu=function(user,opts){
       if(hit)setActive(cur.items.indexOf(hit));
     }
   }
-  var isDD=function(t){return t&&t.tagName==='SELECT'&&t.classList.contains('f')&&!t.multiple;};
+  var isDD=function(t){return t&&t.tagName==='SELECT'&&(t.classList.contains('f')||t.hasAttribute('data-dd'))&&!t.multiple;};
   document.addEventListener('mousedown',function(e){
     if(!isDD(e.target)||e.button!==0||Date.now()-touchedAt<1000||(e.sourceCapabilities&&e.sourceCapabilities.firesTouchEvents))return;e.preventDefault();
     try{e.target.focus({preventScroll:true});}catch(x){}open(e.target);
@@ -355,10 +355,11 @@ window.accountMenu=function(user,opts){
     var exact=all.some(function(n){return norm(n)===q;})||hits.some(function(n){return norm(n)===q;});
     list.innerHTML='';cur.items=[];
     var add=function(v,i,isNew){var el=document.createElement('div');el.className='dd-opt'+(isNew?' dd-new':'');el.id=id+'-'+i;el.setAttribute('role','option');
-      el.innerHTML='<span class="dd-tick" aria-hidden="true"></span><span class="dd-txt"></span>'+(isNew?'<span class="dd-tag">'+t('new player')+'</span>':'');el.querySelector('.dd-txt').textContent=v;
+      el.innerHTML='<span class="dd-tick" aria-hidden="true"></span><span class="dd-txt"></span>'+(isNew?'<span class="dd-tag">'+esc(cur.inp.getAttribute('data-new'))+'</span>':'');el.querySelector('.dd-txt').textContent=v;
       list.appendChild(el);cur.items.push({el:el,v:v});};
     hits.slice(0,60).forEach(function(n,i){add(n,i);});
-    if(q&&!exact){if(hits.length){var sep=document.createElement('div');sep.className='dd-sep';list.appendChild(sep);}add(cur.inp.value.trim(),'new',true);}
+    // a name nobody has used yet (players only: data-new is its tag, "new player")
+    if(q&&!exact&&cur.inp.hasAttribute('data-new')){if(hits.length){var sep=document.createElement('div');sep.className='dd-sep';list.appendChild(sep);}add(cur.inp.value.trim(),'new',true);}
     // nothing to choose: no names, or just the one already typed in full
     if(!cur.items.length||(cur.items.length===1&&norm(cur.items[0].v)===q&&!cur.items[0].el.classList.contains('dd-new'))){close();return;}
     setActive(-1);
@@ -370,24 +371,24 @@ window.accountMenu=function(user,opts){
     if(cur&&cur.inp===inp){fill();return;}close();
     if(!names(inp).length&&!inp.value.trim())return;
     var wrap=document.createElement('div'),id='cb'+Date.now().toString(36);wrap.className='dd-wrap combo';
-    wrap.innerHTML='<div class="dd" role="presentation"><div class="dd-list" role="listbox" id="'+id+'" aria-label="'+t('Known players')+'"></div></div>';
+    wrap.innerHTML='<div class="dd" role="presentation"><div class="dd-list" role="listbox" id="'+id+'" aria-label="'+(inp.hasAttribute('data-new')?t('Known players'):t('Suggestions'))+'"></div></div>';
     document.body.appendChild(wrap);
     cur={inp:inp,wrap:wrap,panel:wrap.querySelector('.dd'),list:wrap.querySelector('.dd-list'),items:[],active:-1,id:id};
-    inp.setAttribute('aria-expanded','true');inp.setAttribute('aria-controls',id);
+    inp.setAttribute('aria-expanded','true');inp.setAttribute('aria-controls',id);inp.classList.add('dd-open');
     // keep the typing focus in the box while picking
     wrap.addEventListener('mousedown',function(e){e.preventDefault();});
     wrap.addEventListener('click',function(e){var el=e.target.closest('.dd-opt');if(!el||!cur)return;var x=cur.items.filter(function(y){return y.el===el;})[0];if(x)pick(x.v,true);});
     wrap.addEventListener('mousemove',function(e){var el=e.target.closest('.dd-opt');if(!el||!cur)return;var i=-1;cur.items.some(function(y,k){if(y.el===el){i=k;return true;}});if(i!==cur.active)setActive(i);});
     fill();
   }
-  function close(){if(!cur)return;var c=cur;cur=null;c.inp.setAttribute('aria-expanded','false');c.inp.removeAttribute('aria-activedescendant');c.wrap.remove();}
+  function close(){if(!cur)return;var c=cur;cur=null;c.inp.classList.remove('dd-open');c.inp.setAttribute('aria-expanded','false');c.inp.removeAttribute('aria-activedescendant');c.wrap.remove();}
   function pick(v,byTap){
     if(!cur)return;var inp=cur.inp;inp.value=v;close();
     inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
     // after a tap on a phone, put the keyboard away
     if(byTap&&window.matchMedia&&matchMedia('(pointer:coarse)').matches)inp.blur();
   }
-  document.addEventListener('focusin',function(e){if(isCombo(e.target)){e.target.removeAttribute('list');e.target.setAttribute('autocomplete','off');e.target.setAttribute('role','combobox');e.target.setAttribute('aria-autocomplete','list');open(e.target);}});
+  document.addEventListener('focusin',function(e){if(isCombo(e.target)){if(!touch())e.target.removeAttribute('list');e.target.setAttribute('autocomplete','off');e.target.setAttribute('role','combobox');e.target.setAttribute('aria-autocomplete','list');open(e.target);}});
   document.addEventListener('focusout',function(e){if(cur&&e.target===cur.inp)setTimeout(function(){if(cur&&document.activeElement!==cur.inp)close();},120);});
   document.addEventListener('input',function(e){if(isCombo(e.target)&&e.isTrusted!==false){if(cur&&cur.inp===e.target)fill();else open(e.target);}});
   document.addEventListener('click',function(e){if(isCombo(e.target)&&!cur)open(e.target);});

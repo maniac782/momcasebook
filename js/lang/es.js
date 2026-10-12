@@ -412,6 +412,7 @@ I18N.add('es',[
 [`No matches`,`Sin coincidencias`],
 [`new player`,`jugador nuevo`],
 [`Known players`,`Jugadores conocidos`],
+[`Suggestions`,`Sugerencias`],
 [`Someone new…`,`Alguien nuevo…`],
 [`Type a name`,`Escribe un nombre`],
 [`That doesn’t look like a Google Sheets link.`,`Eso no parece un enlace de Hojas de cálculo de Google.`],

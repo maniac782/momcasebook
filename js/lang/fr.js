@@ -412,6 +412,7 @@ I18N.add('fr',[
 [`No matches`,`Aucun résultat`],
 [`new player`,`nouveau joueur`],
 [`Known players`,`Joueurs connus`],
+[`Suggestions`,`Suggestions`],
 [`Someone new…`,`Quelqu’un de nouveau…`],
 [`Type a name`,`Saisissez un nom`],
 [`That doesn’t look like a Google Sheets link.`,`Cela ne ressemble pas à un lien Google Sheets.`],

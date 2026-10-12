@@ -413,6 +413,7 @@ I18N.add('pl',[
 [`No matches`,`Brak wyników`],
 [`new player`,`nowy gracz`],
 [`Known players`,`Znani gracze`],
+[`Suggestions`,`Podpowiedzi`],
 [`Someone new…`,`Ktoś nowy…`],
 [`Type a name`,`Wpisz imię`],
 [`That doesn’t look like a Google Sheets link.`,`To nie wygląda na link do Arkuszy Google.`],
