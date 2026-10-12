@@ -2,20 +2,21 @@
 the box), the website version of Dan's packlist tool (github.com/maniac782/valkyrie-tools, packlist/).
 
 For each scenario in the Valkyrie catalogue it downloads the scenario file (<url><key>.valkyrie, a zip of .ini files),
-finds the tiles and monsters it adds, and labels each with:
+finds the tiles and monsters it adds, in the order they first come into play (appearance(): a walk along the
+scenario's events from its start), and labels each with:
 - its number in the community Mansions of Madness Tiles Index v5.2 (scripts/tiles_index.py, read from that PDF by
   scripts/tiles-index-from-pdf.py), and the set whose symbol is printed on it;
 - the box it comes in and its printed name, from Valkyrie's own game-content files (github.com/NPBruce/valkyrie,
   Apache 2.0): unity/Assets/StreamingAssets/content/MoM. First-edition content counts as the box that reprints it:
   Recurring Nightmares (first-edition base game, Conversion Kit) and Suppressed Memories (Forbidden Alchemy, Call of the
   Wild), as in Valkyrie.
-Only names, numbers and box labels are kept; no artwork.
+Only names, numbers and box labels are kept; the pictures are in img/tiles/ and img/monsters/.
 
 Run: python3 scripts/fetch-packlists.py --content <valkyrie>/unity/Assets/StreamingAssets/content/MoM
                                        [--manifest <manifestDownload.ini or URL>] [--cache <folder of .valkyrie files>]
-A scenario whose catalogue version hasn't changed keeps its existing list, so the weekly refresh only downloads new or
+A scenario whose catalogue version (and FORMAT) hasn't changed keeps its existing list, so the weekly refresh only downloads new or
 updated ones. Writes changed=true to $GITHUB_OUTPUT (as packlists_changed) when the file changes."""
-import argparse, configparser, io, json, os, re, sys, urllib.request, zipfile
+import argparse, configparser, heapq, io, json, os, re, sys, urllib.request, zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -117,11 +118,6 @@ def side_def(side, tiles, boxes):
     return (defs[0] if defs else {}), []
 
 
-def idx_key(i):
-    m = re.match(r'^(\d+)([SML])$', i or '')
-    return (0, 'SML'.index(m.group(2)), int(m.group(1))) if m else (1, 0, 0)
-
-
 def localized(files):
     """English text for custom monster names: {key: text} from Localization.English.txt (key,text lines)."""
     for name in ('Localization.English.txt', 'Localization.txt'):
@@ -133,6 +129,49 @@ def localized(files):
                     out[k.strip()] = v.strip().strip('"')
             return out
     return {}
+
+
+# Bump when the lists' shape or order changes, so the next refresh rebuilds every scenario, not only updated ones.
+FORMAT = 2
+# Mythos and round events happen from the first round on: they count as this many steps after the start.
+ROUND_STEPS = 3
+ROUND_TRIGGERS = {'Mythos', 'EndRound', 'StartRound', 'EndInvestigatorTurn', 'NoMorale'}
+
+
+def appearance(secs):
+    """The scenario's components in the order they first come into play: a walk from the start event along every
+    event link (event1=, event2=, ...), into whatever an event adds (an explore token leads to its own event), on to
+    events triggered by defeating a monster that a spawn brought in. Mythos and round events join a few steps in.
+    Branches the players choose between are taken in turn, nearest first, so it's the earliest each could appear."""
+    edges = {}
+    for n, d in secs.items():
+        out = []
+        for k in sorted((k for k in d if re.fullmatch(r'event\d+', k)), key=lambda k: int(k[5:])):
+            out += d[k].split()
+        out += d.get('add', '').split()
+        edges[n] = [x for x in out if x in secs]
+    for n, d in secs.items():
+        m = re.match(r'^Defeated(\w+)$', d.get('trigger', ''))
+        if m:
+            for s, sd in secs.items():
+                if m.group(1) in sd.get('monster', '').split():
+                    edges[s].append(n)
+    queue = [(0, i, n) for i, (n, d) in enumerate(secs.items()) if d.get('trigger') == 'EventStart']
+    queue += [(ROUND_STEPS, i, n) for i, (n, d) in enumerate(secs.items()) if d.get('trigger') in ROUND_TRIGGERS]
+    heapq.heapify(queue)
+    seen, order, count = set(), [], len(secs)
+    while queue:
+        step, _, n = heapq.heappop(queue)
+        if n in seen:
+            continue
+        seen.add(n)
+        order.append(n)
+        for x in edges.get(n, []):
+            if x not in seen:
+                count += 1
+                heapq.heappush(queue, (step + 1, count, x))
+    # anything the walk can't reach (left over from editing, or reached in ways it doesn't follow) goes last
+    return order + [n for n in secs if n not in seen]
 
 
 def packlist(data, tiles, monsters, boxes=()):
@@ -149,16 +188,15 @@ def packlist(data, tiles, monsters, boxes=()):
             for s, d in ini_sections(t).items():
                 secs.setdefault(s, {}).update(d)
     loc = localized(files)
-    # tiles: every Tile… component added anywhere (as Dan's tool does), mapped to its side
+    order_secs = appearance(secs)
+    # tiles: every Tile… component added anywhere (as Dan's tool does), in the order they come into play, mapped to
+    # its side
     added, seen = [], set()
-    for n, t in files.items():
-        if not n.lower().endswith('.ini'):
-            continue
-        for m in re.finditer(r'^\s*add\s*=\s*(.+)$', t, re.MULTILINE | re.IGNORECASE):
-            for comp in m.group(1).split():
-                if comp.startswith('Tile') and comp not in seen:
-                    seen.add(comp)
-                    added.append(comp)
+    for n in order_secs:
+        for comp in secs[n].get('add', '').split():
+            if comp.startswith('Tile') and comp not in seen:
+                seen.add(comp)
+                added.append(comp)
     out_tiles, sides_seen = [], set()
     for comp in added:
         side = secs.get(comp, {}).get('side', '')
@@ -177,26 +215,24 @@ def packlist(data, tiles, monsters, boxes=()):
         if '6player' in comp.lower():
             t['six'] = 1
         out_tiles.append(t)
-    out_tiles.sort(key=lambda t: (t.get('six', 0), idx_key(t.get('i'))))
-    # monsters: every monster= type (all of them when one line offers several), custom ones mapped to their base figure
+    out_tiles.sort(key=lambda t: t.get('six', 0))   # stable: 6-player tiles after the rest, each in order of play
+    # monsters: every monster= type (all of them when one line offers several), custom ones mapped to their base figure,
+    # in the order they come into play
     order, uses = [], {}
-    for n, t in files.items():
-        if not n.lower().endswith('.ini'):
-            continue
-        for m in re.finditer(r'^\s*monster\s*=\s*(.+)$', t, re.MULTILINE | re.IGNORECASE):
-            for mon in m.group(1).split():
-                real, custom = mon, None
-                if mon not in monsters and secs.get(mon, {}).get('base'):
-                    real, custom = secs[mon]['base'], mon
-                if real not in monsters:
-                    continue
-                if real not in uses:
-                    uses[real] = []
-                    order.append(real)
-                if custom:
-                    cn = loc.get(custom + '.monstername') or loc.get(custom + '.name') or camel(custom, 'CustomMonster')
-                    if cn and cn not in uses[real]:
-                        uses[real].append(cn)
+    for n in order_secs:
+        for mon in secs[n].get('monster', '').split():
+            real, custom = mon, None
+            if mon not in monsters and secs.get(mon, {}).get('base'):
+                real, custom = secs[mon]['base'], mon
+            if real not in monsters:
+                continue
+            if real not in uses:
+                uses[real] = []
+                order.append(real)
+            if custom:
+                cn = loc.get(custom + '.monstername') or loc.get(custom + '.name') or camel(custom, 'CustomMonster')
+                if cn and cn not in uses[real]:
+                    uses[real].append(cn)
     out_mon = []
     for r in order:
         mo = {'n': monsters[r]['n'], 'x': monsters[r]['x'], 'e': monsters[r]['e']}
@@ -233,7 +269,7 @@ def main():
         if str(e.get('hidden', '')).lower() == 'true' or e.get('type', 'MoM') != 'MoM':
             continue
         ver = e.get('version', '')
-        if key in old and old[key].get('v') == ver and ver:
+        if key in old and old[key].get('v') == ver and ver and old[key].get('f') == FORMAT:
             out[key] = old[key]
             kept += 1
             continue
@@ -254,13 +290,14 @@ def main():
         need = sorted({x['x'] for x in t + mo if x.get('x')} | {PACK_BOX[pk] for pk in e.get('packs', '').split() if pk in PACK_BOX},
                       key=lambda b: ['core', 'rn', 'sm', 'btt', 'soa', 'sot', 'hj', 'pots'].index(b))
         other = sorted(pk for pk in e.get('packs', '').split() if pk not in PACK_BOX)
-        entry = {'v': ver, 'need': need, 'tiles': t, 'monsters': mo}
+        entry = {'v': ver, 'f': FORMAT, 'need': need, 'tiles': t, 'monsters': mo}
         if other:
             entry['other'] = other
         out[key] = entry
     head = ('/* Mansions of Madness Casebook: packing lists for the Valkyrie scenarios, keyed by catalogue key (js/valkyrie.js).\n'
             '   Generated by scripts/fetch-packlists.py from each scenario file, the community Tiles Index v5.2 (tile numbers)\n'
             '   and Valkyrie\'s game content (names and boxes); the website version of Dan\'s valkyrie-tools packlist. Do not edit.\n'
+            '   Tiles and monsters are in the order they first come into play (6-player tiles last); f is the format version.\n'
             '   need: boxes it uses; tiles: n name, i number (e.g. 9M), e set symbol printed on it, x box it comes in, b the other\n'
             '   side, six 6-player only, alt other possible tiles; monsters: n name, e set, x box, as custom monsters played with\n'
             '   that figure; other: extra content packs it needs. */\n')

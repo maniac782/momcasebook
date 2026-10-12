@@ -176,6 +176,13 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(await p.locator('.pk-idx:has-text("9")').count(),'tile index numbers');
   await p.locator('.pk input').first().check();await p.locator('.pk input').nth(1).check();
   assert.ok(/^2 of /.test(await p.textContent('.pk-count')),'ticks counted');
+  // tile order: by number puts the Tiles Index order (small before medium); ticks survive the switch
+  await p.selectOption('[data-pk=order]','num');
+  const nums=await p.$$eval('.pk-tiles .pk-idx',l=>l.map(x=>x.textContent.replace(/\s+/g,'')));
+  const key=x=>{const m=/^(\d+)([SML])$/.exec(x);return m?'SML'.indexOf(m[2])*1000+ +m[1]:9999;};
+  assert.deepStrictEqual(nums,[...nums].sort((a,b)=>key(a)-key(b)),'sorted by tile number');
+  assert.ok(/^2 of /.test(await p.textContent('.pk-count')),'ticks kept after reordering');
+  await p.selectOption('[data-pk=order]','play');
   await p.screenshot({path:out+'/5k-packing-list.png'});
   await p.click('.dlg [data-close]');await p.locator('.scs li:has-text("Exotic Material") [data-a=pack]').first().click();await p.waitForSelector('.pk-list');
   assert.ok(/^2 of /.test(await p.textContent('.pk-count')),'ticks kept on this device');

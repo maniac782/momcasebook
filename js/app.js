@@ -381,7 +381,10 @@ function needsHtml(s){var p=packOf(s);if(!p||!p.need.length)return '';var o=owne
   return '<span class="note needs">'+t('Needs {boxes}',{boxes:parts.join(' + ')})+'</span>';}
 function packDialog(id){
   var s=scenById(id),p=packOf(s);if(!p)return;var KEY='mom-pack-'+s.vkey,done={};
-  try{(JSON.parse(localStorage.getItem(KEY)||'[]')||[]).forEach(function(k){done[k]=1;});}catch(e){}
+  var loadDone=function(){done={};try{(JSON.parse(localStorage.getItem(KEY)||'[]')||[]).forEach(function(k){done[k]=1;});}catch(e){}};loadDone();
+  // tiles come in the order they first come into play in the scenario; By tile number sorts them as the Tiles Index
+  // does (small, medium, large), for finding them in the box. The choice is kept on this device.
+  var mode='play';try{if(localStorage.getItem('mom-pack-order')==='num')mode='num';}catch(e){}
   var idx=function(i){var m=/^(\d+)([SML])$/.exec(i||'');return m?m[1]+' '+m[2]:'';};
   // pictures in list order, for the large view (tap a picture to open it; tap the rest of the row to tick it)
   var zooms=[];
@@ -393,7 +396,13 @@ function packDialog(id){
   // the tile's art (img/tiles/<set>-<name>.webp); fan-made tiles have none
   var tilePic=function(x){return x.e?'img/tiles/'+x.e+'-'+String(x.n||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.webp':'';};
   var tile=function(x,i){return item('t'+i,x.n,where(x)+(x.b?' · '+t('other side: {name}',{name:esc(x.b)}):'')+(x.alt&&x.alt.length?' · '+t('or {tiles}',{tiles:x.alt.map(function(a){return idx(a.i)+' '+setTag(a.e);}).join(', ')}):''),idx(x.i)||'—',tilePic(x),1);};
-  var normal=[],six=[];p.tiles.forEach(function(x,i){(x.six?six:normal).push(tile(x,i));});
+  var numKey=function(x){var m=/^(\d+)([SML])$/.exec(x.i||'');return m?'SML'.indexOf(m[2])*1000+(+m[1]):9999;};
+  var tileLists=function(){var normal=[],six=[];
+    p.tiles.map(function(x,i){return {x:x,i:i};}).sort(function(a,b){return mode==='num'?numKey(a.x)-numKey(b.x)||a.i-b.i:a.i-b.i;})
+      .forEach(function(o){(o.x.six?six:normal).push(tile(o.x,o.i));});
+    return (normal.length?'<h3 class="pk-h">'+t('Tiles')+' <span class="note">'+normal.length+'</span></h3><ul class="pk-list">'+normal.join('')+'</ul>':'')+
+      (six.length?'<h3 class="pk-h">'+t('Tiles for 6 players only')+' <span class="note">'+six.length+'</span></h3><ul class="pk-list">'+six.join('')+'</ul>':'');};
+  var numbered=p.tiles.some(function(x){return numKey(x)<9999;});
   // the figure's token art (img/monsters/, named after Valkyrie's English monster name, e.g. hound-of-tindalos.webp)
   var monPic=function(n){return 'img/monsters/'+String(n||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.webp';};
   var mons=p.monsters.map(function(m,i){return item('m'+i,m.n,where(m)+(m.as?' · '+t('plays {names}',{names:esc(m.as.join(', '))}):''),'',monPic(m.n));});
@@ -401,17 +410,22 @@ function packDialog(id){
   var d=openDialog('<div class="dlg-head"><h2>'+t('Packing list: {name}',{name:esc(scName(s.id,s.name))})+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
     '<p class="note">'+t('Needs {boxes}.',{boxes:p.need.map(function(b){return esc(boxName(b));}).join(' + ')+(p.other?' + '+t('fan-made pack {name}',{name:esc(p.other.join(', '))}):'')})+
     (miss.length?' <span class="missing">'+t('Not ticked in your collection: {boxes}.',{boxes:esc(miss.map(boxName).join(', '))})+'</span>':'')+'</p>'+
-    '<div class="row pk-bar"><span class="note pk-count"></span><button class="btn sm ghost" type="button" data-pk="clear">'+t('Clear ticks')+'</button></div>'+
-    (normal.length?'<h3 class="pk-h">'+t('Tiles')+' <span class="note">'+normal.length+'</span></h3><ul class="pk-list">'+normal.join('')+'</ul>':'')+
-    (six.length?'<h3 class="pk-h">'+t('Tiles for 6 players only')+' <span class="note">'+six.length+'</span></h3><ul class="pk-list">'+six.join('')+'</ul>':'')+
+    '<div class="row pk-bar"><span class="note pk-count"></span>'+
+      (numbered?'<label class="pk-order"><span class="note">'+t('Tile order')+'</span><select data-pk="order"><option value="play"'+(mode==='play'?' selected':'')+'>'+t('As they come into play')+'</option><option value="num"'+(mode==='num'?' selected':'')+'>'+t('By tile number')+'</option></select></label>':'')+
+      '<button class="btn sm ghost" type="button" data-pk="clear">'+t('Clear ticks')+'</button></div>'+
+    '<div class="pk-tiles">'+tileLists()+'</div>'+
     (mons.length?'<h3 class="pk-h">'+t('Monster figures')+' <span class="note">'+mons.length+'</span></h3><ul class="pk-list">'+mons.join('')+'</ul>':'')+
     '<p class="note fine">'+t('Tile and monster art © Fantasy Flight Games.')+'</p>'+
     '<p class="note fine">'+t('Tile numbers follow the community <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L for small, medium, large); the colored tag is the set whose symbol is printed on the tile or figure. A — means a fan-made tile that isn’t in any box. From the scenario file in the Valkyrie catalogue.')+'</p>'+
     '<div class="row end"><button class="btn" type="button" data-close>'+t('Done')+'</button></div>',t('Packing list'));
   var count=function(){var all=d.querySelectorAll('.pk input'),n=0;all.forEach(function(c){if(c.checked)n++;});d.querySelector('.pk-count').textContent=t('{n} of {total} packed',{n:n,total:all.length});};
   var save=function(){var l=[];d.querySelectorAll('.pk input:checked').forEach(function(c){l.push(c.dataset.k);});try{if(l.length)localStorage.setItem(KEY,JSON.stringify(l));else localStorage.removeItem(KEY);}catch(e){}};
-  d.addEventListener('click',function(e){var z=e.target.closest('[data-zoom]');if(!z)return;e.preventDefault();e.stopPropagation();zoomView(zooms,+z.dataset.zoom,z);});
-  d.addEventListener('change',function(e){var c=e.target;if(!c.dataset.k)return;c.closest('.pk').classList.toggle('on',c.checked);count();save();});
+  // the large view goes through the pictures in the order they're shown
+  d.addEventListener('click',function(e){var z=e.target.closest('[data-zoom]');if(!z)return;e.preventDefault();e.stopPropagation();
+    var all=[].slice.call(d.querySelectorAll('[data-zoom]'));zoomView(all.map(function(b){return zooms[+b.dataset.zoom];}),all.indexOf(z),z);});
+  d.addEventListener('change',function(e){var c=e.target;
+    if(c.dataset.pk==='order'){mode=c.value;try{localStorage.setItem('mom-pack-order',mode);}catch(x){}loadDone();d.querySelector('.pk-tiles').innerHTML=tileLists();count();return;}
+    if(!c.dataset.k)return;c.closest('.pk').classList.toggle('on',c.checked);count();save();});
   d.querySelector('[data-pk=clear]').addEventListener('click',function(){d.querySelectorAll('.pk input').forEach(function(c){c.checked=false;c.closest('.pk').classList.remove('on');});count();save();});
   count();
 }
