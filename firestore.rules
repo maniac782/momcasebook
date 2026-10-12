@@ -80,9 +80,9 @@ service cloud.firestore {
       // regular players (just names; they don't need accounts) and groups of them
       match /people/{pid} {
         allow read, delete: if own(uid);
-        allow create, update: if own(uid) && request.resource.data.keys().hasOnly(['name','notes','created','updated'])
+        allow create, update: if own(uid) && request.resource.data.keys().hasOnly(['name','notes','inv','created','updated'])
           && str(request.resource.data.name, 40) && request.resource.data.name.size() > 0
-          && optStr(request.resource.data, 'notes', 500) && optNum(request.resource.data, 'created') && optNum(request.resource.data, 'updated');
+          && optStr(request.resource.data, 'notes', 500) && optStr(request.resource.data, 'inv', 40) && optNum(request.resource.data, 'created') && optNum(request.resource.data, 'updated');
       }
       match /groups/{gid} {
         allow read, delete: if own(uid);

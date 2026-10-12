@@ -489,6 +489,20 @@ details[data-box=starred]>summary h2::before{content:"\2605  ";color:var(--accen
 .lb-x{top:max(10px,env(safe-area-inset-top));right:10px}
 .lb-nav{top:50%;transform:translateY(-50%)}
 .lb-prev{left:10px}.lb-next{right:10px}
+/* an investigator's card on the Players tab, and full size with its back (cardView) */
+.inv-thumb{flex:none;padding:0;border:0;background:none;border-radius:5px;line-height:0;cursor:zoom-in;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.inv-thumb img{width:96px;height:auto;border-radius:5px;display:block}
+.inv-thumb:hover img{filter:brightness(1.1)}
+.inv-thumb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card3d{padding:0;border:0;background:none;cursor:pointer;perspective:1600px;width:min(100%,900px,calc((100dvh - 170px)*600/351));aspect-ratio:600/351}
+.card3d-in{position:relative;display:block;width:100%;height:100%;transition:transform .6s cubic-bezier(.3,.7,.3,1);transform-style:preserve-3d}
+.card3d.flipped .card3d-in{transform:rotateY(180deg)}
+.card3d img{position:absolute;inset:0;width:100%;height:100%;border-radius:10px;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.card3d-b{transform:rotateY(180deg)}
+.lb-cap .lb-flip{margin-left:10px;vertical-align:middle}
+.lb-note{margin:6px 0 0;color:#a9adb6;font-size:12px}
+@media (prefers-reduced-motion:reduce){.card3d-in{transition:none}}
+@media (max-width:480px){.inv-thumb img{width:72px}}
 .pk.on .pk-pic{opacity:.55}
 .pk-pic.pk-tile{width:auto;height:48px;max-width:96px;border-radius:4px;display:block}
 .pk-txt{display:flex;flex-direction:column;min-width:0}

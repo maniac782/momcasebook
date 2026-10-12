@@ -324,14 +324,26 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.locator('.seat').count(),4,'seats filled from group');
   assert.strictEqual(await p.locator('.seat').filter({has:p.locator('[name=pp][value="Dan"]')}).count()>=0,true);
   const seats=await p.$$eval('.seat',ss=>ss.map(s=>s.querySelector('[name=pp]').value+':'+s.querySelector('[name=pi]').value));
-  assert.ok(seats.includes('Dan:Agatha Crane')&&seats.includes('Gerri:')&&seats.includes('Pat:'),'seats '+seats.join(','));
+  // Gerri gets the investigator she usually plays; Pat has none yet
+  assert.ok(seats.includes('Dan:Agatha Crane')&&seats.includes('Gerri:Ursula Downs')&&seats.includes('Pat:'),'seats '+seats.join(','));
   await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
   await p.waitForSelector('.play:has-text("Rising Tide")');
   // rename Gerri -> Geraldine, also in past plays
   await p.click('[data-t=players]');
   await p.locator('li',{hasText:'Gerri'}).locator('[data-a=editperson]').click();
   await p.fill('input[name=pname]','Geraldine');assert.ok(await p.isVisible('.renm'),'rename-in-plays offered');
+  await p.selectOption('select[name=pinv]','Agatha Crane');
   await p.click('.dlg button[type=submit]');await p.waitForSelector('.scs b:has-text("Geraldine")');
+  // their investigator's card beside them; tap for the full card, tap again to flip it, Escape to close
+  await p.waitForSelector('li:has-text("Geraldine") .inv-thumb img');
+  await p.locator('li',{hasText:'Geraldine'}).locator('.inv-thumb').click();await p.waitForSelector('.lb-card .card3d-f');
+  await p.waitForFunction(()=>{const i=document.querySelector('.card3d-f');return i&&i.complete&&i.naturalWidth>=600;});
+  await p.screenshot({path:out+'/6c-investigator-card.png'});
+  await p.click('.lb-card .card3d');await p.waitForTimeout(700);assert.ok(await p.locator('.card3d.flipped').count(),'flips to the back');
+  await p.waitForFunction(()=>{const i=document.querySelector('.card3d-b');return i&&i.complete&&i.naturalWidth>=600;});
+  await p.screenshot({path:out+'/6d-investigator-card-back.png'});
+  await p.keyboard.press('Escape');assert.strictEqual(await p.locator('.lb-card').count(),0,'card closed');
+  await p.locator('li',{hasText:'Geraldine'}).filter({has:p.locator('.inv-thumb')}).screenshot({path:out+'/6e-player-with-card.png'});
   await p.click('[data-t=plays]');
   assert.strictEqual(await p.locator('.pl-party:has-text("Gerri")').count(),0,'old name gone from plays');
   assert.ok(await p.locator('.pl-party:has-text("Geraldine")').count()>=3,'new name in plays');

@@ -629,6 +629,24 @@ function personStats(name){
   var fav=Object.keys(inv).sort(function(a,b){return inv[b]-inv[a];})[0];
   return {n:n,pass:pass,last:last,fav:fav,favN:fav?inv[fav]:0};
 }
+// a player's investigator: the one set for them on the Players tab, else the one they've played most
+function usualInv(name){var x=personByName(name);if(x&&x.inv&&MOM.isInvestigator(x.inv))return x.inv;var fav=personStats(name).fav;return fav&&MOM.isInvestigator(fav)?fav:'';}
+// an investigator card's picture: 'front', 'back' or 'thumb' (img/investigators/, from github.com/any2cards/mom2e)
+function invImg(name,side){var k=String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return side==='thumb'?'img/investigators/thumb/'+k+'.webp':'img/investigators/'+k+'-'+side+'.webp';}
+// An investigator's card full size, front first; the card itself, the Flip button, Space or F turns it over.
+function cardView(name,from){
+  var bg=document.createElement('div');bg.className='lb lb-card';bg.setAttribute('role','dialog');bg.setAttribute('aria-modal','true');bg.setAttribute('aria-label',name);
+  bg.innerHTML='<button class="lb-x" type="button" aria-label="'+t('Close')+'">×</button>'+
+    '<button class="card3d" type="button" aria-label="'+t('Flip card')+'"><span class="card3d-in"><img class="card3d-f" src="'+invImg(name,'front')+'" alt="'+esc(name)+'"><img class="card3d-b" src="'+invImg(name,'back')+'" alt="'+t('{name}, back of the card',{name:esc(name)})+'"></span></button>'+
+    '<p class="lb-cap"><b>'+esc(name)+'</b> <button class="btn sm lb-flip" type="button">'+t('Flip card')+'</button></p><p class="lb-note">© Fantasy Flight Games</p>';
+  var card=bg.querySelector('.card3d');
+  var flip=function(){card.classList.toggle('flipped');};
+  var close=function(){bg.remove();window.removeEventListener('keydown',key,true);if(from&&from.focus)try{from.focus();}catch(e){}};
+  var key=function(e){if(e.key==='Escape'){e.stopPropagation();e.preventDefault();close();}else if(e.key==='f'||e.key==='F'||(e.key===' '&&e.target===document.body)){e.preventDefault();flip();}};
+  window.addEventListener('keydown',key,true);
+  bg.addEventListener('click',function(e){e.stopPropagation();if(e.target.closest('.card3d,.lb-flip'))flip();else if(e.target.closest('.lb-x')||e.target===bg)close();});
+  document.body.appendChild(bg);bg.querySelector('.lb-x').focus();
+}
 function playsWith(name){var k=lc(name);return plays.filter(function(p){return (p.party||[]).some(function(s){return lc(s.player)===k;});});}
 function playersHtml(){
   var h='<div class="filters"><button class="btn pri" data-a="newperson">'+t('Add a player')+'</button><button class="btn" data-a="newgroup"'+(people.length?'':' disabled title="'+t('Add players first')+'"')+'>'+t('New group')+'</button></div>';
@@ -647,6 +665,7 @@ function playersHtml(){
       return '<li>'+avatarHtml(x.name,'','')+'<div class="grow"><b>'+(st.n?'<a href="#" data-a="playerplays" data-n="'+esc(x.name)+'">'+esc(x.name)+'</a>':esc(x.name))+'</b>'+
         '<span class="note">'+line+'</span>'+(x.notes?'<span class="note pnote">'+esc(x.notes)+'</span>':'')+
         (ing.length?'<span class="row tight chips">'+ing.map(function(g){return '<span class="chip muted">'+esc(g.name)+'</span>';}).join('')+'</span>':'')+'</div>'+
+        (x.inv&&MOM.isInvestigator(x.inv)?'<button type="button" class="inv-thumb" data-a="invcard" data-n="'+esc(x.inv)+'" aria-label="'+t('Show {name}’s card',{name:esc(x.inv)})+'" title="'+esc(x.inv)+'"><img src="'+invImg(x.inv,'thumb')+'" alt="" loading="lazy" width="120" height="70"></button>':'')+
         '<div class="row tight"><button class="btn sm" data-a="editperson" data-id="'+esc(x.id)+'">'+t('Edit')+'</button><button class="btn sm ghost" data-a="delperson" data-id="'+esc(x.id)+'">'+t('Delete')+'</button></div></li>';}).join('')+'</ul>'
       :'<p class="note">'+t('Add the people you play with. They don’t need accounts; it’s just their names, for picking quickly when you log a play and for stats per person.')+'</p>')+'</section>';
   // names typed into plays but not saved
@@ -656,11 +675,12 @@ function playersHtml(){
   return h;
 }
 function newId(){return fb.db.collection('users/'+me.uid+'/people').doc().id;}
-function savePerson(name,notes){var id=newId();return fb.db.doc('users/'+me.uid+'/people/'+id).set({name:name,notes:notes||'',created:Date.now()}).then(function(){return id;});}
+function savePerson(name,notes,inv){var id=newId();var d={name:name,notes:notes||'',created:Date.now()};if(inv)d.inv=inv;return fb.db.doc('users/'+me.uid+'/people/'+id).set(d).then(function(){return id;});}
 function personDialog(x){
   var editing=!!x;x=x||{};var used=editing?playsWith(x.name).length:0;
   var d=openDialog('<form class="stack"><div class="dlg-head"><h2>'+(editing?t('Edit player'):t('Add a player'))+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
     '<label class="field"><span class="lbl">'+t('Name')+'</span><input class="f" name="pname" maxlength="40" required value="'+esc(x.name||'')+'" autocomplete="off"></label>'+
+    '<label class="field"><span class="lbl">'+t('Their investigator (optional)')+'</span>'+invSelect(x.inv||'','pinv')+'<small class="note">'+t('Shown with them on the Players tab, and filled in for them when you log a play.')+'</small></label>'+
     '<label class="field"><span class="lbl">'+t('Notes (optional)')+'</span><textarea class="f" name="pnotes" rows="3" maxlength="500" placeholder="'+t('Favorite investigators, house rules they like…')+'">'+esc(x.notes||'')+'</textarea></label>'+
     (used?'<label class="check renm" hidden><input type="checkbox" name="renplays" checked><span>'+tn('Also rename them in {n} past play','Also rename them in {n} past plays',used)+'</span></label>':'')+
     (editing?'':'<div class="field"><span class="lbl">'+t('Groups (optional)')+'</span><div class="checks">'+(groups.length?groups.slice().sort(byName).map(function(g){return '<label class="check"><input type="checkbox" name="pg" value="'+esc(g.id)+'"><span>'+esc(g.name)+'</span></label>';}).join(''):'<span class="note">'+t('No groups yet.')+'</span>')+'</div></div>')+
@@ -668,19 +688,19 @@ function personDialog(x){
   var f=d.querySelector('form'),err=f.querySelector('.err'),ren=f.querySelector('.renm');
   if(ren)f.pname.addEventListener('input',function(){ren.hidden=lc(f.pname.value)===lc(x.name)&&f.pname.value.trim()===x.name;});
   f.addEventListener('submit',async function(e){
-    e.preventDefault();var name=f.pname.value.trim().replace(/\s+/g,' '),notes=f.pnotes.value.trim();
+    e.preventDefault();var name=f.pname.value.trim().replace(/\s+/g,' '),notes=f.pnotes.value.trim(),inv=f.pinv.value;
     var clash=personByName(name);if(clash&&clash.id!==x.id){err.textContent=t('You already have a player called “{name}”.',{name:clash.name});err.hidden=false;return;}
     var btn=f.querySelector('[type=submit]');btn.disabled=true;
     try{
       if(editing){
-        await fb.db.doc('users/'+me.uid+'/people/'+x.id).set({name:name,notes:notes,updated:Date.now()},{merge:true});
+        await fb.db.doc('users/'+me.uid+'/people/'+x.id).set({name:name,notes:notes,inv:inv,updated:Date.now()},{merge:true});
         if(ren&&!ren.hidden&&f.renplays.checked&&name!==x.name){
           var k=lc(x.name),list=playsWith(x.name);
           for(var i=0;i<list.length;i+=400){var b=fb.db.batch();list.slice(i,i+400).forEach(function(p){
             b.update(fb.db.doc('users/'+me.uid+'/plays/'+p.id),{party:p.party.map(function(s){return lc(s.player)===k?{player:name,investigator:s.investigator||''}:s;}),updated:Date.now()});});await b.commit();}
         }
       }else{
-        var id=await savePerson(name,notes);
+        var id=await savePerson(name,notes,inv);
         var pick=[].slice.call(f.querySelectorAll('input[name=pg]:checked')).map(function(c){return c.value;});
         for(var j=0;j<pick.length;j++){var g=groups.filter(function(y){return y.id===pick[j];})[0];if(g)await fb.db.doc('users/'+me.uid+'/groups/'+g.id).set({members:(g.members||[]).concat([id]),updated:Date.now()},{merge:true});}
       }
@@ -745,9 +765,9 @@ window.addEventListener('acct-account',openAccount);
 
 // ---------- investigators: official names only ----------
 // The dropdown on each seat: the 40 official investigators grouped by box, or Unknown.
-function invSelect(val){
+function invSelect(val,nm){
   var odd=val&&!MOM.isInvestigator(val);
-  return '<select class="f" name="pi" aria-label="'+t('Investigator')+'"><option value="">'+t('Investigator…')+'</option>'+
+  return '<select class="f" name="'+(nm||'pi')+'" aria-label="'+t('Investigator')+'"><option value="">'+t('Investigator…')+'</option>'+
     MOM.INVESTIGATOR_GROUPS.map(function(g){return '<optgroup label="'+esc(g.name)+'">'+g.list.map(function(n){return '<option'+(n===val?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</optgroup>';}).join('')+
     (odd?'<option value="" selected disabled>'+t('{name} (not official)',{name:esc(val)})+'</option>':'')+'</select>';
 }
@@ -874,15 +894,16 @@ function playAgain(scId){
 function openPlay(p,preset){
   var d=openDialog(playForm(p,preset),p&&p.id?t('Edit play'):t('Log a play')),f=d.querySelector('form'),err=f.querySelector('.err');
   var seatHtml=f.querySelector('.seat').outerHTML;
-  // picking a known player fills in the investigator they usually take, if that seat has none yet
+  // picking a known player fills in their investigator (the one set on the Players tab, else the one they usually take), if
+  // that seat has none yet
   f.addEventListener('change',function(e){var t=e.target;if(t.name!=='pp'||!t.value.trim())return;var s=t.closest('.seat'),iv=s&&s.querySelector('[name=pi]');
-    if(!iv||iv.value)return;var fav=personStats(t.value).fav;if(fav&&MOM.isInvestigator(fav)){iv.value=fav;}});
+    if(!iv||iv.value)return;var fav=usualInv(t.value);if(fav)iv.value=fav;});
   // picking a group fills the seats with its members, keeping any investigator already chosen for someone
   if(f.grp)f.grp.addEventListener('change',function(){
     var g=groups.filter(function(y){return y.id===f.grp.value;})[0];if(!g)return;
     var had={};f.querySelectorAll('.seat').forEach(function(s){var n=lc(s.querySelector('[name=pp]').value);if(n)had[n]=s.querySelector('[name=pi]').value;});
     var box=f.querySelector('.seats');box.innerHTML='';
-    groupMembers(g).slice(0,8).forEach(function(x){box.insertAdjacentHTML('beforeend',seatHtml);var s=box.lastElementChild;s.querySelector('[name=pp]').value=x.name;s.querySelector('[name=pi]').value=had[lc(x.name)]||'';});
+    groupMembers(g).slice(0,8).forEach(function(x){box.insertAdjacentHTML('beforeend',seatHtml);var s=box.lastElementChild;s.querySelector('[name=pp]').value=x.name;s.querySelector('[name=pi]').value=had[lc(x.name)]||usualInv(x.name)||'';});
     if(!box.children.length){box.insertAdjacentHTML('beforeend',seatHtml);box.querySelectorAll('input').forEach(function(i){i.value='';});}
     f.grp.value='';var first=box.querySelector('[name=pi]');if(first)first.focus();
   });
@@ -982,6 +1003,7 @@ app.addEventListener('click',function(e){
   else if(k==='xtswap'){var xr=xt.r;xt.r=xt.c;xt.c=xr;saveXt();render();}
   else if(k==='newperson')personDialog();
   else if(k==='newgroup')groupDialog();
+  else if(k==='invcard'){cardView(a.dataset.n,a);}
   else if(k==='editperson'){var ps=people.filter(function(x){return x.id===a.dataset.id;})[0];if(ps)personDialog(ps);}
   else if(k==='editgroup'){var gr=groups.filter(function(x){return x.id===a.dataset.id;})[0];if(gr)groupDialog(gr);}
   else if(k==='delperson'){var pd=people.filter(function(x){return x.id===a.dataset.id;})[0];if(pd)confirmDialog(t('Delete player'),t('Delete <b>{name}</b>? They’re taken out of your groups. Past plays keep their name.',{name:esc(pd.name)}),t('Delete'),async function(){
