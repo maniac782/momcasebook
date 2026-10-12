@@ -383,8 +383,11 @@ function packDialog(id){
   var s=scenById(id),p=packOf(s);if(!p)return;var KEY='mom-pack-'+s.vkey,done={};
   try{(JSON.parse(localStorage.getItem(KEY)||'[]')||[]).forEach(function(k){done[k]=1;});}catch(e){}
   var idx=function(i){var m=/^(\d+)([SML])$/.exec(i||'');return m?m[1]+' '+m[2]:'';};
+  // pictures in list order, for the large view (tap a picture to open it; tap the rest of the row to tick it)
+  var zooms=[];
   var item=function(k,name,sub,badge,pic,wide){return '<li><label class="pk'+(done[k]?' on':'')+'"><input type="checkbox" data-k="'+k+'"'+(done[k]?' checked':'')+'>'+
-    (badge?'<span class="pk-idx num">'+badge+'</span>':'')+(pic?'<img class="pk-pic'+(wide?' pk-tile':'')+'" src="'+pic+'" alt="" loading="lazy" onerror="this.remove()"'+(wide?'':' width="48" height="48"')+'>':'')+'<span class="pk-txt"><b>'+esc(name)+'</b><span class="note">'+sub+'</span></span></label></li>';};
+    (badge?'<span class="pk-idx num">'+badge+'</span>':'')+(pic?(wide?'<span class="pk-picbox">':'')+'<button type="button" class="pk-zoom'+(wide?' pk-tile':'')+'" data-zoom="'+(zooms.push({src:pic.replace(/\/([^/]+)$/,'/full/$1'),name:name})-1)+'" aria-label="'+t('Show {name} larger',{name:esc(name)})+'">'+
+      '<img class="pk-pic'+(wide?' pk-tile':'')+'" src="'+pic+'" alt="" loading="lazy" onerror="this.parentNode.remove()"'+(wide?'':' width="48" height="48"')+'></button>'+(wide?'</span>':''):'')+'<span class="pk-txt"><b>'+esc(name)+'</b><span class="note">'+sub+'</span></span></label></li>';};
   // where it is: the set's tag, the box when that differs (first-edition sets are in Recurring Nightmares or Suppressed Memories), the back
   var where=function(o){var st=SETS[o.e],box=o.x&&st&&['1e','fa','cotw'].indexOf(o.e)>=0?' · '+t('in {box}',{box:esc(boxName(o.x))}):'';return setTag(o.e)+(st?'':' '+t('fan-made tile'))+box;};
   // the tile's art (img/tiles/<set>-<name>.webp); fan-made tiles have none
@@ -407,9 +410,31 @@ function packDialog(id){
     '<div class="row end"><button class="btn" type="button" data-close>'+t('Done')+'</button></div>',t('Packing list'));
   var count=function(){var all=d.querySelectorAll('.pk input'),n=0;all.forEach(function(c){if(c.checked)n++;});d.querySelector('.pk-count').textContent=t('{n} of {total} packed',{n:n,total:all.length});};
   var save=function(){var l=[];d.querySelectorAll('.pk input:checked').forEach(function(c){l.push(c.dataset.k);});try{if(l.length)localStorage.setItem(KEY,JSON.stringify(l));else localStorage.removeItem(KEY);}catch(e){}};
+  d.addEventListener('click',function(e){var z=e.target.closest('[data-zoom]');if(!z)return;e.preventDefault();e.stopPropagation();zoomView(zooms,+z.dataset.zoom,z);});
   d.addEventListener('change',function(e){var c=e.target;if(!c.dataset.k)return;c.closest('.pk').classList.toggle('on',c.checked);count();save();});
   d.querySelector('[data-pk=clear]').addEventListener('click',function(){d.querySelectorAll('.pk input').forEach(function(c){c.checked=false;c.closest('.pk').classList.remove('on');});count();save();});
   count();
+}
+// A picture full-size over everything: arrows, swipe or the buttons go through the list; Escape, × or a tap outside
+// the picture closes it (and only it: the packing list underneath stays open).
+function zoomView(list,i,from){
+  var bg=document.createElement('div');bg.className='lb';bg.setAttribute('role','dialog');bg.setAttribute('aria-modal','true');
+  var many=list.length>1;
+  bg.innerHTML='<button class="lb-x" type="button" aria-label="'+t('Close')+'">×</button>'+
+    (many?'<button class="lb-nav lb-prev" type="button" aria-label="'+t('Previous picture')+'">‹</button><button class="lb-nav lb-next" type="button" aria-label="'+t('Next picture')+'">›</button>':'')+
+    '<img class="lb-img" alt=""><p class="lb-cap"></p>';
+  var img=bg.querySelector('.lb-img'),cap=bg.querySelector('.lb-cap');
+  var show=function(n){i=(n+list.length)%list.length;var z=list[i];img.src=z.src;img.alt=z.name;bg.setAttribute('aria-label',z.name);
+    cap.innerHTML='<b>'+esc(z.name)+'</b>'+(many?' <span>'+t('Picture {n} of {total}',{n:i+1,total:list.length})+'</span>':'');};
+  var close=function(){bg.remove();window.removeEventListener('keydown',key,true);if(from&&from.focus)try{from.focus();}catch(e){}};
+  var key=function(e){if(e.key==='Escape'){e.stopPropagation();e.preventDefault();close();}
+    else if(many&&e.key==='ArrowLeft'){e.stopPropagation();show(i-1);}else if(many&&e.key==='ArrowRight'){e.stopPropagation();show(i+1);}};
+  window.addEventListener('keydown',key,true);
+  bg.addEventListener('click',function(e){e.stopPropagation();
+    if(e.target.closest('.lb-prev'))show(i-1);else if(e.target.closest('.lb-next'))show(i+1);else if(e.target!==img)close();});
+  var x0=null;bg.addEventListener('touchstart',function(e){x0=e.touches.length===1?e.touches[0].clientX:null;},{passive:true});
+  bg.addEventListener('touchend',function(e){if(x0==null||!many)return;var dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)show(dx<0?i+1:i-1);});
+  document.body.appendChild(bg);show(i);bg.querySelector('.lb-x').focus();
 }
 function officialInfo(s){return s.type==='official'&&(window.MOM_OFFICIAL_INFO||{})[s.id]||null;}
 // an official scenario's name in the reader's language (as in the companion app; js/lang/<code>.js), else its own name

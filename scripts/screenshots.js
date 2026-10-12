@@ -4,7 +4,7 @@
 // FONTS is optional; without it the pictures fall back to the browser's own fonts.
 const {chromium}=require(process.env.PW||'playwright');const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..'),out=path.join(root,'docs','screenshots');fs.mkdirSync(out,{recursive:true});
-const types={html:'text/html',js:'text/javascript',css:'text/css',png:'image/png',webmanifest:'application/manifest+json'};
+const types={html:'text/html',js:'text/javascript',css:'text/css',png:'image/png',webp:'image/webp',webmanifest:'application/manifest+json'};
 const G=process.env.FONTS,FONTS=G?{
   '/ss.ttf':G+'/ofl/sourcesans3/SourceSans3[wght].ttf','/lf.ttf':G+'/ofl/librefranklin/LibreFranklin[wght].ttf',
   '/fell.ttf':G+'/ofl/imfellenglish/IMFeENrm28P.ttf','/fellit.ttf':G+'/ofl/imfellenglish/IMFeENit28P.ttf','/mono.ttf':G+'/ofl/ibmplexmono/IBMPlexMono-Medium.ttf'}:{};

@@ -179,7 +179,17 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.screenshot({path:out+'/5k-packing-list.png'});
   await p.click('.dlg [data-close]');await p.locator('.scs li:has-text("Exotic Material") [data-a=pack]').first().click();await p.waitForSelector('.pk-list');
   assert.ok(/^2 of /.test(await p.textContent('.pk-count')),'ticks kept on this device');
-  await p.click('[data-pk=clear]');assert.ok(/^0 of /.test(await p.textContent('.pk-count')),'clear ticks');await p.click('.dlg [data-close]');
+  await p.click('[data-pk=clear]');assert.ok(/^0 of /.test(await p.textContent('.pk-count')),'clear ticks');
+  // a picture opens large without ticking its row; arrows go through the list; Escape closes only the large view
+  await p.locator('.pk-zoom').nth(2).click();await p.waitForSelector('.lb .lb-img');
+  assert.ok(/^0 of /.test(await p.textContent('.pk-count')),'picture tap does not tick');
+  assert.ok(/\/full\//.test(await p.getAttribute('.lb-img','src')),'large image');
+  const cap1=await p.textContent('.lb-cap');await p.keyboard.press('ArrowRight');assert.notStrictEqual(await p.textContent('.lb-cap'),cap1,'next picture');
+  await p.waitForFunction(()=>{const i=document.querySelector('.lb-img');return i&&i.complete&&i.naturalWidth>300;});
+  await p.screenshot({path:out+'/5l-picture-large.png'});
+  await p.keyboard.press('Escape');assert.strictEqual(await p.locator('.lb').count(),0,'large view closed');assert.ok(await p.locator('.pk-list').count(),'packing list still open');
+  await p.locator('.pk-txt').first().click();assert.ok(/^1 of /.test(await p.textContent('.pk-count')),'row tap ticks');
+  await p.click('[data-pk=clear]');await p.click('.dlg [data-close]');
   await p.fill('#sq','');await p.selectOption('#sf-own','own');await p.waitForTimeout(150);
   const ownCount=+(await p.textContent('.count b'));await p.selectOption('#sf-own','any');await p.waitForTimeout(150);
   assert.ok(ownCount>0&&ownCount<=+(await p.textContent('.count b')),'collection filter');
