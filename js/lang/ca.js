@@ -209,7 +209,7 @@ I18N.add('ca',[
 [`Tiles`,`Rajoles`],
 [`Tiles for 6 players only`,`Rajoles només per a 6 jugadors`],
 [`Monster figures`,`Miniatures de monstres`],
-[`Monster art © Fantasy Flight Games.`,`Il·lustracions dels monstres © Fantasy Flight Games.`],
+[`Tile and monster art © Fantasy Flight Games.`,`Il·lustracions de les rajoles i els monstres © Fantasy Flight Games.`],
 [`Tile numbers follow the community <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L for small, medium, large); the colored tag is the set whose symbol is printed on the tile or figure. A — means a fan-made tile that isn’t in any box. From the scenario file in the Valkyrie catalogue.`,`Els números de rajola segueixen el <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> de la comunitat (S, M, L per a petita, mitjana i gran); l'etiqueta de color és la col·lecció el símbol de la qual està imprès a la rajola o a la miniatura. Un — indica una rajola feta per aficionats que no és a cap capsa. Tret del fitxer de l'escenari al catàleg de Valkyrie.`],
 [`Done`,`Fet`],
 [`{n} of {total} packed`,`{n} de {total} preparats`],

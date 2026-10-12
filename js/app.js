@@ -383,11 +383,13 @@ function packDialog(id){
   var s=scenById(id),p=packOf(s);if(!p)return;var KEY='mom-pack-'+s.vkey,done={};
   try{(JSON.parse(localStorage.getItem(KEY)||'[]')||[]).forEach(function(k){done[k]=1;});}catch(e){}
   var idx=function(i){var m=/^(\d+)([SML])$/.exec(i||'');return m?m[1]+' '+m[2]:'';};
-  var item=function(k,name,sub,badge,pic){return '<li><label class="pk'+(done[k]?' on':'')+'"><input type="checkbox" data-k="'+k+'"'+(done[k]?' checked':'')+'>'+
-    (badge?'<span class="pk-idx num">'+badge+'</span>':'')+(pic?'<img class="pk-pic" src="'+pic+'" alt="" loading="lazy" width="48" height="48">':'')+'<span class="pk-txt"><b>'+esc(name)+'</b><span class="note">'+sub+'</span></span></label></li>';};
+  var item=function(k,name,sub,badge,pic,wide){return '<li><label class="pk'+(done[k]?' on':'')+'"><input type="checkbox" data-k="'+k+'"'+(done[k]?' checked':'')+'>'+
+    (badge?'<span class="pk-idx num">'+badge+'</span>':'')+(pic?'<img class="pk-pic'+(wide?' pk-tile':'')+'" src="'+pic+'" alt="" loading="lazy" onerror="this.remove()"'+(wide?'':' width="48" height="48"')+'>':'')+'<span class="pk-txt"><b>'+esc(name)+'</b><span class="note">'+sub+'</span></span></label></li>';};
   // where it is: the set's tag, the box when that differs (first-edition sets are in Recurring Nightmares or Suppressed Memories), the back
   var where=function(o){var st=SETS[o.e],box=o.x&&st&&['1e','fa','cotw'].indexOf(o.e)>=0?' · '+t('in {box}',{box:esc(boxName(o.x))}):'';return setTag(o.e)+(st?'':' '+t('fan-made tile'))+box;};
-  var tile=function(x,i){return item('t'+i,x.n,where(x)+(x.b?' · '+t('other side: {name}',{name:esc(x.b)}):'')+(x.alt&&x.alt.length?' · '+t('or {tiles}',{tiles:x.alt.map(function(a){return idx(a.i)+' '+setTag(a.e);}).join(', ')}):''),idx(x.i)||'—');};
+  // the tile's art (img/tiles/<set>-<name>.webp); fan-made tiles have none
+  var tilePic=function(x){return x.e?'img/tiles/'+x.e+'-'+String(x.n||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.webp':'';};
+  var tile=function(x,i){return item('t'+i,x.n,where(x)+(x.b?' · '+t('other side: {name}',{name:esc(x.b)}):'')+(x.alt&&x.alt.length?' · '+t('or {tiles}',{tiles:x.alt.map(function(a){return idx(a.i)+' '+setTag(a.e);}).join(', ')}):''),idx(x.i)||'—',tilePic(x),1);};
   var normal=[],six=[];p.tiles.forEach(function(x,i){(x.six?six:normal).push(tile(x,i));});
   // the figure's token art (img/monsters/, named after Valkyrie's English monster name, e.g. hound-of-tindalos.webp)
   var monPic=function(n){return 'img/monsters/'+String(n||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.webp';};
@@ -399,7 +401,8 @@ function packDialog(id){
     '<div class="row pk-bar"><span class="note pk-count"></span><button class="btn sm ghost" type="button" data-pk="clear">'+t('Clear ticks')+'</button></div>'+
     (normal.length?'<h3 class="pk-h">'+t('Tiles')+' <span class="note">'+normal.length+'</span></h3><ul class="pk-list">'+normal.join('')+'</ul>':'')+
     (six.length?'<h3 class="pk-h">'+t('Tiles for 6 players only')+' <span class="note">'+six.length+'</span></h3><ul class="pk-list">'+six.join('')+'</ul>':'')+
-    (mons.length?'<h3 class="pk-h">'+t('Monster figures')+' <span class="note">'+mons.length+'</span></h3><ul class="pk-list">'+mons.join('')+'</ul><p class="note fine">'+t('Monster art © Fantasy Flight Games.')+'</p>':'')+
+    (mons.length?'<h3 class="pk-h">'+t('Monster figures')+' <span class="note">'+mons.length+'</span></h3><ul class="pk-list">'+mons.join('')+'</ul>':'')+
+    '<p class="note fine">'+t('Tile and monster art © Fantasy Flight Games.')+'</p>'+
     '<p class="note fine">'+t('Tile numbers follow the community <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L for small, medium, large); the colored tag is the set whose symbol is printed on the tile or figure. A — means a fan-made tile that isn’t in any box. From the scenario file in the Valkyrie catalogue.')+'</p>'+
     '<div class="row end"><button class="btn" type="button" data-close>'+t('Done')+'</button></div>',t('Packing list'));
   var count=function(){var all=d.querySelectorAll('.pk input'),n=0;all.forEach(function(c){if(c.checked)n++;});d.querySelector('.pk-count').textContent=t('{n} of {total} packed',{n:n,total:all.length});};

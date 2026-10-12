@@ -209,7 +209,7 @@ I18N.add('es',[
 [`Tiles`,`Losetas`],
 [`Tiles for 6 players only`,`Losetas solo para 6 jugadores`],
 [`Monster figures`,`Miniaturas de monstruos`],
-[`Monster art © Fantasy Flight Games.`,`Ilustraciones de monstruos © Fantasy Flight Games.`],
+[`Tile and monster art © Fantasy Flight Games.`,`Ilustraciones de losetas y monstruos © Fantasy Flight Games.`],
 [`Tile numbers follow the community <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L for small, medium, large); the colored tag is the set whose symbol is printed on the tile or figure. A — means a fan-made tile that isn’t in any box. From the scenario file in the Valkyrie catalogue.`,`Los números de loseta siguen el <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> de la comunidad (S, M, L para pequeña, mediana y grande); la etiqueta de color es la colección cuyo símbolo está impreso en la loseta o la miniatura. Un — indica una loseta hecha por fans que no está en ninguna caja. Sacado del archivo del escenario en el catálogo de Valkyrie.`],
 [`Done`,`Hecho`],
 [`{n} of {total} packed`,`{n} de {total} preparados`],

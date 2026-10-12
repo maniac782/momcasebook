@@ -210,7 +210,7 @@ I18N.add('pl',[
 [`Tiles`,`Kafelki`],
 [`Tiles for 6 players only`,`Kafelki tylko dla 6 graczy`],
 [`Monster figures`,`Figurki potworów`],
-[`Monster art © Fantasy Flight Games.`,`Ilustracje potworów © Fantasy Flight Games.`],
+[`Tile and monster art © Fantasy Flight Games.`,`Ilustracje kafelków i potworów © Fantasy Flight Games.`],
 [`Tile numbers follow the community <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L for small, medium, large); the colored tag is the set whose symbol is printed on the tile or figure. A — means a fan-made tile that isn’t in any box. From the scenario file in the Valkyrie catalogue.`,`Numery kafelków są zgodne ze społecznościowym <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L to mały, średni, duży); kolorowa etykieta to zestaw, którego symbol jest nadrukowany na kafelku lub figurce. — oznacza kafelek fanowski, którego nie ma w żadnym pudełku. Na podstawie pliku scenariusza z katalogu Valkyrie.`],
 [`Done`,`Gotowe`],
 [`{n} of {total} packed`,`spakowano {n} z {total}`],
