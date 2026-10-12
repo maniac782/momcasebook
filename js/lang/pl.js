@@ -328,7 +328,6 @@ I18N.add('pl',[
 [`Every play must be an official or Valkyrie scenario. Each name below has its best guess chosen; change any that are wrong.`,`Każda rozgrywka musi dotyczyć oficjalnego scenariusza lub scenariusza z Valkyrie. Dla każdej nazwy poniżej wybrano najbardziej prawdopodobny; zmień te, które się nie zgadzają.`],
 [`Best guesses`,`Podpowiedzi`],
 [`Choose a scenario…`,`Wybierz scenariusz…`],
-[`new`,`nowy`],
 [`Official (added)`,`Oficjalne (dodane)`],
 [`{name} (not in the list: choose one)`,`{name} (brak na liście: wybierz scenariusz)`],
 [`Choose a player`,`Wybierz gracza`],

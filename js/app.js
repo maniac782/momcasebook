@@ -829,9 +829,9 @@ function playForm(p,preset){
   // a fresh Log a play starts empty; Play again, a plan or an edit bring their own details
   var party=(p.party&&p.party.length?p.party:[{player:'',investigator:''}]);
   var opts='<option value="">'+t('Choose a scenario…')+'</option>';
-  var own=owned(),st=scenStats();
+  var own=owned();
   MOM.PRODUCTS.forEach(function(pr){var l=MOM.OFFICIAL.filter(function(s){return s.product===pr.id&&(own.indexOf(pr.id)>=0||s.id===scId);});
-    if(l.length)opts+='<optgroup label="'+esc(pr.name)+'">'+l.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===scId?' selected':'')+'>'+esc(scName(s.id,s.name))+(st[s.id]?'':' • '+t('new'))+'</option>';}).join('')+'</optgroup>';});
+    if(l.length)opts+='<optgroup label="'+esc(pr.name)+'">'+l.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===scId?' selected':'')+'>'+esc(scName(s.id,s.name))+'</option>';}).join('')+'</optgroup>';});
   var offK={};MOM.OFFICIAL.forEach(function(s){offK[MOM.key(s.name)]=1;});
   // beyond the built-in official list: official ones the admin added, then Valkyrie
   var ex=allScenarios().filter(function(s){return !offK[MOM.key(s.name)];}).sort(byName);
