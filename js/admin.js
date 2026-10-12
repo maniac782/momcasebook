@@ -5,9 +5,15 @@
 'use strict';
 var MOM=window.MOM,app=document.getElementById('app'),acctEl=document.getElementById('acct');
 var fb=null,me=null,authKnown=false,state='loading',users=[],scs=[],fbs=[],errs=[],loadedAt=0,unsubSc=null;
-var ui={tab:'users',q:''};
+var ui={tab:'users',q:'',sort:'new'};
+try{var s0=localStorage.getItem('mom-adm-sort');if(s0)ui.sort=s0;}catch(e){}
 var DAY=86400000;
-function ago(t){if(!t)return '—';var d=Math.floor((Date.now()-t)/DAY);return d<=0?'today':d===1?'yesterday':d<30?d+' days ago':new Date(t).toLocaleDateString([], {year:'numeric',month:'short',day:'numeric'});}
+// "today 9:14 AM", "yesterday 8:02 PM", "4 days ago", then the date (as on the Arkham site's admin page); the exact
+// date and time is in the tooltip
+function ago(t){if(!t)return '—';var dt=new Date(t),tm=dt.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),y=new Date(Date.now()-DAY);
+  if(dt.toDateString()===new Date().toDateString())return 'today '+tm;if(dt.toDateString()===y.toDateString())return 'yesterday '+tm;
+  var d=Math.floor((Date.now()-t)/DAY);return d<30?d+' day'+(d===1?'':'s')+' ago':dt.toLocaleDateString([], {year:'numeric',month:'short',day:'numeric'});}
+function agoHtml(t){return t?'<span title="'+esc(new Date(t).toLocaleString([], {weekday:'short',year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+'">'+esc(ago(t))+'</span>':'—';}
 function when(t){return t?new Date(t).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';}
 function nameOf(uid){var u=users.filter(function(x){return x.id===uid;})[0];return u?(u.name||u.email||'(no name)'):'(deleted account)';}
 function browserOf(ua){ua=String(ua||'');var os=/iPhone|iPad/.test(ua)?'iOS':/Android/.test(ua)?'Android':/Mac OS X/.test(ua)?'Mac':/Windows/.test(ua)?'Windows':/Linux/.test(ua)?'Linux':'';
@@ -47,9 +53,12 @@ function render(){
 function hit(t){var q=ui.q.trim().toLowerCase();return !q||String(t||'').toLowerCase().indexOf(q)>=0;}
 function usersHtml(){
   var q=ui.q.trim().toLowerCase();
-  var list=users.filter(function(u){return !q||((u.name||'')+' '+(u.email||'')).toLowerCase().indexOf(q)>=0;}).sort(function(a,b){return (b.lastSeen||0)-(a.lastSeen||0);});
-  return (list.length?'<ul class="adm">'+list.map(function(u){return '<li>'+avatarHtml(u.name||u.email,u.photo,u.color)+'<div class="grow"><span class="row tight"><b>'+esc(u.name||'(no name)')+'</b>'+(u.id===me.uid?'<span class="chip ok">You</span>':'')+'</span>'+
-      '<span class="note">'+esc(u.email||'')+' · '+(u.playCount||0)+' play'+(u.playCount===1?'':'s')+' · joined '+esc(ago(u.created))+' · last seen '+esc(ago(u.lastSeen))+'</span></div></li>';}).join('')+'</ul>':'<p class="note">No accounts match.</p>')+
+  var S={new:function(a,b){return (b.created||0)-(a.created||0);},seen:function(a,b){return (b.lastSeen||0)-(a.lastSeen||0);},
+    name:function(a,b){return String(a.name||a.email||'').localeCompare(String(b.name||b.email||''),undefined,{sensitivity:'base'});},plays:function(a,b){return (b.playCount||0)-(a.playCount||0)||(b.lastSeen||0)-(a.lastSeen||0);}};
+  var list=users.filter(function(u){return !q||((u.name||'')+' '+(u.email||'')).toLowerCase().indexOf(q)>=0;}).sort(S[ui.sort]||S.new);
+  var sortSel='<label class="row admsort"><span class="lbl">Sort by</span><select class="f" id="usort">'+[['new','Newest first'],['seen','Last seen'],['name','Name (A–Z)'],['plays','Most plays']].map(function(o){return '<option value="'+o[0]+'"'+(ui.sort===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>';
+  return sortSel+(list.length?'<ul class="adm">'+list.map(function(u){return '<li>'+avatarHtml(u.name||u.email,u.photo,u.color)+'<div class="grow"><span class="row tight"><b>'+esc(u.name||'(no name)')+'</b>'+(u.id===me.uid?'<span class="chip ok">You</span>':'')+'</span>'+
+      '<span class="note">'+esc(u.email||'')+' · '+(u.playCount||0)+' play'+(u.playCount===1?'':'s')+' · joined '+agoHtml(u.created)+' · last seen '+agoHtml(u.lastSeen)+'</span></div></li>';}).join('')+'</ul>':'<p class="note">No accounts match.</p>')+
     '<p class="note">To remove an account, delete it in Firebase › Authentication and its document under <code>users</code> in Firestore. People can also delete their own from Settings.</p>';
 }
 function scsHtml(){
@@ -89,6 +98,7 @@ app.addEventListener('click',function(e){
   else if(k==='clearerrs')Promise.all(errs.map(function(x){return fb.db.doc('errors/'+x.id).delete();})).then(function(){errs=[];render();}).catch(fail);
 });
 app.addEventListener('input',function(e){if(e.target.id==='q'){ui.q=e.target.value;render();}});
+app.addEventListener('change',function(e){if(e.target.id==='usort'){ui.sort=e.target.value;try{localStorage.setItem('mom-adm-sort',ui.sort);}catch(x){}render();}});
 app.addEventListener('submit',function(e){
   if(!e.target.matches('[data-form=addsc]'))return;e.preventDefault();
   var nm=document.getElementById('sc-name').value.trim().replace(/\s+/g,' '),type=document.getElementById('sc-type').value,link=document.getElementById('sc-link').value.trim();

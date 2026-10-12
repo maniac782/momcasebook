@@ -430,6 +430,7 @@ I18N.add('pl',[
 [`Beta`,`Beta`],
 [`Unofficial fan project, not affiliated with Fantasy Flight Games`,`Nieoficjalny projekt fanowski, niezwiązany z Fantasy Flight Games`],
 [`Privacy`,`Prywatność`],
+[`Contact`,`Kontakt`],
 [`Privacy · Mansions of Madness Casebook`,`Prywatność · Mansions of Madness Casebook`],
 [`Mansions of Madness Casebook is a free, personal hobby site for logging board game plays. No ads, no tracking, no analytics.`,`Mansions of Madness Casebook to darmowa, prywatna strona hobbystyczna do zapisywania rozgrywek w gry planszowe. Bez reklam, bez śledzenia, bez analityki.`],
 [`What is stored`,`Co jest przechowywane`],

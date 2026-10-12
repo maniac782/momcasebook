@@ -97,7 +97,7 @@ Everything here is done in your browser; no secrets go into the code or into cha
 ## Admin page
 
 `admin.html`, for accounts with an `admins/{uid}` document (the rules enforce it):
-- **Accounts:** name, email, plays logged, joined, last seen. (Admins can't see anyone's plays.)
+- **Accounts:** name, email, plays logged, joined and last seen ("today 9:14 AM", "yesterday 8:02 PM", then days ago or the date; hover for the exact time), sorted by **Newest first**, **Last seen**, **Name (A–Z)** or **Most plays** (remembered on the device). (Admins can't see anyone's plays.)
 - **Scenarios:** add shared Valkyrie (or missing official) scenarios that everyone can pick when logging.
 - **Feedback** sent from the account menu (Bug, Idea or Other, laid out like the Arkham Horror RPG Ledger's), and **Errors** recorded automatically while people are signed in; both tabs show how many are waiting.
 - One search box filters whichever tab is open. On a phone the tabs get their own row, with search and Refresh beneath, as on the Arkham site.
