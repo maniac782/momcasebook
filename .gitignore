@@ -6,3 +6,4 @@ node_modules/
 *-firebase-adminsdk-*.json
 service-account*.json
 test/shots/
+__pycache__/
