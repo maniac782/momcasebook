@@ -299,6 +299,31 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.locator('.seat [name=pp]').first().inputValue(),'','no player filled in');assert.strictEqual(await p.locator('.seat [name=pi]').first().inputValue(),'','no investigator');
   assert.ok(await p.locator('#dl-loc option[value="Gerri’s house"]').count(),'the place is still suggested');await p.keyboard.press('Escape');
   await p.click('[data-t=stats]');assert.ok(await p.locator('h2:text-is("Where you played")').count(),'location stats');
+  // the same place spelled two ways is one place: suggested once, shown and saved in its usual spelling, fixable in Settings
+  await p.evaluate(async()=>{const S=__fake.store,db=firebase.app().firestore(),ks=Object.keys(S).filter(k=>k.includes('/plays/')&&!S[k].location);
+    await db.doc(ks[0]).update({location:"gerri's  house"});await db.doc(ks[1]).update({location:'The game store'});});
+  const locs=()=>p.evaluate(()=>{const S=__fake.store;return [...new Set(Object.keys(S).filter(k=>k.includes('/plays/')&&S[k].location).map(k=>S[k].location))].sort();});
+  assert.deepStrictEqual(await locs(),['Gerri’s house','The game store',"gerri's  house"],'two spellings of one place in the plays');
+  await p.click('.bar [data-a=log]');await p.waitForSelector('.dlg input[name=loc]');
+  await p.locator('input[name=loc]').click();await p.waitForSelector('.dd-wrap.combo .dd-opt');
+  assert.deepStrictEqual(await p.locator('.dd-wrap.combo .dd-opt .dd-txt').allTextContents(),['Gerri’s house','The game store'],'Where lists every place once');
+  await p.locator('.dd-wrap.combo .dd-opt',{hasText:'The game store'}).click();
+  assert.strictEqual(await p.inputValue('input[name=loc]'),'The game store','picked');
+  await p.locator('.dlg h2').first().click();await p.locator('input[name=loc]').click();await p.waitForSelector('.dd-wrap.combo .dd-opt');
+  assert.strictEqual(await p.locator('.dd-wrap.combo .dd-opt').count(),2,'a filled-in Where still lists every place, not just the one in it');
+  assert.strictEqual(await p.locator('.dd-wrap.combo .dd-opt.sel .dd-txt').textContent(),'The game store','with a tick on the one chosen');
+  await p.fill('input[name=loc]','ger');await p.waitForTimeout(80);
+  assert.deepStrictEqual(await p.locator('.dd-wrap.combo .dd-opt .dd-txt').allTextContents(),['Gerri’s house'],'typing narrows it');
+  await p.keyboard.press('Escape');await p.keyboard.press('Escape');if(await p.locator('.dlg-ask').count())await p.click('.dlg-ask [data-ask=discard]');
+  await p.click('[data-t=settings]');await p.waitForSelector('#places');
+  assert.strictEqual(await p.locator('#places li').count(),2,'Places lists each place once');
+  assert.ok(/written 2 ways/.test(await p.locator('#places li',{hasText:'Gerri’s house'}).textContent()),'and says when one is written two ways');
+  await p.locator('#places li',{hasText:'The game store'}).locator('[data-a=editplace]').click();
+  await p.fill('input[name=plname]','gerri’s house');assert.ok(await p.locator('.pl-hint:has-text("merges it with")').isVisible(),'merging is spelled out');
+  await p.fill('input[name=plname]','Gerri’s house');await p.click('.dlg button[type=submit]');await p.waitForSelector('.toast:has-text("Merged")');
+  assert.deepStrictEqual(await locs(),['Gerri’s house'],'every play now says the same place, in one spelling');
+  assert.strictEqual(await p.locator('#places li').count(),1,'one place left');
+  await p.locator('#places').screenshot({path:out+'/3e-places.png'});
   // switching the list off in Settings keeps played ones only
   await p.click('[data-t=settings]');await p.uncheck('#s-valk');await p.waitForTimeout(150);
   await p.click('[data-t=scenarios]');await p.click('[data-a=sfclear]').catch(()=>{});await p.selectOption('#sf-sort','box');await p.fill('#sq','');await p.waitForTimeout(100);
@@ -618,6 +643,12 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await q.locator('.seat .pp-pick').first().inputValue(),'Robin','the typed name is listed and chosen');
   await q.locator('.seat .pp-pick').first().selectOption('Dan');
   assert.strictEqual(await q.locator('.seat [name=pp]').first().inputValue(),'Dan','picked on the phone');
+  // Rules on a phone: the same kind of picker; Where has nothing to pick from yet, so it's a plain box to type in
+  await q.locator('[name=rules]').locator('xpath=..').locator('.pp-pick').focus();
+  const ro=await q.locator('[name=rules]').locator('xpath=..').locator('.pp-pick option').allTextContents();
+  assert.ok(ro.includes('Normal rules')&&ro.includes('Other rules…'),'rules picker on a phone: '+ro.join('|'));
+  assert.strictEqual(await q.locator('[name=loc]').locator('xpath=..').locator('.pp-pick').count(),0,'no empty place picker');
+  assert.strictEqual(await q.locator('[name=loc]').getAttribute('list'),null,'and not the browser\'s suggestion strip');
   await q.tap('.dlg select[name=sc]');await q.waitForTimeout(300);
   assert.strictEqual(await q.locator('.dd-wrap').count(),0,'a tap on a phone gets the phone\'s own picker, not ours');
   await q.keyboard.press('Escape');await q.waitForTimeout(100);if(await q.locator('.dlg-ask').count())await q.tap('.dlg-ask [data-ask=discard]');if(await q.locator('.dlg').count()){await q.keyboard.press('Escape');if(await q.locator('.dlg-ask').count())await q.tap('.dlg-ask [data-ask=discard]');}await q.click('[data-t=stats]');await q.screenshot({path:out+'/11-phone-stats-dark.png',fullPage:true});

@@ -324,12 +324,13 @@ window.accountMenu=function(user,opts){
   window.closeDropdown=function(){close(false);};
 })();
 /* ---------- Pick-or-type boxes ----------
-   A text box with data-suggest="<datalist id>" (the player names when logging a play) shows a list of the known names
-   under it as soon as it's tapped or typed in, narrowed as you type; pick one, or just keep typing a new name. It looks
-   like the dropdown menus above. The same name can be picked for more than one seat (one person, two investigators).
+   A text box with data-suggest="<datalist id>" (players, Where and Rules; built by comboHtml() in app.js) shows every
+   known value under it as soon as it's clicked, with a tick on the one already in the box, and narrows the list once
+   you type; pick one, or just keep typing a new one. It looks like the dropdown menus above. The same name can be
+   picked for more than one seat (one person, two investigators).
    On phones and tablets the box is covered by a real <select class="pp-pick"> instead, so a tap opens the device's own
-   picker with the known names and "Someone new…", which uncovers the box for typing while the arrow on its right still
-   opens the picker, so you can change your mind. */
+   picker with the known values and its "new…" line (data-choose / data-other on the select), which uncovers the box
+   for typing while the arrow on its right still opens the picker, so you can change your mind. */
 (function(){
   var cur=null;   // {inp, wrap, list, items, active}
   var norm=function(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();};
@@ -348,32 +349,34 @@ window.accountMenu=function(user,opts){
   function setActive(i){if(!cur)return;cur.items.forEach(function(x,k){x.el.classList.toggle('on',k===i);});cur.active=i;
     if(i>=0&&cur.items[i]){cur.items[i].el.scrollIntoView({block:'nearest'});cur.inp.setAttribute('aria-activedescendant',cur.items[i].el.id);}else cur.inp.removeAttribute('aria-activedescendant');}
   function fill(){
-    if(!cur)return;var q=norm(cur.inp.value),all=names(cur.inp),list=cur.list,id=cur.id;
+    // until something is typed, the whole list (what's in the box is ticked); after that, only what matches
+    if(!cur)return;var v=norm(cur.inp.value),q=cur.typed?v:'',all=names(cur.inp),list=cur.list,id=cur.id;
     var hits=all.filter(function(n){return !q||norm(n).indexOf(q)>=0;});
     // names starting with what's typed come first
     if(q)hits.sort(function(a,b){return (norm(a).indexOf(q)===0?0:1)-(norm(b).indexOf(q)===0?0:1);});
-    var exact=all.some(function(n){return norm(n)===q;})||hits.some(function(n){return norm(n)===q;});
-    list.innerHTML='';cur.items=[];
+    var exact=all.some(function(n){return norm(n)===v;});
+    list.innerHTML='';cur.items=[];cur.cv=v;
     var add=function(v,i,isNew){var el=document.createElement('div');el.className='dd-opt'+(isNew?' dd-new':'');el.id=id+'-'+i;el.setAttribute('role','option');
+      if(!isNew&&norm(v)===cur.cv){el.classList.add('sel');el.setAttribute('aria-selected','true');}
       el.innerHTML='<span class="dd-tick" aria-hidden="true"></span><span class="dd-txt"></span>'+(isNew?'<span class="dd-tag">'+esc(cur.inp.getAttribute('data-new'))+'</span>':'');el.querySelector('.dd-txt').textContent=v;
       list.appendChild(el);cur.items.push({el:el,v:v});};
     hits.slice(0,60).forEach(function(n,i){add(n,i);});
     // a name nobody has used yet (players only: data-new is its tag, "new player")
     if(q&&!exact&&cur.inp.hasAttribute('data-new')){if(hits.length){var sep=document.createElement('div');sep.className='dd-sep';list.appendChild(sep);}add(cur.inp.value.trim(),'new',true);}
     // nothing to choose: no names, or just the one already typed in full
-    if(!cur.items.length||(cur.items.length===1&&norm(cur.items[0].v)===q&&!cur.items[0].el.classList.contains('dd-new'))){close();return;}
-    setActive(-1);
+    if(!cur.items.length||(cur.items.length===1&&norm(cur.items[0].v)===v&&!cur.items[0].el.classList.contains('dd-new'))){close();return;}
+    setActive(-1);var on=list.querySelector('.dd-opt.sel');if(on&&!cur.typed)on.scrollIntoView({block:'nearest'});
     place();
   }
   var touch=function(){try{return matchMedia('(pointer:coarse)').matches;}catch(e){return false;}};
-  function open(inp){
+  function open(inp,typed){
     if(touch())return;
     if(cur&&cur.inp===inp){fill();return;}close();
     if(!names(inp).length&&!inp.value.trim())return;
     var wrap=document.createElement('div'),id='cb'+Date.now().toString(36);wrap.className='dd-wrap combo';
     wrap.innerHTML='<div class="dd" role="presentation"><div class="dd-list" role="listbox" id="'+id+'" aria-label="'+(inp.hasAttribute('data-new')?t('Known players'):t('Suggestions'))+'"></div></div>';
     document.body.appendChild(wrap);
-    cur={inp:inp,wrap:wrap,panel:wrap.querySelector('.dd'),list:wrap.querySelector('.dd-list'),items:[],active:-1,id:id};
+    cur={inp:inp,wrap:wrap,panel:wrap.querySelector('.dd'),list:wrap.querySelector('.dd-list'),items:[],active:-1,id:id,typed:!!typed};
     inp.setAttribute('aria-expanded','true');inp.setAttribute('aria-controls',id);inp.classList.add('dd-open');
     // keep the typing focus in the box while picking
     wrap.addEventListener('mousedown',function(e){e.preventDefault();});
@@ -390,7 +393,7 @@ window.accountMenu=function(user,opts){
   }
   document.addEventListener('focusin',function(e){if(isCombo(e.target)){if(!touch())e.target.removeAttribute('list');e.target.setAttribute('autocomplete','off');e.target.setAttribute('role','combobox');e.target.setAttribute('aria-autocomplete','list');open(e.target);}});
   document.addEventListener('focusout',function(e){if(cur&&e.target===cur.inp)setTimeout(function(){if(cur&&document.activeElement!==cur.inp)close();},120);});
-  document.addEventListener('input',function(e){if(isCombo(e.target)&&e.isTrusted!==false){if(cur&&cur.inp===e.target)fill();else open(e.target);}});
+  document.addEventListener('input',function(e){if(isCombo(e.target)&&e.isTrusted!==false){if(cur&&cur.inp===e.target){cur.typed=true;fill();}else open(e.target,true);}});
   document.addEventListener('click',function(e){if(isCombo(e.target)&&!cur)open(e.target);});
   document.addEventListener('keydown',function(e){
     if(!isCombo(e.target))return;var k=e.key;
@@ -404,11 +407,12 @@ window.accountMenu=function(user,opts){
   var NEW='__someone_new__';
   function pickerOptions(sel){
     var inp=sel.parentNode.querySelector('input[data-suggest]');if(!inp)return;var v=inp.value.trim(),list=names(inp),k=norm(v),h='';
+    var choose=sel.getAttribute('data-choose')||t('Choose a player'),other=sel.getAttribute('data-other')||t('Someone new…');
     var o=function(val,txt,on,dis){return '<option value="'+esc(val)+'"'+(on?' selected':'')+(dis?' disabled':'')+'>'+esc(txt)+'</option>';};
-    h+=v?'':o('',t('Choose a player'),true,true);
+    h+=v?'':o('',choose,true,true);
     if(v&&!list.some(function(n){return norm(n)===k;}))h+=o(v,v,true);
     list.forEach(function(n){h+=o(n,n,norm(n)===k);});
-    h+=o(NEW,t('Someone new…'));sel.innerHTML=h;
+    h+=o(NEW,other);sel.innerHTML=h;
   }
   document.addEventListener('touchstart',function(e){var t=e.target;if(t&&t.classList&&t.classList.contains('pp-pick'))pickerOptions(t);},{capture:true,passive:true});
   document.addEventListener('focusin',function(e){var t=e.target;if(t&&t.classList&&t.classList.contains('pp-pick'))pickerOptions(t);});
@@ -416,8 +420,8 @@ window.accountMenu=function(user,opts){
     var sel=e.target;if(!sel.classList||!sel.classList.contains('pp-pick'))return;e.stopPropagation();
     var wrap=sel.parentNode,inp=wrap.querySelector('input[data-suggest]');if(!inp)return;
     if(sel.value===NEW){wrap.classList.add('typing');if(names(inp).some(function(n){return norm(n)===norm(inp.value);}))inp.value='';
-      inp.placeholder=t('Type a name');try{inp.focus({preventScroll:true});}catch(x){inp.focus();}return;}
-    wrap.classList.remove('typing');inp.placeholder=t('Player');inp.value=sel.value;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
+      inp.placeholder=inp.getAttribute('data-typeph')||t('Type a name');try{inp.focus({preventScroll:true});}catch(x){inp.focus();}return;}
+    wrap.classList.remove('typing');inp.placeholder=inp.getAttribute('data-ph')||'';inp.value=sel.value;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
   },true);
   // a new name typed in: cover the box with the picker again (which then lists it)
   document.addEventListener('focusout',function(e){var t=e.target,w=t&&t.parentNode;if(t.tagName==='INPUT'&&w&&w.classList&&w.classList.contains('pp-wrap')&&t.value.trim())w.classList.remove('typing');});

@@ -57,8 +57,43 @@ function names(field){
   return Object.keys(c).sort(function(a,b){return c[b]-c[a]||a.localeCompare(b);});
 }
 // Places used before, most used first.
-function places(){var c={};plays.forEach(function(p){if(p.location)c[p.location]=(c[p.location]||0)+1;});return Object.keys(c).sort(function(a,b){return c[b]-c[a]||a.localeCompare(b);});}
-function rulesUsed(){var c={};c[NORMAL]=0;plays.forEach(function(p){if(p.rules)c[p.rules]=(c[p.rules]||0)+1;});return Object.keys(c).sort(function(a,b){return c[b]-c[a];});}
+// ---------- suggestions for the pick-or-type boxes (Where and Rules) ----------
+// Two spellings of the same thing are one entry: case, accents, curly or straight quotes and extra spaces don't count,
+// so "David's house" and "david’s  house" are the same place.
+function textKey(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[‘’ʼ`´]/g,"'").replace(/[“”]/g,'"').replace(/\s+/g,' ').trim();}
+function tidy(v){return String(v||'').replace(/\s+/g,' ').trim();}
+// [{v, at}] -> [{k, name, n, spellings}], one per textKey, shown in its most-used spelling (the latest on a tie), most used first
+function suggestions(vals){
+  var g={};vals.forEach(function(x){var v=tidy(x.v);if(!v)return;var k=textKey(v),e=g[k]||(g[k]={k:k,n:0,sp:{}}),sp=e.sp[v]||(e.sp[v]={n:0,at:0});e.n++;sp.n++;if((x.at||0)>sp.at)sp.at=x.at||0;});
+  return Object.keys(g).map(function(k){var e=g[k],sps=Object.keys(e.sp).sort(function(a,b){return e.sp[b].n-e.sp[a].n||e.sp[b].at-e.sp[a].at;});return {k:k,name:sps[0],n:e.n,spellings:sps};})
+    .sort(function(a,b){return b.n-a.n||a.name.localeCompare(b.name);});
+}
+var _places=null;
+// every place you've played or scheduled a game, once each
+function placeList(){
+  var st=starredMap();if(_places&&_places.plays===plays&&_places.n===plays.length&&_places.st===st)return _places.list;
+  var vals=plays.map(function(p){return {v:p.location,at:p.updated||p.created||0};});
+  Object.keys(st).forEach(function(id){var pl=st[id]&&st[id].plan;if(pl&&pl.location)vals.push({v:pl.location,at:st[id].at||0});});
+  _places={plays:plays,n:plays.length,st:st,list:suggestions(vals)};return _places.list;
+}
+function places(){return placeList().map(function(x){return x.name;});}
+// how a place is shown and saved: its usual spelling once it's known, so a new play doesn't start a second "David's house"
+function placeName(v){var k=textKey(v);if(!k)return '';var hit=placeList().filter(function(x){return x.k===k;})[0];return hit?hit.name:tidy(v);}
+function rulesList(){var l=suggestions(plays.map(function(p){return {v:p.rules,at:p.updated||p.created||0};}));
+  if(!l.some(function(x){return x.k===textKey(NORMAL);}))l.push({k:textKey(NORMAL),name:NORMAL,n:0,spellings:[NORMAL]});return l;}
+function rulesUsed(){return rulesList().map(function(x){return x.name;});}
+// what's typed in Rules, as saved: blank or "Normal rules" in any language is NORMAL, a known variant keeps its usual spelling
+function canonRules(v){v=tidy(v);var k=textKey(v);if(!k||k===textKey(t(NORMAL))||k===textKey(NORMAL))return NORMAL;var hit=rulesList().filter(function(x){return x.k===k;})[0];return hit?hit.name:v;}
+// A pick-or-type box (js/shared.js, Pick-or-type boxes): on a computer the site's own list, narrowed as you type;
+// on a phone the device's own picker with the known values and "new…" to type one. o: name, dl (datalist id),
+// values, value, max, ph (placeholder), label, choose (picker's first line), other (its "new…" line), typeph, tag, noList.
+function comboHtml(o){
+  var a=function(k,v){return v?' '+k+'="'+esc(v)+'"':'';};
+  return '<span class="pp-wrap"><input class="f combo" name="'+o.name+'" data-suggest="'+o.dl+'" autocomplete="off" maxlength="'+o.max+'"'+a('placeholder',o.ph)+a('data-ph',o.ph)+a('data-typeph',o.typeph)+a('data-new',o.tag)+a('aria-label',o.label)+' value="'+esc(o.value||'')+'">'+
+    (o.values.length?'<select class="pp-pick" tabindex="-1"'+a('aria-label',o.choose)+a('data-choose',o.choose)+a('data-other',o.other)+'><option value="">'+esc(o.choose)+'</option></select>':'')+'</span>'+
+    (o.noList?'':'<datalist id="'+o.dl+'">'+o.values.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>');
+}
+function placeCombo(name,value){return comboHtml({name:name,dl:'dl-'+name,values:places(),value:value?placeName(value):'',max:60,ph:t('e.g. home, a friend’s house or the game store'),choose:t('Choose a place'),other:t('Somewhere new…'),typeph:t('Type a place')});}
 function friendly(e){
   var m={'auth/invalid-email':t('That email address doesn’t look right.'),'auth/missing-password':t('Enter your password.'),
    'auth/invalid-credential':t('Wrong email or password.'),'auth/wrong-password':t('Wrong email or password.'),'auth/user-not-found':t('Wrong email or password.'),
@@ -157,7 +192,7 @@ function playsHtml(){
   if(!list.length)return h+'<p class="note">'+t('Nothing matches.')+'</p>';
   // one collapsible box each for Official and Valkyrie scenarios (plus any still needing a scenario), like the Scenarios tab
   // date and place on one quiet line; left out entirely when the play has neither
-  var plMeta=function(p){var bits=[p.date?esc(fmtDate(p.date)):'',p.location?(p.date?t('at {place}',{place:esc(p.location)}):t('At {place}',{place:esc(p.location)})):''].filter(Boolean);
+  var plMeta=function(p){var bits=[p.date?esc(fmtDate(p.date)):'',p.location?(p.date?t('at {place}',{place:esc(placeName(p.location))}):t('At {place}',{place:esc(placeName(p.location))})):''].filter(Boolean);
     return bits.length?'<span class="pl-meta">'+bits.join(' · ')+'</span>':'';};
   var prow=function(p){
     // the result sits at the right, centred on the card, so results line up down the list
@@ -307,7 +342,7 @@ function fmtTime(hm){if(!hm)return '';var h=+hm.slice(0,2),mi=hm.slice(3,5);
   return ((h%12)||12)+(mi!=='00'?':'+mi:'')+(h<12?' am':' pm');}
 function planText(pl){
   var d=new Date(pl.date+'T12:00:00'),g=groups.filter(function(x){return x.id===pl.groupId;})[0];
-  return [isNaN(d)?pl.date:d.toLocaleDateString(I18N.locale, {weekday:'short',month:'short',day:'numeric'}),fmtTime(pl.time),pl.location?t('at {place}',{place:pl.location}):'',g?g.name:''].filter(Boolean).join(' · ');
+  return [isNaN(d)?pl.date:d.toLocaleDateString(I18N.locale, {weekday:'short',month:'short',day:'numeric'}),fmtTime(pl.time),pl.location?t('at {place}',{place:placeName(pl.location)}):'',g?g.name:''].filter(Boolean).join(' · ');
 }
 // The next scheduled game today or later, for the Plays tab.
 function nextPlan(){var td=today(),m=starredMap(),best=null;
@@ -317,15 +352,14 @@ function planDialog(id){
   var d=openDialog('<form class="stack"><div class="dlg-head"><h2>'+t('Schedule: {name}',{name:esc(scName(sc.id,sc.name))})+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
     '<div class="grid2"><label class="field"><span class="lbl">'+t('Date')+'</span><input class="f" type="date" name="pdate" required min="'+today()+'" value="'+esc(cur.date||'')+'"></label>'+
     '<label class="field"><span class="lbl">'+t('Time (optional)')+'</span><input class="f" type="time" name="ptime" value="'+esc(cur.time||'')+'"></label></div>'+
-    '<label class="field"><span class="lbl">'+t('Where (optional)')+'</span><input class="f combo" name="ploc" list="dl-ploc" data-suggest="dl-ploc" maxlength="60" value="'+esc(cur.location||'')+'" autocomplete="off"></label>'+
-    '<datalist id="dl-ploc">'+places().map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
+    '<div class="field"><label class="lbl" for="f-ploc">'+t('Where (optional)')+'</label>'+placeCombo('ploc',cur.location).replace('name="ploc"','name="ploc" id="f-ploc"')+'</div>'+
     (groups.length?'<label class="field"><span class="lbl">'+t('Group (optional)')+'</span><select class="f" name="pgrp"><option value="">'+t('No group')+'</option>'+groups.slice().sort(byName).map(function(g){return '<option value="'+esc(g.id)+'"'+(g.id===cur.groupId?' selected':'')+'>'+esc(g.name)+'</option>';}).join('')+'</select></label>':'')+
     '<label class="field"><span class="lbl">'+t('Note (optional)')+'</span><input class="f" name="pnote" maxlength="200" value="'+esc(cur.note||'')+'" placeholder="'+t('e.g. bring snacks, use modified rules')+'"></label>'+
     '<div class="row end">'+(cur.date?'<button class="btn ghost dng" type="button" data-unplan style="margin-right:auto">'+t('Remove date')+'</button>':'')+'<button class="btn" type="button" data-close>'+t('Cancel')+'</button><button class="btn pri" type="submit">'+t('Save')+'</button></div></form>',t('Schedule'));
   var f=d.querySelector('form');
   var put=function(plan){var m={},c=starredMap();for(var k in c)m[k]=c[k];m[id]={at:(m[id]&&m[id].at)||Date.now()};if(plan)m[id].plan=plan;d.close();saveStarred(m);};
   f.addEventListener('submit',function(e){e.preventDefault();
-    put({date:f.pdate.value,time:f.ptime.value||'',location:f.ploc.value.trim().slice(0,60),groupId:f.pgrp?f.pgrp.value:'',note:f.pnote.value.trim().slice(0,200)});toast(t('Scheduled.'));});
+    put({date:f.pdate.value,time:f.ptime.value||'',location:placeName(f.ploc.value).slice(0,60),groupId:f.pgrp?f.pgrp.value:'',note:f.pnote.value.trim().slice(0,200)});toast(t('Scheduled.'));});
   var un=f.querySelector('[data-unplan]');if(un)un.addEventListener('click',function(){put(null);toast(t('Date removed; still starred.'));});
 }
 // Calendar: a Google Calendar link, or an .ics file for Apple Calendar and Outlook. Length from how long the scenario usually takes.
@@ -496,7 +530,7 @@ function xvals(d,p){
   if(d==='player')return peopleAt(p).names.map(function(n){return [n.toLowerCase(),n];});
   if(d==='expansion'){if(p.scenarioType==='valkyrie')return [['valkyrie',t('Valkyrie')]];var pr=sc&&sc.product;return pr?[[pr,MOM.productName(pr)]]:[];}
   if(d==='party'){var n=peopleAt(p).count;return n?[[String(n),n===1?t('Solo'):tn('{n} player','{n} players',n)]]:[];}
-  if(d==='where')return [[p.location||'',p.location||t('Not recorded')]];
+  if(d==='where')return [[textKey(p.location),p.location?placeName(p.location):t('Not recorded')]];
   if(d==='rules')return [[p.rules||'',p.rules?rulesName(p.rules):t('Not recorded')]];
   if(d==='result')return RES[p.result]?[[p.result,t(RES[p.result][0])]]:[];
   if(d==='type')return [[p.scenarioType||'official',typeName(p.scenarioType||'official')]];
@@ -574,13 +608,48 @@ function statsHtml(){
   h+=table(t('Investigators'),tally(function(p){return uniq((p.party||[]).map(function(s){return (s.investigator||'').trim();}));}),t('Investigator'));
   h+=table(t('Scenarios'),tally(function(p){return [scName(p.scenarioId,p.scenarioName)];}),t('Scenario'));
   h+=table(t('Party size'),sizes,t('Party'));
-  if(plays.some(function(p){return p.location;}))h+=table(t('Where you played'),tally(function(p){return [p.location||t('Not recorded')];}),t('Where'));
+  if(plays.some(function(p){return p.location;}))h+=table(t('Where you played'),tally(function(p){return [p.location?placeName(p.location):t('Not recorded')];}),t('Where'));
   h+=table(t('Rules'),tally(function(p){return [p.rules?rulesName(p.rules):t('Not recorded')];}),t('Rules'));
   h+=table(t('Scenario type'),tally(function(p){return [typeName(p.scenarioType||'official')];}),t('Type'));
   if(!names('player').length)h+='<p class="note">'+t('Add who played to your plays to see stats per person.')+'</p>';
   return h;
 }
 
+// Settings, Places: every place once, to rename (fixing its spelling in every play) or merge into another
+function placesHtml(){
+  var l=placeList();if(!l.length)return '';
+  return '<section class="sec" id="places"><div class="sec-head"><h2>'+t('Places')+'</h2><span class="note">'+tn('{n} place','{n} places',l.length)+'</span></div>'+
+    '<p class="note">'+t('Where you’ve played, as the Where box suggests them. Rename a place to change it in every play; give it the same name as another to merge the two.')+'</p>'+
+    '<ul class="scs">'+l.map(function(x){var n=playsAt(x.k).length;
+      return '<li><div class="grow"><b>'+esc(x.name)+'</b><span class="note">'+(n?tn('{n} play','{n} plays',n):t('A scheduled game'))+
+        (x.spellings.length>1?' · '+tn('written {n} way','written {n} ways',x.spellings.length)+': '+x.spellings.map(function(v){return '“'+esc(v)+'”';}).join(', '):'')+'</span></div>'+
+        '<button class="btn sm" data-a="editplace" data-k="'+esc(x.k)+'">'+t('Rename')+'</button></li>';}).join('')+'</ul></section>';
+}
+function playsAt(k){return plays.filter(function(p){return p.location&&textKey(p.location)===k;});}
+function placeDialog(k){
+  var x=placeList().filter(function(y){return y.k===k;})[0];if(!x)return;
+  var d=openDialog('<form class="stack"><div class="dlg-head"><h2>'+t('Rename place')+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
+    '<label class="field"><span class="lbl">'+t('Name')+'</span><input class="f" name="plname" maxlength="60" required value="'+esc(x.name)+'" autocomplete="off"></label>'+
+    '<p class="note pl-hint" aria-live="polite"></p><p class="err" role="alert" hidden></p>'+
+    '<div class="row end"><button class="btn" type="button" data-close>'+t('Cancel')+'</button><button class="btn pri" type="submit">'+t('Save')+'</button></div></form>',t('Rename place'));
+  var f=d.querySelector('form'),err=f.querySelector('.err'),hint=f.querySelector('.pl-hint');
+  var other=function(){var nk=textKey(f.plname.value);return nk&&nk!==k?placeList().filter(function(y){return y.k===nk;})[0]:null;};
+  var upd=function(){var o=other();hint.textContent=o?t('This merges it with “{name}”.',{name:o.name}):'';hint.hidden=!o;};
+  f.plname.addEventListener('input',upd);upd();
+  f.addEventListener('submit',async function(e){
+    e.preventDefault();var name=tidy(f.plname.value).slice(0,60);if(!name)return;
+    var o=other(),keys={};keys[k]=1;if(o)keys[o.k]=1;
+    var list=plays.filter(function(p){return p.location&&keys[textKey(p.location)]&&p.location!==name;});
+    var btn=f.querySelector('[type=submit]');btn.disabled=true;
+    try{
+      for(var i=0;i<list.length;i+=400){var b=fb.db.batch();list.slice(i,i+400).forEach(function(p){b.update(fb.db.doc('users/'+me.uid+'/plays/'+p.id),{location:name,updated:Date.now()});});await b.commit();}
+      // scheduled games at that place too
+      var st=starredMap(),ch=false,m={};Object.keys(st).forEach(function(id){var v=st[id];if(v&&v.plan&&v.plan.location&&keys[textKey(v.plan.location)]&&v.plan.location!==name){v=Object.assign({},v,{plan:Object.assign({},v.plan,{location:name})});ch=true;}m[id]=v;});
+      if(ch)await saveStarred(m);
+      d.clean();d.close();toast(o?t('Merged into “{name}”.',{name:name}):t('Saved.'));
+    }catch(e2){btn.disabled=false;err.textContent=friendly(e2);err.hidden=false;}
+  });
+}
 function settingsHtml(){
   var own=owned(),imp=ui.imp;
   var h='';
@@ -606,6 +675,7 @@ function settingsHtml(){
     }
   }
   h+='</section>';
+  h+=placesHtml();
   h+='<section class="sec"><h2>'+t('Export')+'</h2><p class="note">'+t('A copy of all your plays. The CSV opens in any spreadsheet and can be imported back here.')+'</p><div class="row"><button class="btn" data-a="csv">'+t('Download CSV')+'</button><button class="btn" data-a="json">'+t('Download backup (JSON)')+'</button></div></section>';
   if(!(window.LocalMoM&&LocalMoM.mode==='demo'))h+='<section class="sec danger"><h2>'+t('Delete')+'</h2><div class="row"><button class="btn" data-a="wipe"'+(plays.length?'':' disabled')+'>'+t('Delete all plays…')+'</button><button class="btn dng" data-a="delacct">'+(window.LocalMoM&&LocalMoM.mode?t('Delete this casebook…'):t('Delete my account…'))+'</button></div></section>';
   return h;
@@ -868,8 +938,7 @@ function playForm(p,preset){
   [['official',t('Official (added)')],['valkyrie',t('Valkyrie')]].forEach(function(g){var l=ex.filter(function(s){return s.type===g[0];});
     if(l.length)opts+='<optgroup label="'+g[1]+'">'+l.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===scId?' selected':'')+'>'+esc(scName(s.id,s.name))+'</option>';}).join('')+'</optgroup>';});
   if(scId&&!scenById(scId)&&p.scenarioName)opts+='<option value="" selected disabled>'+t('{name} (not in the list: choose one)',{name:esc(scName(p.scenarioId,p.scenarioName))})+'</option>';
-  var seat=function(s){return '<div class="seat"><span class="pp-wrap"><input class="f combo" name="pp" data-suggest="dl-pl" data-new="'+t('new player')+'" autocomplete="off" placeholder="'+t('Player')+'" maxlength="40" value="'+esc(s.player||'')+'" aria-label="'+t('Player')+'">'+
-    '<select class="pp-pick" tabindex="-1" aria-label="'+t('Choose a player')+'"><option value="">'+t('Choose a player')+'</option></select></span>'+
+  var seat=function(s){return '<div class="seat">'+comboHtml({name:'pp',dl:'dl-pl',values:ppl,value:s.player,max:40,ph:t('Player'),label:t('Player'),choose:t('Choose a player'),other:t('Someone new…'),typeph:t('Type a name'),tag:t('new player'),noList:true})+
     invSelect(s.investigator||'')+
     '<button class="x" type="button" data-f="rmseat" aria-label="'+t('Remove this seat')+'">×</button></div>';};
   var ppl=people.map(function(x){return x.name;}).sort();names('player').forEach(function(n){if(!personByName(n)&&ppl.indexOf(n)<0)ppl.push(n);});if(myName()&&!ppl.some(function(n){return lc(n)===lc(myName());}))ppl.unshift(myName());
@@ -883,12 +952,10 @@ function playForm(p,preset){
     '<fieldset class="field"><legend class="lbl">'+t('Who played')+'</legend>'+
     (groups.length?'<select class="f grp" name="grp" aria-label="'+t('Fill in from a group')+'"><option value="">'+t('Fill in from a group…')+'</option>'+groups.slice().sort(byName).map(function(g){return '<option value="'+esc(g.id)+'">'+esc(g.name)+' ('+groupMembers(g).length+')</option>';}).join('')+'</select>':'')+
     '<div class="seats">'+party.map(seat).join('')+'</div><div class="row"><button class="btn sm" type="button" data-f="addseat">'+t('+ Add a player')+'</button></div></fieldset>'+
-    '<label class="field"><span class="lbl">'+t('Where (optional)')+'</span><input class="f combo" name="loc" list="dl-loc" data-suggest="dl-loc" maxlength="60" placeholder="'+t('e.g. home, a friend’s house or the game store')+'" value="'+esc(p.location||'')+'" autocomplete="off"></label>'+
-    '<datalist id="dl-loc">'+places().map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
-    '<label class="field"><span class="lbl">'+t('Rules')+'</span><input class="f combo" name="rules" list="dl-rules" data-suggest="dl-rules" autocomplete="off" maxlength="80" placeholder="'+t(NORMAL)+'" value="'+esc(p.rules?rulesName(p.rules):'')+'"></label>'+
+    '<div class="field"><label class="lbl" for="f-loc">'+t('Where (optional)')+'</label>'+placeCombo('loc',p.location).replace('name="loc"','name="loc" id="f-loc"')+'</div>'+
+    '<div class="field"><label class="lbl" for="f-rules">'+t('Rules')+'</label>'+comboHtml({name:'rules',dl:'dl-rules',values:rulesUsed().map(rulesName),value:p.rules?rulesName(p.rules):'',max:80,ph:t(NORMAL),choose:t('Choose the rules'),other:t('Other rules…'),typeph:t('Type the rules')}).replace('name="rules"','name="rules" id="f-rules"')+'</div>'+
     '<label class="field"><span class="lbl">'+t('Notes')+'</span><textarea class="f" name="notes" rows="4" maxlength="4000" placeholder="'+t('What happened? Anything to remember next time?')+'">'+esc(p.notes||'')+'</textarea></label>'+
     '<datalist id="dl-pl">'+ppl.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
-    '<datalist id="dl-rules">'+rulesUsed().map(function(n){return '<option value="'+esc(rulesName(n))+'">';}).join('')+'</datalist>'+
     '<p class="err" role="alert" hidden></p>'+
     '<div class="row end">'+(editing?'<button class="btn dng ghost" type="button" data-f="del" style="margin-right:auto">'+t('Delete')+'</button>':'')+'<button class="btn" type="button" data-close>'+t('Cancel')+'</button><button class="btn pri" type="submit">'+(editing?t('Save'):t('Log play'))+'</button></div></form>';
 }
@@ -942,7 +1009,7 @@ async function savePlay(f){
   var party=[];f.querySelectorAll('.seat').forEach(function(s){var a=s.querySelector('[name=pp]').value.trim(),b=s.querySelector('[name=pi]').value;if(b&&!MOM.isInvestigator(b))b='';if(a||b)party.push({player:a.slice(0,40),investigator:b});});
   var att=Math.max(1,Math.min(99,parseInt(f.att.value,10)||1));
   var doc={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,date:f.date.value||'',result:res,attempts:att,
-    party:party,solo:peopleAt({party:party}).count===1,rules:(f.rules.value.trim()===t(NORMAL)?NORMAL:f.rules.value.trim()||NORMAL).slice(0,80),location:f.loc.value.trim().replace(/\s+/g,' ').slice(0,60),notes:f.notes.value.trim().slice(0,4000),updated:Date.now()};
+    party:party,solo:peopleAt({party:party}).count===1,rules:canonRules(f.rules.value).slice(0,80),location:placeName(f.loc.value).slice(0,60),notes:f.notes.value.trim().slice(0,4000),updated:Date.now()};
   if(f.dataset.id)await fb.db.doc('users/'+me.uid+'/plays/'+f.dataset.id).update(doc);
   else{doc.created=Date.now();await fb.db.collection('users/'+me.uid+'/plays').add(doc);}
 }
@@ -1026,6 +1093,7 @@ app.addEventListener('click',function(e){
   else if(k==='goimport'){ui.tab='settings';render();var el=document.getElementById('import');if(el)el.scrollIntoView();}
   else if(k==='doimport')runImport();
   else if(k==='cancelimport'){ui.imp=null;render();}
+  else if(k==='editplace')placeDialog(a.dataset.k);
   else if(k==='csv')download('mansions-plays.csv',I.toCSV(plays.slice().sort(sortPlays)),'text/csv');
   else if(k==='json')download('mansions-backup.json',JSON.stringify({exported:new Date().toISOString(),version:self.APP_VERSION,plays:plays,scenarios:mine},null,1),'application/json');
   else if(k==='wipe')confirmDialog(t('Delete all plays'),tn('Your {n} play goes for good. Download a copy first if you might want it.','All {n} plays go for good. Download a copy first if you might want them.',plays.length),t('Delete all plays'),function(){return deleteAll('plays').then(function(){toast(t('All plays deleted.'));});});
