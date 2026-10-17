@@ -188,7 +188,6 @@ I18N.add('pl',[
 [`Plays {name}`,`Gra: {name}`],
 [`Played as`,`Grał(a):`],
 [`{n} places`,{one:`{n} miejsce`,few:`{n} miejsca`,many:`{n} miejsc`,other:`{n} miejsca`}],
-[`written {n} ways`,{one:`zapisane na {n} sposób`,few:`zapisane na {n} sposoby`,many:`zapisane na {n} sposobów`,other:`zapisane na {n} sposobu`}],
 [`Choose a place`,`Wybierz miejsce`],
 [`Somewhere new…`,`Inne miejsce…`],
 [`Type a place`,`Wpisz miejsce`],

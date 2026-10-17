@@ -187,7 +187,6 @@ I18N.add('ca',[
 [`Plays {name}`,`Juga amb {name}`],
 [`Played as`,`Ha portat`],
 [`{n} places`,{one:`{n} lloc`,other:`{n} llocs`}],
-[`written {n} ways`,{one:`escrit de {n} manera`,other:`escrit de {n} maneres`}],
 [`Choose a place`,`Tria un lloc`],
 [`Somewhere new…`,`Un altre lloc…`],
 [`Type a place`,`Escriu un lloc`],

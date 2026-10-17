@@ -187,7 +187,6 @@ I18N.add('fr',[
 [`Plays {name}`,`Joue {name}`],
 [`Played as`,`A joué`],
 [`{n} places`,{one:`{n} lieu`,other:`{n} lieux`}],
-[`written {n} ways`,{one:`écrit de {n} façon`,other:`écrit de {n} façons`}],
 [`Choose a place`,`Choisir un lieu`],
 [`Somewhere new…`,`Un autre lieu…`],
 [`Type a place`,`Saisissez un lieu`],

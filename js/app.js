@@ -61,11 +61,13 @@ function names(field){
 // Two spellings of the same thing are one entry: case, accents, curly or straight quotes and extra spaces don't count,
 // so "David's house" and "david’s  house" are the same place.
 function textKey(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[‘’ʼ`´]/g,"'").replace(/[“”]/g,'"').replace(/\s+/g,' ').trim();}
-function tidy(v){return String(v||'').replace(/\s+/g,' ').trim();}
+// curly quotes from a phone keyboard saved as the plain ones a computer types, so both write the same thing
+function straight(v){return String(v||'').replace(/[\u2018\u2019\u02bc]/g,"'").replace(/[\u201c\u201d]/g,'"');}
+function tidy(v){return straight(v).replace(/\s+/g,' ').trim();}
 // [{v, at}] -> [{k, name, n, spellings}], one per textKey, shown in its most-used spelling (the latest on a tie), most used first
 function suggestions(vals){
   var g={};vals.forEach(function(x){var v=tidy(x.v);if(!v)return;var k=textKey(v),e=g[k]||(g[k]={k:k,n:0,sp:{}}),sp=e.sp[v]||(e.sp[v]={n:0,at:0});e.n++;sp.n++;if((x.at||0)>sp.at)sp.at=x.at||0;});
-  return Object.keys(g).map(function(k){var e=g[k],sps=Object.keys(e.sp).sort(function(a,b){return e.sp[b].n-e.sp[a].n||e.sp[b].at-e.sp[a].at;});return {k:k,name:sps[0],n:e.n,spellings:sps};})
+  return Object.keys(g).map(function(k){var e=g[k],sps=Object.keys(e.sp).sort(function(a,b){return e.sp[b].n-e.sp[a].n||e.sp[b].at-e.sp[a].at;});return {k:k,name:tidy(sps[0]),n:e.n,spellings:sps};})
     .sort(function(a,b){return b.n-a.n||a.name.localeCompare(b.name);});
 }
 var _places=null;
@@ -79,6 +81,19 @@ function placeList(){
 function places(){return placeList().map(function(x){return x.name;});}
 // how a place is shown and saved: its usual spelling once it's known, so a new play doesn't start a second "David's house"
 function placeName(v){var k=textKey(v);if(!k)return '';var hit=placeList().filter(function(x){return x.k===k;})[0];return hit?hit.name:tidy(v);}
+// Plays saved before v83 (or on another device) may hold another spelling of a place or rules, such as a curly apostrophe
+// from a phone: rewrite them in the usual spelling, quietly, once the plays have loaded.
+var tidying=false;
+function tidySpellings(){
+  if(tidying||!me||!fb||(window.LocalMoM&&LocalMoM.mode==='demo'))return;
+  var list=plays.filter(function(p){return (p.location&&p.location!==placeName(p.location))||(p.rules&&p.rules!==canonRules(p.rules));});
+  var st=starredMap(),m={},ch=false;Object.keys(st).forEach(function(id){var v=st[id];if(v&&v.plan&&v.plan.location&&v.plan.location!==placeName(v.plan.location)){v=Object.assign({},v,{plan:Object.assign({},v.plan,{location:placeName(v.plan.location)})});ch=true;}m[id]=v;});
+  if(!list.length&&!ch)return;tidying=true;
+  (async function(){
+    for(var i=0;i<list.length;i+=400){var b=fb.db.batch();list.slice(i,i+400).forEach(function(p){var u={};if(p.location&&p.location!==placeName(p.location))u.location=placeName(p.location).slice(0,60);if(p.rules&&p.rules!==canonRules(p.rules))u.rules=canonRules(p.rules).slice(0,80);b.update(fb.db.doc('users/'+me.uid+'/plays/'+p.id),u);});await b.commit();}
+    if(ch&&profile)await fb.db.doc('users/'+me.uid).update({starred:m});
+  })().catch(function(e){console.warn('tidy',e);}).then(function(){tidying=false;});
+}
 function rulesList(){var l=suggestions(plays.map(function(p){return {v:p.rules,at:p.updated||p.created||0};}));
   if(!l.some(function(x){return x.k===textKey(NORMAL);}))l.push({k:textKey(NORMAL),name:NORMAL,n:0,spellings:[NORMAL]});return l;}
 function rulesUsed(){return rulesList().map(function(x){return x.name;});}
@@ -622,7 +637,7 @@ function placesHtml(){
     '<p class="note">'+t('Where you’ve played, as the Where box suggests them. Rename a place to change it in every play; give it the same name as another to merge the two.')+'</p>'+
     '<ul class="scs">'+l.map(function(x){var n=playsAt(x.k).length;
       return '<li><div class="grow"><b>'+esc(x.name)+'</b><span class="note">'+(n?tn('{n} play','{n} plays',n):t('A scheduled game'))+
-        (x.spellings.length>1?' · '+tn('written {n} way','written {n} ways',x.spellings.length)+': '+x.spellings.map(function(v){return '“'+esc(v)+'”';}).join(', '):'')+'</span></div>'+
+        '</span></div>'+
         '<button class="btn sm" data-a="editplace" data-k="'+esc(x.k)+'">'+t('Rename')+'</button></li>';}).join('')+'</ul></section>';
 }
 function playsAt(k){return plays.filter(function(p){return p.location&&textKey(p.location)===k;});}
@@ -1204,7 +1219,7 @@ function listen(user){
   unsub.push(fb.db.collection('users/'+user.uid+'/plays').onSnapshot(function(q){
     plays=q.docs.map(function(d){var x=d.data();x.id=d.id;return x;}).sort(sortPlays);loaded.plays=true;
     if(!q.metadata.fromCache&&profile&&profile.playCount!==plays.length)uref.set({playCount:plays.length},{merge:true}).catch(function(){});
-    render();
+    render();if(!q.metadata.fromCache)setTimeout(tidySpellings,800);
   },function(e){console.warn(e);loaded.plays=true;render();}));
   unsub.push(fb.db.collection('users/'+user.uid+'/people').onSnapshot(function(q){people=q.docs.map(function(d){var x=d.data();x.id=d.id;return x;});render();},function(){}));
   unsub.push(fb.db.collection('users/'+user.uid+'/groups').onSnapshot(function(q){groups=q.docs.map(function(d){var x=d.data();x.id=d.id;return x;});render();},function(){}));
