@@ -421,6 +421,9 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   const icsTxt=fs.readFileSync(await ics.path(),'utf8');assert.ok(/BEGIN:VEVENT/.test(icsTxt)&&/DTSTART:\d{8}T190000/.test(icsTxt)&&/Shattered Bonds/.test(icsTxt),'ics file');
   // next game on the Plays tab
   await p.click('[data-t=plays]');assert.ok(await p.locator('.nextup:has-text("Shattered Bonds")').count(),'next game card');
+  // Edit on the next game opens its plan
+  await p.locator('.nextup [data-a=plan]').click();await p.waitForSelector('.dlg input[name=pdate]');
+  assert.strictEqual(await p.inputValue('.dlg input[name=pnote]'),'bring snacks','Edit on the next game opens its plan');await p.click('.dlg [data-close]');
   await p.screenshot({path:out+'/3f-next-game.png'});
   // log it: filled in from the plan; afterwards it's off the starred list
   await p.locator('.nextup [data-a=logplan]').click();await p.waitForSelector('form[data-form=play]');
