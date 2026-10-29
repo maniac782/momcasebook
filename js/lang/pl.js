@@ -197,7 +197,6 @@ I18N.add('pl',[
 [`Investigator cards © Fantasy Flight Games.`,`Karty badaczy © Fantasy Flight Games.`],
 [`Print`,`Drukuj`],
 [`This device can’t print from here. Open the site in your browser and try again.`,`To urządzenie nie może drukować z tego miejsca. Otwórz stronę w przeglądarce i spróbuj ponownie.`],
-[`If nothing happens, open the site in Safari to print.`,`Jeśli nic się nie dzieje, otwórz stronę w Safari, aby wydrukować.`],
 [`{n} places`,{one:`{n} miejsce`,few:`{n} miejsca`,many:`{n} miejsc`,other:`{n} miejsca`}],
 [`Choose a place`,`Wybierz miejsce`],
 [`Somewhere new…`,`Inne miejsce…`],

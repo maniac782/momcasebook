@@ -441,12 +441,18 @@ function cheatSheet(id){
   var sc=scenById(id),pl=(starredMap()[id]||{}).plan;if(!sc||!pl)return;
   var html=cheatHtml(sc,pl);
   var d=openDialog('<div class="dlg-head"><h2>'+t('Cheat sheet')+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+html+
-    '<div class="row end"><button class="btn" type="button" data-ch="edit">'+t('Edit plan')+'</button><button class="btn pri" type="button" data-ch="print">'+t('Print')+'</button></div>'+
-    // an iPhone or iPad home-screen app may not offer printing at all; Safari does
-    (navigator.standalone?'<p class="note" style="text-align:right">'+t('If nothing happens, open the site in Safari to print.')+'</p>':''),t('Cheat sheet'));
+    '<div class="row end"><button class="btn" type="button" data-ch="edit">'+t('Edit plan')+'</button><button class="btn pri" type="button" data-ch="print">'+t('Print')+'</button></div>',t('Cheat sheet'));
   d.classList.add('wide');
   d.addEventListener('click',function(e){var b=e.target.closest('[data-ch]');if(!b)return;
-    if(b.dataset.ch==='print')printSheet(html);else{d.close();planDialog(id);}});
+    if(b.dataset.ch==='print'){if(isIOS())printPage(html,scName(sc.id,sc.name));else printSheet(html);}else{d.close();planDialog(id);}});
+}
+// iPhones and iPads (iPads may say they're a Mac, but have a touch screen)
+function isIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+// Safari on an iPhone or iPad doesn't reliably print a sheet hidden inside a page full of other things, so there the sheet
+// opens as a plain page of its own in a new tab (print.html), with a Print button (and Safari's Share > Print as well).
+function printPage(html,title){
+  window.__printSheet={html:html,title:t('Cheat sheet')+': '+title,print:t('Print'),lang:document.documentElement.lang||'en'};
+  var w=window.open('print.html','_blank');if(!w)printSheet(html);
 }
 // print one sheet on its own: everything else on the page is hidden while the printer dialog is open. window.print()
 // is called straight from the tap, as phones (Safari above all) only print when it's the tap itself that asks; the

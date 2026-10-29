@@ -26,7 +26,10 @@ window.openDialog=function(html,label){
   bg.addEventListener('input',edited);bg.addEventListener('change',edited);
   bg.addEventListener('click',function(e){if(e.target===bg||e.target.closest('[data-close]'))leave();});
   bg.close=close;bg.clean=function(){dirty=false;};
-  var f=bg.querySelector('input,textarea,select,button.pri');if(f)setTimeout(function(){f.focus();},30);
+  // ready for the keyboard, but always opening at the top: on a phone a dialog taller than the screen would otherwise
+  // scroll down to whatever got the focus (on the cheat sheet, the Print button at the bottom)
+  var f=bg.querySelector('input,textarea,select,button.pri');
+  if(f)setTimeout(function(){try{f.focus({preventScroll:true});}catch(e){f.focus();}bg.scrollTop=0;},30);
   return bg;
 };
 

@@ -648,6 +648,23 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await q.waitForSelector('.plays');
   const sw=await q.evaluate(()=>document.documentElement.scrollWidth);assert.ok(sw<=390,'no sideways scroll on a phone ('+sw+')');
   await q.screenshot({path:out+'/9-phone-plays-dark.png'});
+  // a tall dialog on a phone opens at its top, not scrolled down to its button (the cheat sheet's Print)
+  await q.evaluate(async()=>{const u=firebase.app().auth().currentUser.uid;const party=['Agatha Crane','Rita Young','Joe Diamond','Father Mateo','Lily Chen','Silas Marsh'].map((n,i)=>({player:'P'+i,investigator:n}));
+    await firebase.app().firestore().doc('users/'+u).set({starred:{'o-shattered-bonds':{at:Date.now(),plan:{date:'2099-01-01',time:'',location:'',groupId:'',note:'',party}}}},{merge:true});});
+  await q.waitForSelector('.nextup [data-a=cheat]');await q.tap('.nextup [data-a=cheat]');await q.waitForSelector('.dlg .ch-card');await q.waitForTimeout(250);
+  assert.strictEqual(await q.evaluate(()=>document.querySelector('.dlg-bg').scrollTop),0,'cheat sheet opens at the top on a phone');
+  await q.screenshot({path:out+'/10b-phone-cheat-sheet.png'});
+  // on an iPhone, Print opens the sheet as a plain page in a new tab, with its own Print button
+  await q.evaluate(()=>Object.defineProperty(navigator,'userAgent',{get:()=>'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'}));
+  const [pp]=await Promise.all([q.waitForEvent('popup'),q.tap('[data-ch=print]')]);
+  await pp.waitForSelector('#printarea .ch-card');
+  await pp.waitForFunction(()=>[...document.querySelectorAll('#printarea img')].every(i=>i.complete&&i.naturalWidth>0),);
+  assert.strictEqual(await pp.locator('#printarea .ch-card').count(),6,'every seat on the print page');
+  assert.ok(await pp.locator('.pbar button').isVisible(),'with a Print button');
+  await pp.screenshot({path:out+'/10c-iphone-print-page.png',fullPage:true});
+  await pp.emulateMedia({media:'print'});assert.ok(!(await pp.locator('.pbar button').isVisible()),'the button doesn\'t print');await pp.close();
+  await q.tap('.dlg [data-close]');
+  await q.evaluate(async()=>{const u=firebase.app().auth().currentUser.uid;await firebase.app().firestore().doc('users/'+u).set({starred:{}},{merge:true});});
   await q.click('.bar [data-a=log]');await q.waitForSelector('.dlg');await q.screenshot({path:out+'/10-phone-form-dark.png'});
   // player boxes on a phone: the phone's own picker with the known players and "Someone new…"
   assert.ok(await q.locator('.seat .pp-pick').first().isVisible(),'phone picker over the player box');

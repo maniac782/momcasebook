@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Mansions of Madness Casebook</title>
+<link rel="icon" href="favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+<style>
+  body{margin:0;padding:16px;background:var(--bg)}
+  #printarea{display:block!important;max-width:820px;margin:0 auto}
+  .pbar{max-width:820px;margin:0 auto 12px;display:flex;justify-content:flex-end}
+</style>
+</head>
+<!-- A sheet on a page of its own, for printing where printing from inside the casebook doesn't work (Safari on an
+     iPhone or iPad). The casebook tab that opens it hands over the sheet (window.__printSheet, see printPage() in
+     js/app.js); opened any other way, it goes to the casebook. "printing" on <body> applies the print styles in
+     css/app.css, which leave only #printarea on paper. -->
+<body class="printing">
+<div class="pbar"><button class="btn pri" type="button" id="pr" hidden></button></div>
+<div id="printarea"></div>
+<script src="js/print.js"></script>
+</body>
+</html>
