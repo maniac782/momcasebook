@@ -662,7 +662,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await pp.waitForSelector('#printarea .ch-card');
   await pp.waitForFunction(()=>[...document.querySelectorAll('#printarea img')].every(i=>i.complete&&i.naturalWidth>0),);
   assert.strictEqual(await pp.locator('#printarea .ch-card').count(),6,'every seat on the print page');
-  assert.ok(await pp.locator('.pbar button').isVisible(),'with a Print or share button');
+  assert.ok(await pp.locator('#pr').isVisible(),'with a Print or share button');
   // the sheet is made into a picture first, then the button hands it to the phone's share sheet (Print, Save Image, Messages)
   await pp.waitForFunction(()=>!document.getElementById('pr').disabled,null,{timeout:20000});
   assert.strictEqual(await pp.locator('#pr').textContent(),'Print or share');
@@ -674,7 +674,10 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   fs.writeFileSync(out+'/10d-iphone-cheat-sheet.png',Buffer.from(shared.data.split(',')[1],'base64'));
   const dims=await pp.evaluate(src=>new Promise(r=>{const i=new Image();i.onload=()=>r([i.width,i.height]);i.src=src;}),shared.data);
   assert.ok(dims[0]>=1400&&dims[1]>1000,'a sharp picture of the whole sheet: '+dims);
-  await pp.emulateMedia({media:'print'});assert.ok(!(await pp.locator('.pbar button').isVisible()),'the button doesn\'t print');await pp.close();
+  await pp.emulateMedia({media:'print'});assert.ok(!(await pp.locator('.pbar button').first().isVisible()),'the buttons don\'t print');await pp.emulateMedia({media:'screen'});
+  // a way back: Back closes the page the casebook opened
+  assert.ok(/Back to the casebook/.test(await pp.locator('#back').textContent()),'a Back button');
+  await Promise.all([pp.waitForEvent('close'),pp.tap('#back').catch(()=>{})]);
   await q.tap('.dlg [data-close]');
   await q.evaluate(async()=>{const u=firebase.app().auth().currentUser.uid;await firebase.app().firestore().doc('users/'+u).set({starred:{}},{merge:true});});
   await q.click('.bar [data-a=log]');await q.waitForSelector('.dlg');await q.screenshot({path:out+'/10-phone-form-dark.png'});

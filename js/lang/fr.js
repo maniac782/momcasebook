@@ -196,6 +196,7 @@ I18N.add('fr',[
 [`Investigator cards © Fantasy Flight Games.`,`Cartes d’investigateur © Fantasy Flight Games.`],
 [`Print`,`Imprimer`],
 [`Print or share`,`Imprimer ou partager`],
+[`Back to the casebook`,`Retour au carnet`],
 [`Opens your phone’s share options: Print, Save Image, or send it to the group.`,`Ouvre les options de partage du téléphone : Imprimer, Enregistrer l’image ou l’envoyer au groupe.`],
 [`Press and hold the picture to print, save or share it.`,`Appuyez longuement sur l’image pour l’imprimer, l’enregistrer ou la partager.`],
 [`This device can’t print from here. Open the site in your browser and try again.`,`Cet appareil ne peut pas imprimer d’ici. Ouvrez le site dans votre navigateur et réessayez.`],

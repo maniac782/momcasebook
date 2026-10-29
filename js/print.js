@@ -9,6 +9,10 @@
   document.documentElement.lang=d.lang||'en';document.title=d.title||document.title;
   var area=document.getElementById('printarea'),b=document.getElementById('pr'),hint=document.getElementById('hint');
   area.innerHTML=d.html;
+  // back to the casebook: close this page if the casebook opened it as a new tab, else (a home-screen app shows it in
+  // the same window, with no tabs to switch to) go back to it
+  var back=document.getElementById('back');back.textContent='‹ '+(d.back||'Back');back.hidden=false;
+  back.addEventListener('click',function(){try{window.close();}catch(e){}setTimeout(function(){if(history.length>1)history.back();else location.replace('./');},250);});
   var ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   if(!ios){b.textContent=d.print;b.hidden=false;b.addEventListener('click',function(){window.print();});return;}
 
