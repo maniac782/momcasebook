@@ -412,12 +412,12 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.emulateMedia({media:'print'});await p.pdf({path:out+'/5l-cheat-sheet.pdf',format:'Letter',printBackground:true});await p.emulateMedia({media:'screen'});
   await p.evaluate(()=>window.dispatchEvent(new Event('afterprint')));assert.strictEqual(await p.locator('#printarea').count(),0,'tidied up after printing');
   await p.keyboard.press('Escape');
-  assert.ok(/7 pm/.test(await p.textContent('details[data-box=starred] .plan')),'plan shows the time');
+  assert.ok(/7:00\s?PM/i.test(await p.textContent('details[data-box=starred] .plan')),'plan shows the time');
   await p.screenshot({path:out+'/5j-starred.png'});
   // calendar: Google link and .ics
   await p.locator('details[data-box=starred] [data-a=calmenu]').click();
   const gurl=await p.getAttribute('.calmenu a','href');assert.ok(gurl.includes('calendar.google.com')&&gurl.includes(tomorrow.replace(/-/g,'')+'T190000'),'Google Calendar link');
-  const [ics]=await Promise.all([p.waitForEvent('download'),p.click('.calmenu [data-ics]')]);
+  const [ics]=await Promise.all([p.waitForEvent('download'),p.locator('.calmenu [data-ics]').first().click()]);
   const icsTxt=fs.readFileSync(await ics.path(),'utf8');assert.ok(/BEGIN:VEVENT/.test(icsTxt)&&/DTSTART:\d{8}T190000/.test(icsTxt)&&/Shattered Bonds/.test(icsTxt),'ics file');
   // next game on the Plays tab
   await p.click('[data-t=plays]');assert.ok(await p.locator('.nextup:has-text("Shattered Bonds")').count(),'next game card');
@@ -428,6 +428,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   // log it: filled in from the plan; afterwards it's off the starred list
   await p.locator('.nextup [data-a=logplan]').click();await p.waitForSelector('form[data-form=play]');
   assert.strictEqual(await p.inputValue('select[name=sc]'),'o-shattered-bonds');
+  await p.waitForFunction(()=>document.querySelector('input[name=loc]').value==="Gerri's house",null,{timeout:3000}).catch(()=>{});
   assert.strictEqual(await p.inputValue('input[name=loc]'),"Gerri's house");
   assert.strictEqual(await p.locator('.seat').count(),4,'seats from the plan');
   assert.strictEqual(await p.locator('.seat').nth(0).locator('[name=pi]').inputValue(),'Carson Sinclair','with the investigators picked for game night');

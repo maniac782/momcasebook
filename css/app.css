@@ -67,7 +67,9 @@ main{flex:1;width:100%;max-width:980px;margin:0 auto;padding:16px 16px 56px;disp
 .stack{display:flex;flex-direction:column;gap:14px}
 .grow{flex:1;min-width:0}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-@media (max-width:520px){.grid2{grid-template-columns:1fr}}
+@media (max-width:520px){.grid2:not(.keep){grid-template-columns:1fr}}
+/* where a pair belongs together (date and time; where and how long) it stays a pair on phones */
+.grid2.plan-where{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
 .lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0;margin:0;border:0;padding:0}
 .field legend{padding:0;margin-bottom:6px}
@@ -301,7 +303,8 @@ html.embed main{padding-top:4px}
 .dlg .steps{padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .seats{display:flex;flex-direction:column;gap:8px}
 .seat{display:grid;grid-template-columns:1fr 1fr 40px;gap:8px;align-items:center}
-@media (max-width:420px){.seat{grid-template-columns:1fr 40px}.seat [name=pi]{grid-column:1;grid-row:2}.seat .x{grid-row:1/3;grid-column:2}}
+/* phones: player and investigator stay side by side, a little tighter */
+@media (max-width:420px){.seat{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 30px;gap:6px}.seat .f{padding-left:10px;padding-right:26px;background-position:right 9px center}.seat .x{width:30px}}
 .newsc{border-left:3px solid var(--accent);padding-left:12px}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:30;font-weight:600;max-width:calc(100% - 32px)}
@@ -383,9 +386,6 @@ details.pbox>.plays{margin:12px 16px 16px}
 .calmenu{position:absolute;right:0;top:calc(100% + 4px);z-index:8;min-width:230px;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.2);display:flex;flex-direction:column;padding:6px}
 .calmenu a,.calmenu button{border:0;background:none;text-align:left;padding:9px 10px;border-radius:6px;font-weight:600;font-size:14px;text-decoration:none;cursor:pointer;color:var(--ink)}
 .calmenu a:hover,.calmenu button:hover{background:var(--surface2)}
-.sec.nextup{flex-direction:row;align-items:center;flex-wrap:wrap;gap:12px;border-left:4px solid var(--accent)}
-.sec.nextup .grow{display:flex;flex-direction:column;gap:2px;min-width:200px}
-.sec.nextup b{font-family:var(--display);font-weight:400;font-size:21px}
 details[data-box=starred]>summary h2::before{content:"\2605  ";color:var(--accent)}
 
 /* keep scenario names readable: the buttons wrap below the text before squeezing it */
@@ -596,3 +596,26 @@ button.ipill:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
   #printarea .ch-ab{font-size:13pt;margin:2px 0 0}
   #printarea *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+/* the next game on the Plays tab, laid out like the Arkham Horror RPG Ledger's next session: countdown, when and where,
+   calendar and Change at the top; then the scenario, who's playing, and what to do about it */
+.sec.nextup{gap:12px}
+.nu-top{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px}
+.nu-top .grow{display:flex;flex-direction:column;gap:3px;flex:1;min-width:200px}
+.nu-top .lbl [data-pcd]{color:var(--accent)}
+.nu-when{font-size:18px;font-weight:700;line-height:1.25}
+.nu-where{color:var(--muted);font-size:15px}
+.nu-game{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line)}
+.nu-game h3{margin:0;font-family:var(--display);font-weight:400;font-size:24px;line-height:1.15}
+.nu-game .note{margin:0}
+.nu-cast{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.nu-cast li{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border-radius:999px;background:var(--surface2)}
+.nu-cast img,.nu-cast .avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none}
+.nu-cast span{display:flex;flex-direction:column;line-height:1.15}
+.nu-cast b{font-size:14px}
+.nu-cast small{font-size:12px;color:var(--muted)}
+.nu-acts .btn.pri{margin-left:auto}
+.placecaret{margin-left:4px;font-size:.8em}
+.placelink{border:0;background:none;padding:0;font:inherit;color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;cursor:pointer}
+.calmenu.left{right:auto;left:0}
+.calmenu[hidden]{display:none}
+@media (max-width:520px){.nu-acts .btn.pri{margin-left:0;flex:1 1 100%}.nu-top>.row{width:100%}}
