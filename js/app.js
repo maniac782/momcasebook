@@ -446,12 +446,13 @@ function cheatSheet(id){
   d.addEventListener('click',function(e){var b=e.target.closest('[data-ch]');if(!b)return;
     if(b.dataset.ch==='print'){if(isIOS())printPage(html,scName(sc.id,sc.name));else printSheet(html);}else{d.close();planDialog(id);}});
 }
-// iPhones and iPads (iPads may say they're a Mac, but have a touch screen)
+// iPhones and iPads (iPads may say they're a Mac, but have a touch screen); print.html then offers the share sheet
 function isIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
 // Safari on an iPhone or iPad doesn't reliably print a sheet hidden inside a page full of other things, so there the sheet
 // opens as a plain page of its own in a new tab (print.html), with a Print button (and Safari's Share > Print as well).
 function printPage(html,title){
-  window.__printSheet={html:html,title:t('Cheat sheet')+': '+title,print:t('Print'),lang:document.documentElement.lang||'en'};
+  window.__printSheet={html:html,title:t('Cheat sheet')+': '+title,print:t('Print'),lang:document.documentElement.lang||'en',
+    share:t('Print or share'),hint:t('Opens your phone’s share options: Print, Save Image, or send it to the group.'),hold:t('Press and hold the picture to print, save or share it.'),file:'cheat-sheet.png'};
   var w=window.open('print.html','_blank');if(!w)printSheet(html);
 }
 // print one sheet on its own: everything else on the page is hidden while the printer dialog is open. window.print()

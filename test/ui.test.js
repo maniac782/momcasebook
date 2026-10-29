@@ -655,13 +655,25 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await q.evaluate(()=>document.querySelector('.dlg-bg').scrollTop),0,'cheat sheet opens at the top on a phone');
   await q.screenshot({path:out+'/10b-phone-cheat-sheet.png'});
   // on an iPhone, Print opens the sheet as a plain page in a new tab, with its own Print button
-  await q.evaluate(()=>Object.defineProperty(navigator,'userAgent',{get:()=>'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'}));
+  const IPHONE='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+  await q.evaluate(ua=>Object.defineProperty(navigator,'userAgent',{get:()=>ua}),IPHONE);
+  await q.context().addInitScript(ua=>Object.defineProperty(navigator,'userAgent',{get:()=>ua}),IPHONE);
   const [pp]=await Promise.all([q.waitForEvent('popup'),q.tap('[data-ch=print]')]);
   await pp.waitForSelector('#printarea .ch-card');
   await pp.waitForFunction(()=>[...document.querySelectorAll('#printarea img')].every(i=>i.complete&&i.naturalWidth>0),);
   assert.strictEqual(await pp.locator('#printarea .ch-card').count(),6,'every seat on the print page');
-  assert.ok(await pp.locator('.pbar button').isVisible(),'with a Print button');
+  assert.ok(await pp.locator('.pbar button').isVisible(),'with a Print or share button');
+  // the sheet is made into a picture first, then the button hands it to the phone's share sheet (Print, Save Image, Messages)
+  await pp.waitForFunction(()=>!document.getElementById('pr').disabled,null,{timeout:20000});
+  assert.strictEqual(await pp.locator('#pr').textContent(),'Print or share');
   await pp.screenshot({path:out+'/10c-iphone-print-page.png',fullPage:true});
+  await pp.evaluate(()=>{navigator.canShare=()=>true;navigator.share=x=>new Promise(r=>{const f=x.files[0],fr=new FileReader();fr.onload=()=>{window.__shared={name:f.name,type:f.type,data:fr.result};r();};fr.readAsDataURL(f);});});
+  await pp.tap('#pr');await pp.waitForFunction(()=>window.__shared);
+  const shared=await pp.evaluate(()=>window.__shared);
+  assert.strictEqual(shared.type,'image/png');assert.strictEqual(shared.name,'cheat-sheet.png');
+  fs.writeFileSync(out+'/10d-iphone-cheat-sheet.png',Buffer.from(shared.data.split(',')[1],'base64'));
+  const dims=await pp.evaluate(src=>new Promise(r=>{const i=new Image();i.onload=()=>r([i.width,i.height]);i.src=src;}),shared.data);
+  assert.ok(dims[0]>=1400&&dims[1]>1000,'a sharp picture of the whole sheet: '+dims);
   await pp.emulateMedia({media:'print'});assert.ok(!(await pp.locator('.pbar button').isVisible()),'the button doesn\'t print');await pp.close();
   await q.tap('.dlg [data-close]');
   await q.evaluate(async()=>{const u=firebase.app().auth().currentUser.uid;await firebase.app().firestore().doc('users/'+u).set({starred:{}},{merge:true});});
