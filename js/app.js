@@ -427,16 +427,12 @@ function abilityHtml(txt){
   return esc(txt).replace(/^Action:/,'<b>Action:</b>').replace(/\{(clue|success)\}/g,function(m,k){var nm=k==='clue'?t('clue (magnifying glass)'):t('success');return '<span class="die" role="img" aria-label="'+nm+'" title="'+nm+'">'+DIE_ICON[k]+'</span>';});
 }
 function cheatHtml(sc,pl){
-  var sk=[t('Strength'),t('Agility'),t('Observation'),t('Lore'),t('Influence'),t('Will')];
   var cast=(pl.party||[]).filter(function(x){return x.investigator&&MOM_CARDS[x.investigator];});
   var card=function(x){var c=MOM_CARDS[x.investigator];
     return '<article class="ch-card"><img class="ch-face" src="'+invImg(x.investigator,'face')+'" alt="" width="160" height="160"><div class="ch-body">'+
-      '<div class="ch-top"><div class="ch-who">'+(x.player?esc(x.player):'<span class="note">'+t('No player yet')+'</span>')+'</div>'+
-      '<div class="ch-hs"><span class="ch-h"><i>'+t('Health')+'</i><b>'+c[1]+'</b></span><span class="ch-s"><i>'+t('Sanity')+'</i><b>'+c[2]+'</b></span></div></div>'+
+      '<div class="ch-who">'+(x.player?esc(x.player):'<span class="note">'+t('No player yet')+'</span>')+'</div>'+
       '<div class="ch-inv"><b>'+esc(x.investigator)+'</b> <span>'+esc(c[0])+'</span></div>'+
-      '<p class="ch-ab">'+abilityHtml(c[4])+'</p>'+
-      '<div class="ch-stats">'+
-      sk.map(function(n,i){return '<span title="'+n+'"><i>'+n+'</i><b>'+c[3][i]+'</b></span>';}).join('')+'</div></div></article>';};
+      '<p class="ch-ab">'+abilityHtml(c[1])+'</p></div></article>';};
   return '<div class="cheat"><header class="ch-head"><span class="lbl">'+t('Cheat sheet')+'</span><h2>'+esc(scName(sc.id,sc.name))+'</h2><p class="note">'+esc(planText(pl))+'</p></header>'+
     '<div class="ch-grid">'+cast.map(card).join('')+'</div>'+
     '<p class="ch-foot">'+(I18N.lang&&I18N.lang!=='en'?t('Card text is in English, as printed on the cards.')+' ':'')+t('Investigator cards © Fantasy Flight Games.')+' · momcasebook.web.app</p></div>';

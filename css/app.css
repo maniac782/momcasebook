@@ -579,21 +579,10 @@ button.ipill:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .ch-ab{margin:4px 0 2px;padding:6px 0 6px 10px;border-left:3px solid var(--accent);font-size:15px;line-height:1.35}
 .ch-ab .die{display:inline-block;width:1.05em;height:1.05em;vertical-align:-.15em;color:var(--accent)}
 .ch-ab .die svg{width:100%;height:100%;display:block}
-.ch-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-.ch-hs{display:flex;gap:4px;flex:none}
-.ch-hs span{display:flex;flex-direction:column;align-items:center;min-width:52px;padding:2px 6px;border-radius:6px;background:var(--surface2)}
-.ch-hs i,.ch-stats i{font-style:normal;font-size:10.5px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ch-hs b{font-size:18px;line-height:1.1}
-.ch-h b{color:var(--bad)}
-.ch-s b{color:var(--accent)}
-.ch-stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;margin-top:2px;text-align:center}
-.ch-stats span{display:flex;flex-direction:column;align-items:center;padding:3px 1px;border-radius:6px;background:var(--surface2);min-width:0}
-.ch-stats b{font-size:16px;line-height:1.1}
-.ch-stats i{font-size:9.5px;letter-spacing:-.01em}
 .dlg .ch-head .lbl{display:none}
 .ch-foot{margin:12px 0 0;font-size:12px;color:var(--muted)}
 #printarea{display:none}
-@media (max-width:420px){.ch-grid{grid-template-columns:1fr}.ch-face{width:48px;height:48px}.ch-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:420px){.ch-grid{grid-template-columns:1fr}.ch-face{width:48px;height:48px}}
 @media print{
   @page{margin:12mm}
   body.printing>*:not(#printarea){display:none!important}
@@ -602,11 +591,8 @@ button.ipill:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
   body.printing #printarea{display:block;font-size:12pt;--surface:#fff;--surface2:#e1e5e8;--ink:#1a1f26;--muted:#555d68;--line:#bcc3ca;--accent:#1d5c63;--bad:#a3322a;color:var(--ink)}
   /* one wide card per seat: big enough to read across the table, up to eight on a page */
   #printarea .ch-grid{grid-template-columns:1fr;gap:8px}
-  #printarea .ch-card{padding:8px 12px;gap:14px}
+  #printarea .ch-card{padding:8px 12px;gap:14px;align-items:center}
   #printarea .ch-face{width:58px;height:58px}
-  #printarea .ch-body{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;row-gap:2px}
-  #printarea .ch-top,#printarea .ch-inv,#printarea .ch-ab{grid-column:1}
-  #printarea .ch-stats{grid-column:2;grid-row:1/4;align-self:center;grid-template-columns:repeat(3,64px)}
   #printarea .ch-ab{font-size:13pt;margin:2px 0 0}
   #printarea *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
