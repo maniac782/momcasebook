@@ -405,8 +405,10 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.ok(await p.locator('.dlg .ch-card .ch-who').first().textContent(),'the player’s name on the card');
   await p.screenshot({path:out+'/5k-cheat-sheet.png'});
   await p.evaluate(()=>{window.__printed=0;window.print=()=>{window.__printed=document.body.classList.contains('printing')&&!!document.querySelector('#printarea .ch-card');};});
-  await p.click('[data-ch=print]');await p.waitForFunction(()=>window.__printed!==0);
-  assert.strictEqual(await p.evaluate(()=>window.__printed),true,'only the sheet is put out for printing');
+  // straight from the tap (phones won't print otherwise): the printer is asked during the click itself
+  await p.evaluate(()=>{const b=document.querySelector('[data-ch=print]');b.addEventListener('click',()=>{window.__inTap=window.__printed;},{once:true});document.addEventListener('click',()=>{window.__afterTap=window.__printed;},{once:true});});
+  await p.click('[data-ch=print]');
+  assert.strictEqual(await p.evaluate(()=>window.__afterTap),true,'print is called within the tap, with only the sheet put out for printing');
   await p.emulateMedia({media:'print'});await p.pdf({path:out+'/5l-cheat-sheet.pdf',format:'Letter',printBackground:true});await p.emulateMedia({media:'screen'});
   await p.evaluate(()=>window.dispatchEvent(new Event('afterprint')));assert.strictEqual(await p.locator('#printarea').count(),0,'tidied up after printing');
   await p.keyboard.press('Escape');

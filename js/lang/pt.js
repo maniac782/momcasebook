@@ -195,6 +195,8 @@ I18N.add('pt',[
 [`Card text is in English, as printed on the cards.`,`O texto das cartas está em inglês, como impresso nelas.`],
 [`Investigator cards © Fantasy Flight Games.`,`Cartas de investigador © Fantasy Flight Games.`],
 [`Print`,`Imprimir`],
+[`This device can’t print from here. Open the site in your browser and try again.`,`Este aparelho não consegue imprimir daqui. Abra o site no navegador e tente de novo.`],
+[`If nothing happens, open the site in Safari to print.`,`Se nada acontecer, abra o site no Safari para imprimir.`],
 [`{n} places`,{one:`{n} lugar`,other:`{n} lugares`}],
 [`Choose a place`,`Escolha um lugar`],
 [`Somewhere new…`,`Outro lugar…`],

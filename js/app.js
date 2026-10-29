@@ -441,20 +441,22 @@ function cheatSheet(id){
   var sc=scenById(id),pl=(starredMap()[id]||{}).plan;if(!sc||!pl)return;
   var html=cheatHtml(sc,pl);
   var d=openDialog('<div class="dlg-head"><h2>'+t('Cheat sheet')+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+html+
-    '<div class="row end"><button class="btn" type="button" data-ch="edit">'+t('Edit plan')+'</button><button class="btn pri" type="button" data-ch="print">'+t('Print')+'</button></div>',t('Cheat sheet'));
+    '<div class="row end"><button class="btn" type="button" data-ch="edit">'+t('Edit plan')+'</button><button class="btn pri" type="button" data-ch="print">'+t('Print')+'</button></div>'+
+    // an iPhone or iPad home-screen app may not offer printing at all; Safari does
+    (navigator.standalone?'<p class="note" style="text-align:right">'+t('If nothing happens, open the site in Safari to print.')+'</p>':''),t('Cheat sheet'));
   d.classList.add('wide');
   d.addEventListener('click',function(e){var b=e.target.closest('[data-ch]');if(!b)return;
     if(b.dataset.ch==='print')printSheet(html);else{d.close();planDialog(id);}});
 }
-// print one sheet on its own: everything else on the page is hidden while the printer dialog is open
+// print one sheet on its own: everything else on the page is hidden while the printer dialog is open. window.print()
+// is called straight from the tap, as phones (Safari above all) only print when it's the tap itself that asks; the
+// pictures are the ones the sheet on screen already loaded, so they're there in time.
 function printSheet(html){
   var old=document.getElementById('printarea');if(old)old.remove();
   var el=document.createElement('div');el.id='printarea';el.innerHTML=html;document.body.appendChild(el);document.body.classList.add('printing');
-  var imgs=[].slice.call(el.querySelectorAll('img'));
-  Promise.all(imgs.map(function(i){return i.complete?0:new Promise(function(r){i.onload=i.onerror=r;setTimeout(r,4000);});})).then(function(){
-    var done=function(){window.removeEventListener('afterprint',done);document.body.classList.remove('printing');el.remove();};
-    window.addEventListener('afterprint',done);window.print();
-  });
+  var done=function(){window.removeEventListener('afterprint',done);document.body.classList.remove('printing');if(el.parentNode)el.remove();};
+  window.addEventListener('afterprint',done);
+  try{window.print();}catch(e){done();toast(t('This device can’t print from here. Open the site in your browser and try again.'));}
 }
 // Our own short premise for an official scenario (js/official-info.js), if there is one.
 // ---------- packing lists (Valkyrie scenarios; js/packlists.js, built by scripts/fetch-packlists.py) ----------
