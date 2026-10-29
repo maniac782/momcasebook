@@ -323,7 +323,7 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.fill('input[name=plname]','gerri’s house');assert.ok(await p.locator('.pl-hint:has-text("merges it with")').isVisible(),'merging is spelled out');
   await p.fill('input[name=plname]','Gerri’s house');await p.click('.dlg button[type=submit]');await p.waitForSelector('.toast:has-text("Merged")');
   assert.deepStrictEqual(await locs(),["Gerri's house"],'every play now says the same place, in one spelling');
-  assert.strictEqual(await p.locator('#places li').count(),1,'one place left');
+  await p.waitForTimeout(300);assert.strictEqual(await p.locator('#places li').count(),1,'one place left: '+(await p.locator('#places li').allTextContents()).join(' / '));
   await p.locator('#places').screenshot({path:out+'/3e-places.png'});
   // switching the list off in Settings keeps played ones only
   await p.click('[data-t=settings]');await p.uncheck('#s-valk');await p.waitForTimeout(150);
@@ -389,8 +389,27 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.locator('details[data-box=starred] .scs li',{hasText:'Shattered Bonds'}).locator('[data-a=plan]').click();
   const tomorrow=await p.evaluate(()=>{const d=new Date();d.setDate(d.getDate()+1);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);});
   await p.fill('input[name=pdate]',tomorrow);await p.fill('input[name=ptime]','19:00');await p.fill('input[name=ploc]','Gerri’s house');
-  await p.selectOption('select[name=pgrp]',{label:'Thursday group'});await p.fill('input[name=pnote]','bring snacks');
+  // who's playing: a group fills the seats with each person's usual investigator; change one, add someone without one
+  await p.selectOption('.dlg select[name=grp]',await p.locator('.dlg select[name=grp] option',{hasText:'Thursday group'}).getAttribute('value'));await p.fill('input[name=pnote]','bring snacks');
+  assert.strictEqual(await p.locator('.dlg .seat').count(),3,'the group fills three seats');
+  await p.locator('.dlg .seat').nth(0).locator('[name=pi]').selectOption('Carson Sinclair');
+  await p.locator('.dlg [data-f=addseat]').click();await p.locator('.dlg .seat').nth(3).locator('[name=pp]').fill('Robin');
+  await p.screenshot({path:out+'/5i-schedule-seats.png',fullPage:true});
   await p.click('.dlg button[type=submit]');await p.waitForSelector('details[data-box=starred] .plan');
+  const party=await p.evaluate(()=>Object.values(__fake.store['users/u-danexamplecom'].starred)[0].plan.party);
+  assert.strictEqual(party.length,4,'four seats saved with the plan');assert.strictEqual(party[0].investigator,'Carson Sinclair');assert.deepStrictEqual(party[3],{player:'Robin',investigator:''});
+  // the cheat sheet: one card per investigator (Robin has none yet), with their ability, and Print prints only the sheet
+  await p.locator('details[data-box=starred] [data-a=cheat]').click();await p.waitForSelector('.dlg .cheat');
+  assert.strictEqual(await p.locator('.dlg .ch-card').count(),party.filter(x=>x.investigator).length,'a card per seat with an investigator, none for Robin');
+  assert.ok(/Another investigator within range may perform 1 action/.test(await p.locator('.dlg .ch-card').first().textContent()),'Carson Sinclair’s own ability');
+  assert.ok(await p.locator('.dlg .ch-card .ch-who').first().textContent(),'the player’s name on the card');
+  await p.screenshot({path:out+'/5k-cheat-sheet.png'});
+  await p.evaluate(()=>{window.__printed=0;window.print=()=>{window.__printed=document.body.classList.contains('printing')&&!!document.querySelector('#printarea .ch-card');};});
+  await p.click('[data-ch=print]');await p.waitForFunction(()=>window.__printed!==0);
+  assert.strictEqual(await p.evaluate(()=>window.__printed),true,'only the sheet is put out for printing');
+  await p.emulateMedia({media:'print'});await p.pdf({path:out+'/5l-cheat-sheet.pdf',format:'Letter',printBackground:true});await p.emulateMedia({media:'screen'});
+  await p.evaluate(()=>window.dispatchEvent(new Event('afterprint')));assert.strictEqual(await p.locator('#printarea').count(),0,'tidied up after printing');
+  await p.keyboard.press('Escape');
   assert.ok(/7 pm/.test(await p.textContent('details[data-box=starred] .plan')),'plan shows the time');
   await p.screenshot({path:out+'/5j-starred.png'});
   // calendar: Google link and .ics
@@ -405,7 +424,9 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   await p.locator('.nextup [data-a=logplan]').click();await p.waitForSelector('form[data-form=play]');
   assert.strictEqual(await p.inputValue('select[name=sc]'),'o-shattered-bonds');
   assert.strictEqual(await p.inputValue('input[name=loc]'),"Gerri's house");
-  assert.strictEqual(await p.locator('.seat').count(),3,'seats from the group');
+  assert.strictEqual(await p.locator('.seat').count(),4,'seats from the plan');
+  assert.strictEqual(await p.locator('.seat').nth(0).locator('[name=pi]').inputValue(),'Carson Sinclair','with the investigators picked for game night');
+  await p.locator('.seat').nth(3).locator('[data-f=rmseat]').click();
   await p.check('.seg.big .pass input',{force:true});await p.click('form[data-form=play] button[type=submit]');
   await p.waitForSelector('.nextup',{state:'detached'});
   assert.deepStrictEqual(await p.evaluate(()=>__fake.store['users/u-danexamplecom'].starred),{},'taken off the starred list');

@@ -199,7 +199,7 @@ function playsHtml(){
   // the next scheduled game, if any
   var np=nextPlan();
   if(np)h='<section class="sec nextup"><div class="grow"><span class="lbl">'+t('Next game')+'</span><b>'+esc(scName(np.sc.id,np.sc.name))+'</b><span class="note">'+esc(planText(np.plan))+'</span></div>'+
-    '<div class="row tight"><span class="placewrap"><button class="btn sm" data-a="calmenu" data-sc="'+esc(np.id)+'">'+t('Add to calendar')+'</button></span>'+(packOf(np.sc)?'<button class="btn sm" data-a="pack" data-sc="'+esc(np.id)+'">'+ICON_BOX+t('Packing list')+'</button>':'')+'<button class="btn sm pri" data-a="logplan" data-sc="'+esc(np.id)+'">'+t('Log this game')+'</button></div></section>'+h;
+    '<div class="row tight"><span class="placewrap"><button class="btn sm" data-a="calmenu" data-sc="'+esc(np.id)+'">'+t('Add to calendar')+'</button></span>'+(packOf(np.sc)?'<button class="btn sm" data-a="pack" data-sc="'+esc(np.id)+'">'+ICON_BOX+t('Packing list')+'</button>':'')+(planHasCast(np.plan)?'<button class="btn sm" data-a="cheat" data-sc="'+esc(np.id)+'">'+t('Cheat sheet')+'</button>':'')+'<button class="btn sm pri" data-a="logplan" data-sc="'+esc(np.id)+'">'+t('Log this game')+'</button></div></section>'+h;
   if(probs.length)h='<section class="sec notice" role="status"><div class="grow"><b>'+t('Some investigator names aren’t official ones')+'</b><span class="note">'+tn('{n} name ({names}) needs matching to an official investigator.','{n} names ({names}) need matching to an official investigator.',probs.length,{names:probs.slice(0,3).map(function(x){return '“'+esc(x.text)+'”';}).join(', ')+(probs.length>3?'…':'')})+'</span></div><button class="btn pri" data-a="fixinv">'+t('Fix them')+'</button></section>'+h;
   if(sprobs.length)h='<section class="sec notice" role="status"><div class="grow"><b>'+tn('{n} play isn’t matched to an official or Valkyrie scenario','{n} plays aren’t matched to an official or Valkyrie scenario',sprobs.length)+'</b><span class="note">'+t('Every play needs a real scenario. Pick the right one for each name; good guesses are filled in.')+'</span></div><button class="btn pri" data-a="fixsc">'+t('Match them')+'</button></section>'+h;
   var any=ui.q||ui.result||ui.player||ui.scen;
@@ -315,6 +315,7 @@ function scenariosHtml(){
       (star?'<button class="btn sm" data-a="plan" data-sc="'+esc(s.id)+'">'+(plan?t('Edit plan'):t('Schedule'))+'</button>':'')+
       (plan?'<span class="placewrap"><button class="btn sm" data-a="calmenu" data-sc="'+esc(s.id)+'" aria-haspopup="true">'+t('Add to calendar')+'</button></span><button class="btn sm pri" data-a="logplan" data-sc="'+esc(s.id)+'">'+t('Log this game')+'</button>':'')+
       (packOf(s)?'<button class="btn sm" data-a="pack" data-sc="'+esc(s.id)+'">'+ICON_BOX+t('Packing list')+'</button>':'')+
+      (planHasCast(plan)?'<button class="btn sm" data-a="cheat" data-sc="'+esc(s.id)+'">'+t('Cheat sheet')+'</button>':'')+
       (plan?'':x?'<button class="btn sm again" data-a="again" data-sc="'+esc(s.id)+'" title="'+t('Same players, investigators, rules and place as last time')+'">'+ICON_AGAIN+t('Play again')+'</button>':'<button class="btn sm" data-a="log" data-sc="'+esc(s.id)+'">'+t('Log a play')+'</button>')+
 '</div></li>';
   };
@@ -362,26 +363,34 @@ function planText(pl){
 // The next scheduled game today or later, for the Plays tab.
 function nextPlan(){var td=today(),m=starredMap(),best=null;
   Object.keys(m).forEach(function(id){var pl=m[id].plan,sc=scenById(id);if(!pl||!sc||pl.date<td)return;if(!best||(pl.date+(pl.time||''))<(best.plan.date+(best.plan.time||'')))best={id:id,sc:sc,plan:pl};});return best;}
+// who's down to play a scheduled game: the seats saved with it, else (plans from before v86) its group, each with their usual investigator
+function planParty(pl){
+  if(pl&&pl.party&&pl.party.length)return pl.party.map(function(x){return {player:x.player||'',investigator:x.investigator||''};});
+  var g=pl&&groups.filter(function(x){return x.id===pl.groupId;})[0];
+  return g?groupMembers(g).map(function(x){return {player:x.name,investigator:usualInv(x.name)};}):[];
+}
+function planHasCast(pl){return !!(pl&&pl.party&&pl.party.some(function(x){return x.investigator&&MOM_CARDS[x.investigator];}));}
 function planDialog(id){
   var sc=scenById(id),cur=(starredMap()[id]||{}).plan||{};if(!sc)return;
   var d=openDialog('<form class="stack"><div class="dlg-head"><h2>'+t('Schedule: {name}',{name:esc(scName(sc.id,sc.name))})+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
     '<div class="grid2"><label class="field"><span class="lbl">'+t('Date')+'</span><input class="f" type="date" name="pdate" required min="'+today()+'" value="'+esc(cur.date||'')+'"></label>'+
     '<label class="field"><span class="lbl">'+t('Time (optional)')+'</span><input class="f" type="time" name="ptime" value="'+esc(cur.time||'')+'"></label></div>'+
     '<div class="field"><label class="lbl" for="f-ploc">'+t('Where (optional)')+'</label>'+placeCombo('ploc',cur.location).replace('name="ploc"','name="ploc" id="f-ploc"')+'</div>'+
-    (groups.length?'<label class="field"><span class="lbl">'+t('Group (optional)')+'</span><select class="f" name="pgrp"><option value="">'+t('No group')+'</option>'+groups.slice().sort(byName).map(function(g){return '<option value="'+esc(g.id)+'"'+(g.id===cur.groupId?' selected':'')+'>'+esc(g.name)+'</option>';}).join('')+'</select></label>':'')+
+    seatsHtml(planParty(cur),t('Who’s playing (optional)'))+
+    '<p class="note">'+t('Pick everyone’s investigator now to print a cheat sheet of who plays whom and their abilities.')+'</p>'+
     '<label class="field"><span class="lbl">'+t('Note (optional)')+'</span><input class="f" name="pnote" maxlength="200" value="'+esc(cur.note||'')+'" placeholder="'+t('e.g. bring snacks, use modified rules')+'"></label>'+
     '<div class="row end">'+(cur.date?'<button class="btn ghost dng" type="button" data-unplan style="margin-right:auto">'+t('Remove date')+'</button>':'')+'<button class="btn" type="button" data-close>'+t('Cancel')+'</button><button class="btn pri" type="submit">'+t('Save')+'</button></div></form>',t('Schedule'));
-  var f=d.querySelector('form');
+  var f=d.querySelector('form');wireSeats(f);
   var put=function(plan){var m={},c=starredMap();for(var k in c)m[k]=c[k];m[id]={at:(m[id]&&m[id].at)||Date.now()};if(plan)m[id].plan=plan;d.close();saveStarred(m);};
   f.addEventListener('submit',function(e){e.preventDefault();
-    put({date:f.pdate.value,time:f.ptime.value||'',location:placeName(f.ploc.value).slice(0,60),groupId:f.pgrp?f.pgrp.value:'',note:f.pnote.value.trim().slice(0,200)});toast(t('Scheduled.'));});
+    put({date:f.pdate.value,time:f.ptime.value||'',location:placeName(f.ploc.value).slice(0,60),groupId:f.dataset.group||cur.groupId||'',party:readSeats(f),note:f.pnote.value.trim().slice(0,200)});toast(t('Scheduled.'));});
   var un=f.querySelector('[data-unplan]');if(un)un.addEventListener('click',function(){put(null);toast(t('Date removed; still starred.'));});
 }
 // Calendar: a Google Calendar link, or an .ics file for Apple Calendar and Outlook. Length from how long the scenario usually takes.
 function calEvent(id){
   var sc=scenById(id),pl=(starredMap()[id]||{}).plan;if(!sc||!pl)return null;
   var mins=Math.round((typicalMins(sc)||180)/30)*30||180,g=groups.filter(function(x){return x.id===pl.groupId;})[0];
-  var who=g?groupMembers(g).map(function(x){return x.name;}).join(', '):'';
+  var who=pl.party&&pl.party.length?pl.party.map(function(x){return x.player;}).filter(function(x,i,a){return x&&a.indexOf(x)===i;}).join(', '):g?groupMembers(g).map(function(x){return x.name;}).join(', '):'';
   var details=['Mansions of Madness: '+sc.name+(sc.type==='valkyrie'?' (Valkyrie)':''),who?t('Players: {names}',{names:who}):'',pl.note||'',t('Logged with Mansions of Madness Casebook')].filter(Boolean).join('\n');
   var p2=function(n){return ('0'+n).slice(-2);},stamp=function(dt){return dt.getFullYear()+p2(dt.getMonth()+1)+p2(dt.getDate())+'T'+p2(dt.getHours())+p2(dt.getMinutes())+'00';};
   var start,end,allDay=!pl.time;
@@ -408,7 +417,48 @@ function logFromPlan(id){
   var pl=(starredMap()[id]||{}).plan||{},sc=scenById(id);if(!sc)return;
   var g=groups.filter(function(x){return x.id===pl.groupId;})[0];
   openPlay({_again:false,_fromPlan:id,scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,date:pl.date&&pl.date<=today()?pl.date:today(),
-    party:g?groupMembers(g).map(function(x){return {player:x.name,investigator:''};}):null,location:pl.location||'',notes:pl.note||'',attempts:1});
+    party:pl.party&&pl.party.length?planParty(pl):g?groupMembers(g).map(function(x){return {player:x.name,investigator:''};}):null,location:pl.location||'',notes:pl.note||'',attempts:1});
+}
+// ---------- game-night cheat sheet: who plays which investigator, and what they can do (js/investigator-cards.js) ----------
+var DIE_ICON={
+  clue:'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m9.7 9.7 4.3 4.3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  success:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.2l1.9 4.3 4.7.4-3.6 3.1 1.1 4.6L8 11.2l-4.1 2.4L5 9 1.4 5.9l4.7-.4z" fill="currentColor"/></svg>'};
+function abilityHtml(txt){
+  return esc(txt).replace(/^Action:/,'<b>Action:</b>').replace(/\{(clue|success)\}/g,function(m,k){var nm=k==='clue'?t('clue (magnifying glass)'):t('success');return '<span class="die" role="img" aria-label="'+nm+'" title="'+nm+'">'+DIE_ICON[k]+'</span>';});
+}
+function cheatHtml(sc,pl){
+  var sk=[t('Strength'),t('Agility'),t('Observation'),t('Lore'),t('Influence'),t('Will')];
+  var cast=(pl.party||[]).filter(function(x){return x.investigator&&MOM_CARDS[x.investigator];});
+  var card=function(x){var c=MOM_CARDS[x.investigator];
+    return '<article class="ch-card"><img class="ch-face" src="'+invImg(x.investigator,'face')+'" alt="" width="160" height="160"><div class="ch-body">'+
+      '<div class="ch-top"><div class="ch-who">'+(x.player?esc(x.player):'<span class="note">'+t('No player yet')+'</span>')+'</div>'+
+      '<div class="ch-hs"><span class="ch-h"><i>'+t('Health')+'</i><b>'+c[1]+'</b></span><span class="ch-s"><i>'+t('Sanity')+'</i><b>'+c[2]+'</b></span></div></div>'+
+      '<div class="ch-inv"><b>'+esc(x.investigator)+'</b> <span>'+esc(c[0])+'</span></div>'+
+      '<p class="ch-ab">'+abilityHtml(c[4])+'</p>'+
+      '<div class="ch-stats">'+
+      sk.map(function(n,i){return '<span title="'+n+'"><i>'+n+'</i><b>'+c[3][i]+'</b></span>';}).join('')+'</div></div></article>';};
+  return '<div class="cheat"><header class="ch-head"><span class="lbl">'+t('Cheat sheet')+'</span><h2>'+esc(scName(sc.id,sc.name))+'</h2><p class="note">'+esc(planText(pl))+'</p></header>'+
+    '<div class="ch-grid">'+cast.map(card).join('')+'</div>'+
+    '<p class="ch-foot">'+(I18N.lang&&I18N.lang!=='en'?t('Card text is in English, as printed on the cards.')+' ':'')+t('Investigator cards © Fantasy Flight Games.')+' · momcasebook.web.app</p></div>';
+}
+function cheatSheet(id){
+  var sc=scenById(id),pl=(starredMap()[id]||{}).plan;if(!sc||!pl)return;
+  var html=cheatHtml(sc,pl);
+  var d=openDialog('<div class="dlg-head"><h2>'+t('Cheat sheet')+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+html+
+    '<div class="row end"><button class="btn" type="button" data-ch="edit">'+t('Edit plan')+'</button><button class="btn pri" type="button" data-ch="print">'+t('Print')+'</button></div>',t('Cheat sheet'));
+  d.classList.add('wide');
+  d.addEventListener('click',function(e){var b=e.target.closest('[data-ch]');if(!b)return;
+    if(b.dataset.ch==='print')printSheet(html);else{d.close();planDialog(id);}});
+}
+// print one sheet on its own: everything else on the page is hidden while the printer dialog is open
+function printSheet(html){
+  var old=document.getElementById('printarea');if(old)old.remove();
+  var el=document.createElement('div');el.id='printarea';el.innerHTML=html;document.body.appendChild(el);document.body.classList.add('printing');
+  var imgs=[].slice.call(el.querySelectorAll('img'));
+  Promise.all(imgs.map(function(i){return i.complete?0:new Promise(function(r){i.onload=i.onerror=r;setTimeout(r,4000);});})).then(function(){
+    var done=function(){window.removeEventListener('afterprint',done);document.body.classList.remove('printing');el.remove();};
+    window.addEventListener('afterprint',done);window.print();
+  });
 }
 // Our own short premise for an official scenario (js/official-info.js), if there is one.
 // ---------- packing lists (Valkyrie scenarios; js/packlists.js, built by scripts/fetch-packlists.py) ----------
@@ -860,6 +910,42 @@ window.addEventListener('acct-account',openAccount);
 
 // ---------- investigators: official names only ----------
 // The dropdown on each seat: the 40 official investigators grouped by box, or Unknown.
+// ---------- who's playing: the seats in Log a play and in a scheduled game ----------
+// everyone you might pick: saved players, names from past plays, and you
+function knownPlayers(){var ppl=people.map(function(x){return x.name;}).sort();names('player').forEach(function(n){if(!personByName(n)&&ppl.indexOf(n)<0)ppl.push(n);});if(myName()&&!ppl.some(function(n){return lc(n)===lc(myName());}))ppl.unshift(myName());return ppl;}
+function seatHtml(s,ppl){return '<div class="seat">'+comboHtml({name:'pp',dl:'dl-pl',values:ppl,value:s.player,max:40,ph:t('Player'),label:t('Player'),choose:t('Choose a player'),other:t('Someone new…'),typeph:t('Type a name'),tag:t('new player'),noList:true})+
+    invSelect(s.investigator||'')+
+    '<button class="x" type="button" data-f="rmseat" aria-label="'+t('Remove this seat')+'">×</button></div>';}
+// a fieldset of seats (player and investigator), with "Fill in from a group…" when there are groups; wireSeats() makes it work
+function seatsHtml(party,legend){
+  var ppl=knownPlayers();party=party&&party.length?party:[{player:'',investigator:''}];
+  return '<fieldset class="field"><legend class="lbl">'+legend+'</legend>'+
+    (groups.length?'<select class="f grp" name="grp" aria-label="'+t('Fill in from a group')+'"><option value="">'+t('Fill in from a group…')+'</option>'+groups.slice().sort(byName).map(function(g){return '<option value="'+esc(g.id)+'">'+esc(g.name)+' ('+groupMembers(g).length+')</option>';}).join('')+'</select>':'')+
+    '<div class="seats">'+party.map(function(x){return seatHtml(x,ppl);}).join('')+'</div><div class="row"><button class="btn sm" type="button" data-f="addseat">'+t('+ Add a player')+'</button></div>'+
+    '<datalist id="dl-pl">'+ppl.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist></fieldset>';
+}
+function wireSeats(f){
+  var blank=seatHtml({player:'',investigator:''},knownPlayers());
+  // picking a known player fills in their investigator (the one set on the Players tab, else the one they usually take), if
+  // that seat has none yet
+  f.addEventListener('change',function(e){var t=e.target;if(t.name!=='pp'||!t.value.trim())return;var s=t.closest('.seat'),iv=s&&s.querySelector('[name=pi]');
+    if(!iv||iv.value)return;var fav=usualInv(t.value);if(fav)iv.value=fav;});
+  // picking a group fills the seats with its members, keeping any investigator already chosen for someone
+  if(f.grp)f.grp.addEventListener('change',function(){
+    var g=groups.filter(function(y){return y.id===f.grp.value;})[0];if(!g)return;f.dataset.group=g.id;
+    var had={};f.querySelectorAll('.seat').forEach(function(s){var n=lc(s.querySelector('[name=pp]').value);if(n)had[n]=s.querySelector('[name=pi]').value;});
+    var box=f.querySelector('.seats');box.innerHTML='';
+    groupMembers(g).slice(0,8).forEach(function(x){box.insertAdjacentHTML('beforeend',blank);var s=box.lastElementChild;s.querySelector('[name=pp]').value=x.name;s.querySelector('[name=pi]').value=had[lc(x.name)]||usualInv(x.name)||'';});
+    if(!box.children.length)box.insertAdjacentHTML('beforeend',blank);
+    f.grp.value='';var first=box.querySelector('[name=pi]');if(first)first.focus();
+  });
+  f.addEventListener('click',function(e){
+    var b=e.target.closest('[data-f]');if(!b)return;var k=b.getAttribute('data-f');
+    if(k==='addseat'){var box=f.querySelector('.seats');if(box.children.length>=8)return;box.insertAdjacentHTML('beforeend',blank);if(!matchMedia('(pointer:coarse)').matches)box.lastElementChild.querySelector('input').focus();}
+    else if(k==='rmseat'){var all=f.querySelectorAll('.seat');if(all.length>1)b.closest('.seat').remove();else{b.closest('.seat').querySelectorAll('input').forEach(function(i){i.value='';});b.closest('.seat').querySelector('[name=pi]').value='';}}
+  });
+}
+function readSeats(f){var party=[];f.querySelectorAll('.seat').forEach(function(s){var a=s.querySelector('[name=pp]').value.trim(),b=s.querySelector('[name=pi]').value;if(b&&!MOM.isInvestigator(b))b='';if(a||b)party.push({player:a.slice(0,40),investigator:b});});return party;}
 function invSelect(val,nm){
   var odd=val&&!MOM.isInvestigator(val);
   return '<select class="f" name="'+(nm||'pi')+'" aria-label="'+t('Investigator')+'"><option value="">'+t('Investigator…')+'</option>'+
@@ -953,10 +1039,6 @@ function playForm(p,preset){
   [['official',t('Official (added)')],['valkyrie',t('Valkyrie')]].forEach(function(g){var l=ex.filter(function(s){return s.type===g[0];});
     if(l.length)opts+='<optgroup label="'+g[1]+'">'+l.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===scId?' selected':'')+'>'+esc(scName(s.id,s.name))+'</option>';}).join('')+'</optgroup>';});
   if(scId&&!scenById(scId)&&p.scenarioName)opts+='<option value="" selected disabled>'+t('{name} (not in the list: choose one)',{name:esc(scName(p.scenarioId,p.scenarioName))})+'</option>';
-  var seat=function(s){return '<div class="seat">'+comboHtml({name:'pp',dl:'dl-pl',values:ppl,value:s.player,max:40,ph:t('Player'),label:t('Player'),choose:t('Choose a player'),other:t('Someone new…'),typeph:t('Type a name'),tag:t('new player'),noList:true})+
-    invSelect(s.investigator||'')+
-    '<button class="x" type="button" data-f="rmseat" aria-label="'+t('Remove this seat')+'">×</button></div>';};
-  var ppl=people.map(function(x){return x.name;}).sort();names('player').forEach(function(n){if(!personByName(n)&&ppl.indexOf(n)<0)ppl.push(n);});if(myName()&&!ppl.some(function(n){return lc(n)===lc(myName());}))ppl.unshift(myName());
   var res=p.result||'';
   return '<form class="stack" data-form="play"'+(editing?' data-id="'+esc(p.id)+'"':'')+'>'+
     '<div class="dlg-head"><h2>'+(editing?t('Edit play'):p._again?t('Play again'):t('Log a play'))+'</h2><button class="x" type="button" data-close aria-label="'+t('Close')+'">×</button></div>'+
@@ -964,13 +1046,10 @@ function playForm(p,preset){
     '<div class="grid2"><label class="field"><span class="lbl">'+t('Date (optional)')+'</span><input class="f" type="date" name="date" value="'+esc(p.date||'')+'" max="'+today()+'"></label>'+
     '<label class="field"><span class="lbl">'+t('Attempt')+'</span><input class="f num" type="number" name="att" min="1" max="99" value="'+(p.attempts||1)+'" aria-describedby="att-h"><small class="note" id="att-h">'+t('Which try this was')+'</small></label></div>'+
     '<fieldset class="field"><legend class="lbl">'+t('Result')+'</legend><div class="seg big" role="radiogroup">'+[['pass',t('Won')],['fail',t('Lost')],['abandoned',t('Abandoned')]].map(function(r){return '<label class="'+r[0]+'"><input type="radio" name="res" value="'+r[0]+'"'+(res===r[0]?' checked':'')+' required><span>'+r[1]+'</span></label>';}).join('')+'</div></fieldset>'+
-    '<fieldset class="field"><legend class="lbl">'+t('Who played')+'</legend>'+
-    (groups.length?'<select class="f grp" name="grp" aria-label="'+t('Fill in from a group')+'"><option value="">'+t('Fill in from a group…')+'</option>'+groups.slice().sort(byName).map(function(g){return '<option value="'+esc(g.id)+'">'+esc(g.name)+' ('+groupMembers(g).length+')</option>';}).join('')+'</select>':'')+
-    '<div class="seats">'+party.map(seat).join('')+'</div><div class="row"><button class="btn sm" type="button" data-f="addseat">'+t('+ Add a player')+'</button></div></fieldset>'+
+    seatsHtml(party,t('Who played'))+
     '<div class="field"><label class="lbl" for="f-loc">'+t('Where (optional)')+'</label>'+placeCombo('loc',p.location).replace('name="loc"','name="loc" id="f-loc"')+'</div>'+
     '<div class="field"><label class="lbl" for="f-rules">'+t('Rules')+'</label>'+comboHtml({name:'rules',dl:'dl-rules',values:rulesUsed().map(rulesName),value:p.rules?rulesName(p.rules):'',max:80,ph:t(NORMAL),choose:t('Choose the rules'),other:t('Other rules…'),typeph:t('Type the rules')}).replace('name="rules"','name="rules" id="f-rules"')+'</div>'+
     '<label class="field"><span class="lbl">'+t('Notes')+'</span><textarea class="f" name="notes" rows="4" maxlength="4000" placeholder="'+t('What happened? Anything to remember next time?')+'">'+esc(p.notes||'')+'</textarea></label>'+
-    '<datalist id="dl-pl">'+ppl.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
     '<p class="err" role="alert" hidden></p>'+
     '<div class="row end">'+(editing?'<button class="btn dng ghost" type="button" data-f="del" style="margin-right:auto">'+t('Delete')+'</button>':'')+'<button class="btn" type="button" data-close>'+t('Cancel')+'</button><button class="btn pri" type="submit">'+(editing?t('Save'):t('Log play'))+'</button></div></form>';
 }
@@ -985,25 +1064,10 @@ function playAgain(scId){
 }
 function openPlay(p,preset){
   var d=openDialog(playForm(p,preset),p&&p.id?t('Edit play'):t('Log a play')),f=d.querySelector('form'),err=f.querySelector('.err');
-  var seatHtml=f.querySelector('.seat').outerHTML;
-  // picking a known player fills in their investigator (the one set on the Players tab, else the one they usually take), if
-  // that seat has none yet
-  f.addEventListener('change',function(e){var t=e.target;if(t.name!=='pp'||!t.value.trim())return;var s=t.closest('.seat'),iv=s&&s.querySelector('[name=pi]');
-    if(!iv||iv.value)return;var fav=usualInv(t.value);if(fav)iv.value=fav;});
-  // picking a group fills the seats with its members, keeping any investigator already chosen for someone
-  if(f.grp)f.grp.addEventListener('change',function(){
-    var g=groups.filter(function(y){return y.id===f.grp.value;})[0];if(!g)return;
-    var had={};f.querySelectorAll('.seat').forEach(function(s){var n=lc(s.querySelector('[name=pp]').value);if(n)had[n]=s.querySelector('[name=pi]').value;});
-    var box=f.querySelector('.seats');box.innerHTML='';
-    groupMembers(g).slice(0,8).forEach(function(x){box.insertAdjacentHTML('beforeend',seatHtml);var s=box.lastElementChild;s.querySelector('[name=pp]').value=x.name;s.querySelector('[name=pi]').value=had[lc(x.name)]||usualInv(x.name)||'';});
-    if(!box.children.length){box.insertAdjacentHTML('beforeend',seatHtml);box.querySelectorAll('input').forEach(function(i){i.value='';});}
-    f.grp.value='';var first=box.querySelector('[name=pi]');if(first)first.focus();
-  });
+  wireSeats(f);
   f.addEventListener('click',function(e){
     var b=e.target.closest('[data-f]');if(!b)return;var k=b.getAttribute('data-f');
-    if(k==='addseat'){var box=f.querySelector('.seats');if(box.children.length>=8)return;box.insertAdjacentHTML('beforeend',seatHtml);var s=box.lastElementChild;s.querySelectorAll('input').forEach(function(i){i.value='';});if(!matchMedia('(pointer:coarse)').matches)s.querySelector('input').focus();}
-    else if(k==='rmseat'){var all=f.querySelectorAll('.seat');if(all.length>1)b.closest('.seat').remove();else b.closest('.seat').querySelectorAll('input').forEach(function(i){i.value='';});}
-    else if(k==='del'){
+    if(k==='del'){
       if(b.dataset.sure){b.disabled=true;fb.db.doc('users/'+me.uid+'/plays/'+f.dataset.id).delete().then(function(){d.close();toast(t('Play deleted.'));}).catch(function(e2){b.disabled=false;showErr(friendly(e2));});}
       else{b.dataset.sure='1';b.textContent=t('Delete this play?');b.classList.remove('ghost');}
     }
@@ -1021,7 +1085,7 @@ async function savePlay(f){
   sc=scenById(scId);
   if(!sc||(sc.type!=='official'&&sc.type!=='valkyrie'))throw {msg:t('Choose a scenario from the list.')};
   var res=(f.querySelector('input[name=res]:checked')||{}).value;if(!res)throw {msg:t('Choose Won, Lost or Abandoned.')};
-  var party=[];f.querySelectorAll('.seat').forEach(function(s){var a=s.querySelector('[name=pp]').value.trim(),b=s.querySelector('[name=pi]').value;if(b&&!MOM.isInvestigator(b))b='';if(a||b)party.push({player:a.slice(0,40),investigator:b});});
+  var party=readSeats(f);
   var att=Math.max(1,Math.min(99,parseInt(f.att.value,10)||1));
   var doc={scenarioId:sc.id,scenarioName:sc.name,scenarioType:sc.type,date:f.date.value||'',result:res,attempts:att,
     party:party,solo:peopleAt({party:party}).count===1,rules:canonRules(f.rules.value).slice(0,80),location:placeName(f.loc.value).slice(0,60),notes:f.notes.value.trim().slice(0,4000),updated:Date.now()};
@@ -1086,6 +1150,7 @@ app.addEventListener('click',function(e){
   else if(k==='pack')packDialog(a.dataset.sc);
   else if(k==='calmenu')calMenu(a);
   else if(k==='logplan')logFromPlan(a.dataset.sc);
+  else if(k==='cheat')cheatSheet(a.dataset.sc);
   else if(k==='edit'){var p=plays.filter(function(x){return x.id===a.dataset.id;})[0];if(p)openPlay(p);}
   else if(k==='clearf'){ui.q=ui.result=ui.player=ui.scen='';render();}
   else if(k==='scplays'){ui.q=ui.result=ui.player='';ui.scen=a.dataset.id;ui.tab='plays';render();window.scrollTo(0,0);}

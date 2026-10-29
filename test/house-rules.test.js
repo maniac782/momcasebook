@@ -29,6 +29,12 @@ const rulesInv=[...(fs.readFileSync(path.join(root,'firestore.rules'),'utf8').ma
 const catInv=globalThis.MOM.INVESTIGATORS;
 if(JSON.stringify(rulesInv)!==JSON.stringify(catInv)){console.error('firestore.rules investigators() differs from js/catalog.js:\n  rules: '+rulesInv.length+'\n  catalog: '+catInv.length);process.exit(1);}
 console.log('investigators: '+catInv.length+' official, rules match');
+// 3b. Each official investigator's card (js/investigator-cards.js, for the cheat sheet): title, health, sanity, six skills, ability.
+{const w={};new Function('window',fs.readFileSync(path.join(root,'js/investigator-cards.js'),'utf8'))(w);const C=w.MOM_CARDS,bad=[];
+ catInv.forEach(n=>{const c=C[n];if(!c||typeof c[0]!=='string'||!/^The /.test(c[0])||![c[1],c[2]].every(x=>x>=4&&x<=10)||!Array.isArray(c[3])||c[3].length!==6||!c[3].every(x=>x>=1&&x<=6)||typeof c[4]!=='string'||c[4].length<20)bad.push(n);});
+ Object.keys(C).forEach(n=>{if(catInv.indexOf(n)<0)bad.push(n+' (not official)');});
+ if(bad.length){console.error('Investigator cards missing or malformed: '+bad.join(', '));process.exit(1);}
+ console.log('investigator cards: '+Object.keys(C).length+', complete');}
 require('../js/reviews.js');
 const ids=new Set(globalThis.MOM.OFFICIAL.concat(globalThis.MOM.VALKYRIE).map(s=>s.id));
 const badRev=Object.keys(globalThis.MOM_REVIEWS).filter(k=>!ids.has(k));

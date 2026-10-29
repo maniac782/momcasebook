@@ -48,6 +48,9 @@ const HIDE='.demoban{display:none!important}';
    await p.screenshot({path:path.join(out,'players.png'),fullPage:true,clip:{x:0,y,width:W.width,height:640}});console.log('wrote players.png');}
   await tab(p,'stats');await shot(p,'stats.png',760);
   await tab(p,'plays');await p.click('.nextup [data-a=calmenu]');await shot(p,'next-game.png',420);
+  await p.keyboard.press('Escape');await p.mouse.click(5,5);await p.click('.nextup [data-a=cheat]');await p.waitForSelector('.dlg .ch-card');
+  await p.evaluate(()=>Promise.all([...document.querySelectorAll('.dlg img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r;}))));
+  await shot(p,'cheat-sheet.png');await p.keyboard.press('Escape');
   await p.keyboard.press('Escape');
   // a packing list that mixes sets, with a few things already ticked
   pack=async(p)=>{await tab(p,'scenarios');await p.fill('#sq','The Innsmouth Trial');await p.waitForTimeout(250);

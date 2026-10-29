@@ -11,7 +11,7 @@
   docs[P]={name:'Alex',email:'',created:now-90*864e5,lastSeen:now,playCount:0,
     owned:['core','dlc','rn','sm','btt','soa','sot','hj','pots'],
     starred:{
-      'v-exotic-material':{at:now-5*864e5,plan:{date:day(3),time:'19:00',location:THU,groupId:'thursday',note:t('Bring snacks')}},
+      'v-exotic-material':{at:now-5*864e5,plan:{date:day(3),time:'19:00',location:THU,groupId:'thursday',note:t('Bring snacks'),party:[{player:'Alex',investigator:'Agatha Crane'},{player:'Mara',investigator:'Rita Young'},{player:'Theo',investigator:'Joe Diamond'},{player:'Jules',investigator:'Father Mateo'}]}},
       'o-hidden-depths':{at:now-9*864e5},
       'o-the-twilight-diadem':{at:now-20*864e5}
     }};
