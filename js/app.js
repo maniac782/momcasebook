@@ -528,12 +528,16 @@ function printSheet(html){
 // valkyrie-tools packlist. Ticks are kept on this device only, per scenario, so you can pack at the table.
 var ICON_BOX='<svg class="ic" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg>';
 function packOf(s){var ty=s&&(s.type||s.from);return ty==='valkyrie'&&s.vkey&&(window.MOM_PACKLISTS||{})[s.vkey]||null;}
-// the set whose symbol is printed on a tile or figure, as a short colour-coded tag (Fantasy Flight's symbols themselves
-// can't be used here); first-edition content keeps its first-edition symbol in the boxes that reprint it
+// the set whose symbol is printed on a tile or figure: the symbol itself (img/sets/, Fantasy Flight's, under its fan
+// policy) where we have it, else a short colour-coded tag (first-edition core, Call of the Wild); first-edition content
+// keeps its first-edition symbol in the boxes that reprint it
 var SETS={'2e':['Core','Second Edition Core'],'1e':['1E','First Edition Core'],'cotw':['CotW','Call of the Wild'],'fa':['FA','Forbidden Alchemy'],
   btt:['BtT','Beyond the Threshold'],soa:['SoA','Streets of Arkham'],sot:['SoT','Sanctum of Twilight'],hj:['HJ','Horrific Journeys'],pots:['PotS','Path of the Serpent']};
 // the full name (in the reader's language) is the tag's tooltip; the short tag stays the same everywhere
-function setTag(e){var st=SETS[e];return st?'<span class="set s-'+e+'" title="'+esc(t(st[1]))+'">'+esc(st[0])+'</span>':'<span class="set s-fan" title="'+t('Not from a Fantasy Flight box')+'">'+t('Fan')+'</span>';}
+var SET_SYMBOL={'2e':1,btt:1,soa:1,sot:1,hj:1,pots:1,fa:1};
+function setTag(e){var st=SETS[e];
+  if(st&&SET_SYMBOL[e])return '<span class="set sym s-'+e+'" role="img" aria-label="'+esc(t(st[1]))+'" title="'+esc(t(st[1]))+'"></span>';
+  return st?'<span class="set s-'+e+'" title="'+esc(t(st[1]))+'">'+esc(st[0])+'</span>':'<span class="set s-fan" title="'+t('Not from a Fantasy Flight box')+'">'+t('Fan')+'</span>';}
 function boxName(id){return id?(MOM.productName(id)||id):t('fan-made tile');}
 function canPlay(s){var p=packOf(s);if(!p||p.other)return false;var o=owned();return p.need.every(function(b){return o.indexOf(b)>=0;});}
 function needsHtml(s){var p=packOf(s);if(!p||!p.need.length)return '';var o=owned();
@@ -577,7 +581,7 @@ function packDialog(id){
     '<div class="pk-tiles">'+tileLists()+'</div>'+
     (mons.length?'<h3 class="pk-h">'+t('Monster figures')+' <span class="note">'+mons.length+'</span></h3><ul class="pk-list">'+mons.join('')+'</ul>':'')+
     '<p class="note fine">'+t('Tile and monster art © Fantasy Flight Games.')+'</p>'+
-    '<p class="note fine">'+t('Tile numbers follow the community <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L for small, medium, large); the colored tag is the set whose symbol is printed on the tile or figure. A — means a fan-made tile that isn’t in any box. From the scenario file in the Valkyrie catalogue.')+'</p>'+
+    '<p class="note fine">'+t('Tile numbers follow the community <a href="https://boardgamegeek.com/filepage/147448/mansions-of-madness-tiles-index" target="_blank" rel="noopener">Mansions of Madness Tiles Index v5.2</a> (S, M, L for small, medium, large); the symbol beside each one is the set symbol printed on the tile or figure (a short colored tag for first-edition core and Call of the Wild). A — means a fan-made tile that isn’t in any box. From the scenario file in the Valkyrie catalogue.')+'</p>'+
     '<div class="row end"><button class="btn" type="button" data-close>'+t('Done')+'</button></div>',t('Packing list'));
   var count=function(){var all=d.querySelectorAll('.pk input'),n=0;all.forEach(function(c){if(c.checked)n++;});d.querySelector('.pk-count').textContent=t('{n} of {total} packed',{n:n,total:all.length});};
   var save=function(){var l=[];d.querySelectorAll('.pk input:checked').forEach(function(c){l.push(c.dataset.k);});try{if(l.length)localStorage.setItem(KEY,JSON.stringify(l));else localStorage.removeItem(KEY);}catch(e){}};

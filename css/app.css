@@ -545,6 +545,10 @@ button.ipill:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .set.s-2e{background:#4b5563}.set.s-1e{background:#6b4fa0}.set.s-cotw{background:#2f7a4a}.set.s-fa{background:#1f6f78}
 .set.s-btt{background:#2f5fb3}.set.s-soa{background:#9b2c2c}.set.s-sot{background:#9a3a7a}.set.s-hj{background:#2b3f74}
 .set.s-pots{background:#7a4a2a}.set.s-fan{background:transparent;color:var(--muted);border:1px solid var(--line)}
+/* the real set symbols (img/sets/, transparent shapes) drawn in the text colour, so they suit both themes */
+.set.sym{min-width:0;width:19px;height:19px;padding:0;border-radius:0;background:var(--ink);vertical-align:-4px;-webkit-mask:var(--sym) center/contain no-repeat;mask:var(--sym) center/contain no-repeat}
+.set.sym.s-2e{--sym:url(../img/sets/2e.png)}.set.sym.s-btt{--sym:url(../img/sets/btt.png)}.set.sym.s-soa{--sym:url(../img/sets/soa.png)}.set.sym.s-sot{--sym:url(../img/sets/sot.png)}
+.set.sym.s-hj{--sym:url(../img/sets/hj.png)}.set.sym.s-pots{--sym:url(../img/sets/pots.png)}.set.sym.s-fa{--sym:url(../img/sets/fa.png)}
 /* an official scenario's English name under its translated one (Scenarios tab) */
 .scs .orig{font-size:12.5px;font-style:italic;margin-top:-2px}
 /* cross table (Stats tab): scrolls inside its box; the row names and column heads stay put while it does */
