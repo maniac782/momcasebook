@@ -198,6 +198,7 @@ I18N.add('pl',[
 [`Print`,`Drukuj`],
 [`Print or share`,`Drukuj lub udostępnij`],
 [`Scenario details`,`Pokaż scenariusz`],
+[`Back to your plays`,`Wróć do rozgrywek`],
 [`Happening now`,`Właśnie trwa`],
 [`Directions`,`Dojazd`],
 [`Food nearby`,`Jedzenie w pobliżu`],

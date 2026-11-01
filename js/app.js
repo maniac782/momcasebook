@@ -288,7 +288,10 @@ function scenariosHtml(){
     lang:function(a,b){var x=a.lang||'',y=b.lang||'';if(!x!==!y)return x?-1:1;return x.localeCompare(y)||byName(a,b);},mine:by(function(s){var x=st[s.id];return x?x.last||'0':null;},-1)};
   var sel=function(id,label,val,opts){return '<label class="field"><span class="lbl">'+label+'</span><select class="f" id="'+id+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(val===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>';};
   var offIds=MOM.OFFICIAL.filter(function(s){return own.indexOf(s.product)>=0;}),beat=offIds.filter(function(s){return st[s.id]&&st[s.id].pass;}).length;
-  var h='<div class="filters"><label class="field grow"><span class="lbl">'+t('Search')+'</span><input class="f" id="sq" type="search" value="'+esc(ui.sq||'')+'" placeholder="'+t('Name, author or words in the description')+'" autocomplete="off"></label>'+
+  // arrived from a play or the next game: a way straight back to where you were
+  // (floating at the bottom corner, so it's in view wherever the page has scrolled to)
+  var h=ui.backTo?'<button class="btn backfloat" type="button" data-a="goback">‹ '+t('Back to your plays')+'</button>':'';
+  h+='<div class="filters"><label class="field grow"><span class="lbl">'+t('Search')+'</span><input class="f" id="sq" type="search" value="'+esc(ui.sq||'')+'" placeholder="'+t('Name, author or words in the description')+'" autocomplete="off"></label>'+
     sel('sf-src',t('From'),sf.src,[['all',t('Everything')],['official',t('Official')],['valkyrie',t('Valkyrie')]])+
     sel('sf-status',t('Your progress'),f,[['all',t('Any')],['new',t('Not played')],['failed',t('Lost')],['unbeaten',t('Not played or lost')],['beaten',t('Won')]])+
     sel('sf-diff',t('Difficulty'),sf.diff,[['any',t('Any')],['easy',t('Easy')],['medium',t('Medium')],['hard',t('Hard')],['vhard',t('Very hard')]])+
@@ -357,6 +360,9 @@ function scenariosHtml(){
 // it with its premise or description open and a brief highlight. Clear filters brings the whole list back.
 function goScenario(id){
   var s=scenById(id);if(!s)return;
+  // remember where you came from (tab, scroll, the Scenarios filters) for Back, and give the phone's back button a step
+  ui.backTo={tab:ui.tab,y:window.scrollY,sf:JSON.stringify(sf),sq:ui.sq||'',sfilter:ui.sfilter};
+  try{history.pushState({momBack:1},'');}catch(x){}
   sf.src='all';sf.diff=sf.len=sf.rate=sf.lang=sf.own='any';ui.sfilter='all';ui.sq=scName(s.id,s.name);try{sessionStorage.setItem('mom-sf',JSON.stringify(sf));}catch(x){}
   ui.tab='scenarios';render();
   var rows=[].slice.call(document.querySelectorAll('li.sc[data-sc="'+id+'"]'));
@@ -366,6 +372,13 @@ function goScenario(id){
   row.classList.add('hl');setTimeout(function(){row.classList.remove('hl');},2200);
   row.scrollIntoView({block:'center'});
 }
+function goBack(){
+  var b=ui.backTo;if(!b)return;ui.backTo=null;
+  try{var o=JSON.parse(b.sf);for(var k in o)sf[k]=o[k];sessionStorage.setItem('mom-sf',b.sf);}catch(x){}
+  ui.sq=b.sq;ui.sfilter=b.sfilter;ui.tab=b.tab;render();window.scrollTo(0,b.y||0);
+}
+// the phone's or browser's back button after following a link to a scenario
+window.addEventListener('popstate',function(){if(ui.backTo)goBack();});
 // ---------- starred scenarios and plans ----------
 // users/{uid}.starred = {scenarioId: {at, plan?: {date 'YYYY-MM-DD', time 'HH:MM' or '', location, groupId, note}}}
 var ICON_STAR_OFF='<svg class="ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg>';
@@ -1222,7 +1235,8 @@ function confirmDialog(title,body,yes,run){
 app.addEventListener('click',function(e){
   var a=e.target.closest('[data-a]');if(!a)return;var k=a.getAttribute('data-a');
   if(a.tagName==='A')e.preventDefault();
-  if(k==='tab'){ui.tab=a.dataset.t;try{sessionStorage.setItem('mom-tab',ui.tab);}catch(x){}render();window.scrollTo(0,0);}
+  if(k==='goback'){if(history.state&&history.state.momBack)history.back();else goBack();}
+  else if(k==='tab'){ui.backTo=null;ui.tab=a.dataset.t;try{sessionStorage.setItem('mom-tab',ui.tab);}catch(x){}render();window.scrollTo(0,0);}
   else if(k==='log')openPlay(null,a.dataset.sc);
   else if(k==='again')playAgain(a.dataset.sc);
   else if(k==='star')toggleStar(a.dataset.sc);

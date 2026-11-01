@@ -632,3 +632,6 @@ button.ipill:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .scs li.sc.hl{animation:schl 2.2s ease-out}
 @keyframes schl{0%,35%{background:var(--accent-soft);box-shadow:0 0 0 6px var(--accent-soft)}100%{background:transparent;box-shadow:0 0 0 6px transparent}}
 @media (prefers-reduced-motion:reduce){.scs li.sc.hl{animation:none;outline:2px solid var(--accent)}}
+/* Back to your plays, after following a link from a play to its scenario: floats at the bottom left, clear of the
+   phone's + Log a play at the bottom right */
+.btn.backfloat{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:6;min-height:48px;padding:10px 18px;border-radius:999px;background:var(--surface);box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:15px}

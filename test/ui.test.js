@@ -299,13 +299,23 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   assert.strictEqual(await p.locator('.seat [name=pp]').first().inputValue(),'','no player filled in');assert.strictEqual(await p.locator('.seat [name=pi]').first().inputValue(),'','no investigator');
   assert.ok(await p.locator(`#dl-loc option[value="Gerri's house"]`).count(),'the place is still suggested, saved with a plain apostrophe');await p.keyboard.press('Escape');
   // a play's title opens its scenario on the Scenarios tab, scrolled to and highlighted; the rest of the card still edits the play
+  await p.click('[data-t=scenarios]');const sqBefore=await p.inputValue('#sq');
   await p.click('[data-t=plays]');const firstSc=p.locator('.play .pl-sc').first();const scText=await firstSc.textContent();
   await firstSc.click();await p.waitForSelector('li.sc.hl');
   assert.strictEqual(await p.evaluate(()=>document.querySelector('.tab[aria-selected="true"]').dataset.t),'scenarios','went to the Scenarios tab');
   assert.ok((await p.locator('li.sc.hl b').first().textContent()).includes(scText),'at that scenario: '+scText);
   assert.strictEqual(await p.locator('.dlg').count(),0,'without opening the play');
+  assert.ok(await p.locator('.backfloat').isVisible()&&await p.locator('.backfloat').evaluate(b=>{const r=b.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),'Back to your plays is in view');
   await p.screenshot({path:out+'/3g-play-to-scenario.png'});
-  await p.click('[data-a=sfclear]');await p.click('[data-t=plays]');await p.locator('.play .pl-party').first().click();await p.waitForSelector('form[data-form=play]');
+  // Back to your plays returns to the Plays tab and puts the Scenarios search back as it was
+  await p.click('[data-a=goback]');await p.waitForSelector('.play');
+  assert.strictEqual(await p.evaluate(()=>document.querySelector('.tab[aria-selected="true"]').dataset.t),'plays','Back returns to the plays');
+  await p.click('[data-t=scenarios]');assert.strictEqual(await p.inputValue('#sq'),sqBefore,'the Scenarios search is as it was');assert.strictEqual(await p.locator('.backfloat').count(),0,'no Back button when you came by the tab');
+  // the browser's (or phone's) own back button does the same
+  await p.click('[data-t=plays]');await p.locator('.play .pl-sc').first().click();await p.waitForSelector('li.sc.hl');
+  await p.goBack();await p.waitForSelector('.play');
+  assert.strictEqual(await p.evaluate(()=>document.querySelector('.tab[aria-selected="true"]').dataset.t),'plays','the back button returns to the plays too');
+  await p.locator('.play .pl-party').first().click();await p.waitForSelector('form[data-form=play]');
   assert.ok(true,'the rest of the card still opens the play');await p.keyboard.press('Escape');
   await p.click('[data-t=stats]');assert.ok(await p.locator('h2:text-is("Where you played")').count(),'location stats');
   // the same place spelled two ways is one place: suggested once, shown and saved in its usual spelling, fixable in Settings
