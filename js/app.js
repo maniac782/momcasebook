@@ -205,7 +205,7 @@ function playsHtml(){
         ((pl.location||g)?'<span class="nu-where">'+[pl.location?placeHtml(pl.location):'',g?esc(g.name):''].filter(Boolean).join(' · ')+'</span>':'')+'</div>'+
         '<div class="row tight"><span class="placewrap"><button class="btn sm" data-a="calmenu" data-sc="'+esc(np.id)+'" aria-haspopup="true">'+t('Add to calendar')+'<span class="placecaret" aria-hidden="true">▾</span></button></span>'+
         '<button class="btn sm" data-a="plan" data-sc="'+esc(np.id)+'">'+t('Change')+'</button></div></div>'+
-      '<div class="nu-game"><h3>'+esc(scName(np.sc.id,np.sc.name))+'</h3>'+(pl.note?'<p class="note">'+esc(pl.note)+'</p>':'')+castHtml(pl)+'</div>'+
+      '<div class="nu-game"><h3><a href="#" class="pl-sc" data-a="gosc" data-id="'+esc(np.id)+'" title="'+t('Scenario details')+'">'+esc(scName(np.sc.id,np.sc.name))+'</a></h3>'+(pl.note?'<p class="note">'+esc(pl.note)+'</p>':'')+castHtml(pl)+'</div>'+
       '<div class="row tight nu-acts">'+(packOf(np.sc)?'<button class="btn sm" data-a="pack" data-sc="'+esc(np.id)+'">'+ICON_BOX+t('Packing list')+'</button>':'')+
         (planHasCast(pl)?'<button class="btn sm" data-a="cheat" data-sc="'+esc(np.id)+'">'+t('Cheat sheet')+'</button>':'')+
         '<button class="btn sm pri" data-a="logplan" data-sc="'+esc(np.id)+'">'+t('Log this game')+'</button></div></section>'+h;}

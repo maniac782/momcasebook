@@ -430,6 +430,10 @@ const gviz={status:'ok',table:{cols:rows[0].map(l=>({label:l})),rows:rows.slice(
   const icsTxt=fs.readFileSync(await ics.path(),'utf8');assert.ok(/BEGIN:VEVENT/.test(icsTxt)&&/DTSTART:\d{8}T190000/.test(icsTxt)&&/Shattered Bonds/.test(icsTxt),'ics file');
   // next game on the Plays tab
   await p.click('[data-t=plays]');assert.ok(await p.locator('.nextup:has-text("Shattered Bonds")').count(),'next game card');
+  // the next game's scenario name opens the scenario on the Scenarios tab
+  await p.locator('.nextup .nu-game .pl-sc').click();await p.waitForSelector('li.sc.hl');
+  assert.ok((await p.locator('li.sc.hl b').first().textContent()).includes('Shattered Bonds'),'the next game links to its scenario');
+  await p.click('[data-a=sfclear]');await p.click('[data-t=plays]');await p.waitForSelector('.nextup');
   // Edit on the next game opens its plan
   await p.locator('.nextup [data-a=plan]').click();await p.waitForSelector('.dlg input[name=pdate]');
   assert.strictEqual(await p.inputValue('.dlg input[name=pnote]'),'bring snacks','Edit on the next game opens its plan');await p.click('.dlg [data-close]');
