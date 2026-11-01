@@ -222,7 +222,8 @@ function playsHtml(){
     // the result sits at the right, centred on the card, so results line up down the list
     return '<li><button class="play" data-a="edit" data-id="'+esc(p.id)+'"><span class="pl-main">'+
       plMeta(p)+
-      '<span class="pl-name">'+esc(scName(p.scenarioId,p.scenarioName))+'</span>'+
+      // the title opens the scenario on the Scenarios tab; the rest of the card opens the play
+      (scenById(p.scenarioId)?'<span class="pl-name"><span class="pl-sc" role="link" data-a="gosc" data-id="'+esc(p.scenarioId)+'" title="'+t('Scenario details')+'">'+esc(scName(p.scenarioId,p.scenarioName))+'</span></span>':'<span class="pl-name">'+esc(scName(p.scenarioId,p.scenarioName))+'</span>')+
       (partyText(p)?'<span class="pl-party">'+partyText(p)+'</span>':'<span class="pl-party none">'+t('Players not recorded')+'</span>')+
       (p.rules&&p.rules!==NORMAL?'<span class="pl-rules">'+esc(p.rules)+'</span>':'')+
       (p.notes?'<span class="pl-notes">'+esc(p.notes)+'</span>':'')+'</span>'+
@@ -314,7 +315,7 @@ function scenariosHtml(){
       (s.win!=null?t('{n}% win rate',{n:Math.round(s.win*100)}):'')+' · '+tn('{n} play on Valkyrie','{n} plays on Valkyrie',s.plays,{n:fmtNum(s.plays)}):'';
     var yours=x?(x.last?tn('You: {n} play, {won} won, last {date}','You: {n} plays, {won} won, last {date}',x.n,{won:x.pass,date:esc(fmtDate(x.last))}):tn('You: {n} play, {won} won','You: {n} plays, {won} won',x.n,{won:x.pass})):'';
     var rv=reviewsOf(s);
-    return '<li class="sc">'+starBtn(s.id,!!star)+'<div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(scName(s.id,s.name))+'</a>':esc(scName(s.id,s.name)))+'</b>'+chip+'</span>'+(scName(s.id,s.name)!==s.name?'<span class="note orig" lang="en">'+esc(s.name)+'</span>':'')+
+    return '<li class="sc" data-sc="'+esc(s.id)+'">'+starBtn(s.id,!!star)+'<div class="grow"><span class="row tight"><b>'+(x?'<a href="#" data-a="scplays" data-id="'+esc(s.id)+'">'+esc(scName(s.id,s.name))+'</a>':esc(scName(s.id,s.name)))+'</b>'+chip+'</span>'+(scName(s.id,s.name)!==s.name?'<span class="note orig" lang="en">'+esc(s.name)+'</span>':'')+
       '<span class="note">'+facts+'</span>'+needsHtml(s)+(plan?'<span class="plan">'+ICON_CAL+'<span>'+esc(planText(plan))+'</span></span>':'')+(comm?'<span class="note community">'+comm+'</span>':'')+(yours?'<span class="note">'+yours+'</span>':'')+
       (s.link&&/^https:\/\//.test(s.link)?'<span class="note"><a href="'+esc(s.link)+'" target="_blank" rel="noopener">'+t('Details')+'</a></span>':'')+
       (officialInfo(s)?'<details class="desc"><summary>'+t('Premise')+'</summary><p>'+esc(premiseText(s))+'</p><p class="note">'+t('Written for this site from {source}; no spoilers.',{source:'<a href="'+esc(officialInfo(s).url)+'" target="_blank" rel="noopener">'+esc(officialInfo(s).source)+'</a>'})+'</p></details>':'')+
@@ -352,6 +353,19 @@ function scenariosHtml(){
   return h;
 }
 
+// From a play to its scenario: the Scenarios tab with the filters cleared and the search set to its name, scrolled to
+// it with its premise or description open and a brief highlight. Clear filters brings the whole list back.
+function goScenario(id){
+  var s=scenById(id);if(!s)return;
+  sf.src='all';sf.diff=sf.len=sf.rate=sf.lang=sf.own='any';ui.sfilter='all';ui.sq=scName(s.id,s.name);try{sessionStorage.setItem('mom-sf',JSON.stringify(sf));}catch(x){}
+  ui.tab='scenarios';render();
+  var rows=[].slice.call(document.querySelectorAll('li.sc[data-sc="'+id+'"]'));
+  var row=rows.filter(function(r){return !r.closest('details[data-box=starred]');})[0]||rows[0];if(!row)return;
+  var box=row.closest('details');if(box&&!box.open){box.open=true;boxes[box.dataset.box]=true;}
+  var d=row.querySelector('details.desc');if(d)d.open=true;
+  row.classList.add('hl');setTimeout(function(){row.classList.remove('hl');},2200);
+  row.scrollIntoView({block:'center'});
+}
 // ---------- starred scenarios and plans ----------
 // users/{uid}.starred = {scenarioId: {at, plan?: {date 'YYYY-MM-DD', time 'HH:MM' or '', location, groupId, note}}}
 var ICON_STAR_OFF='<svg class="ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg>';
@@ -1219,6 +1233,7 @@ app.addEventListener('click',function(e){
   else if(k==='cheat')cheatSheet(a.dataset.sc);
   else if(k==='edit'){var p=plays.filter(function(x){return x.id===a.dataset.id;})[0];if(p)openPlay(p);}
   else if(k==='clearf'){ui.q=ui.result=ui.player=ui.scen='';render();}
+  else if(k==='gosc'){e.stopPropagation();goScenario(a.dataset.id);}
   else if(k==='scplays'){ui.q=ui.result=ui.player='';ui.scen=a.dataset.id;ui.tab='plays';render();window.scrollTo(0,0);}
   else if(k==='fixinv')fixInvestigators();
   else if(k==='fixsc')fixScenarios();

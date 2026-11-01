@@ -196,6 +196,7 @@ I18N.add('es',[
 [`Investigator cards © Fantasy Flight Games.`,`Cartas de investigador © Fantasy Flight Games.`],
 [`Print`,`Imprimir`],
 [`Print or share`,`Imprimir o compartir`],
+[`Scenario details`,`Ver el escenario`],
 [`Happening now`,`Ahora mismo`],
 [`Directions`,`Cómo llegar`],
 [`Food nearby`,`Comida cerca`],

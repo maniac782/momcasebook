@@ -624,3 +624,10 @@ button.ipill:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .calmenu.left{right:auto;left:0}
 .calmenu[hidden]{display:none}
 @media (max-width:520px){.nu-acts .btn.pri{margin-left:0;flex:1 1 100%}.nu-top>.row{width:100%}}
+/* a play's scenario title: a link to the scenario on the Scenarios tab (the rest of the card opens the play) */
+.pl-sc{cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 45%,transparent);text-decoration-thickness:1.5px;text-underline-offset:4px}
+.pl-sc:hover{color:var(--accent);text-decoration-color:var(--accent)}
+/* arriving at a scenario from a play: a brief highlight */
+.scs li.sc.hl{animation:schl 2.2s ease-out}
+@keyframes schl{0%,35%{background:var(--accent-soft);box-shadow:0 0 0 6px var(--accent-soft)}100%{background:transparent;box-shadow:0 0 0 6px transparent}}
+@media (prefers-reduced-motion:reduce){.scs li.sc.hl{animation:none;outline:2px solid var(--accent)}}
